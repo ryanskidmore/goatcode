@@ -6,6 +6,7 @@ import { buildHooks } from "./hooks/dispatcher"
 import { log } from "./shared/logger"
 import type { OpenCodeContext } from "./types/plugin"
 import type { OcHeadConfig } from "./types/config"
+import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents"
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const rawConfig = await loadConfig(ctx.directory)
@@ -27,7 +28,9 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
 
   const registry = new PluginRegistry()
 
-  // TODO: register built-in plugins
+  for (const plugin of BUILTIN_AGENT_PLUGINS) {
+    registry.register(plugin)
+  }
 
   for (const packageName of config.plugins ?? []) {
     try {
