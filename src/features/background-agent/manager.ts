@@ -1,11 +1,14 @@
 import type { OpenCodeContext } from "../../types/plugin"
 
 import { log } from "../../shared/logger"
+import { resetMessageCursor } from "../session-state/session-cursor"
 
 import { ConcurrencyManager } from "./concurrency"
 import { pollUntilStable } from "./poller"
 import { spawnBackgroundSession } from "./spawner"
 import type { BackgroundTask, LaunchInput } from "./types"
+
+const TASK_TTL_MS = 5 * 60 * 1_000
 
 type SessionMessage = {
   role?: string
@@ -94,6 +97,8 @@ export class BackgroundAgentManager {
     task.result = result
     task.completedAt = Date.now()
     this.concurrency.release(task.model)
+    if (task.sessionId) resetMessageCursor(task.sessionId)
+    this.evictStaleTasks()
     log("[manager] Task completed", { id })
   }
 
@@ -105,10 +110,12 @@ export class BackgroundAgentManager {
     task.error = error
     task.completedAt = Date.now()
     this.concurrency.release(task.model)
+    if (task.sessionId) resetMessageCursor(task.sessionId)
+    this.evictStaleTasks()
     log("[manager] Task failed", { id, error })
   }
 
-  cancel(id: string): void {
+  async cancel(ctx: OpenCodeContext, id: string): Promise<void> {
     const task = this.tasks.get(id)
     if (!task || isTerminalStatus(task.status)) return
 
@@ -118,9 +125,27 @@ export class BackgroundAgentManager {
 
     if (wasRunning) {
       this.concurrency.release(task.model)
+      if (task.sessionId) {
+        try {
+          await ctx.client.session.delete({ path: { id: task.sessionId } })
+        } catch (error) {
+          log("[manager] Failed to delete cancelled session", { id, error })
+        }
+      }
     }
 
+    if (task.sessionId) resetMessageCursor(task.sessionId)
+    this.evictStaleTasks()
     log("[manager] Task cancelled", { id })
+  }
+
+  private evictStaleTasks(): void {
+    const now = Date.now()
+    for (const [id, task] of this.tasks) {
+      if (isTerminalStatus(task.status) && task.completedAt && now - task.completedAt > TASK_TTL_MS) {
+        this.tasks.delete(id)
+      }
+    }
   }
 
   get(id: string): BackgroundTask | undefined {

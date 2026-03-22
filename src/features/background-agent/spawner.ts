@@ -1,6 +1,7 @@
 import type { OpenCodeContext } from "../../types/plugin"
 
 import { log } from "../../shared/logger"
+import { parseModelId } from "../../shared/model-normalization"
 
 import type { LaunchInput } from "./types"
 
@@ -32,10 +33,12 @@ export async function spawnBackgroundSession(
 
   const sessionId = createResult.data.id
 
+  const parsed = parseModelId(input.model)
   const promptResult = await ctx.client.session.promptAsync({
     path: { id: sessionId },
     body: {
       parts: [{ type: "text", text: input.prompt }],
+      ...(parsed && { model: { providerID: parsed.provider, modelID: parsed.modelId } }),
     },
   })
 
