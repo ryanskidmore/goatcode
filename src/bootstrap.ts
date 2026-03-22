@@ -5,13 +5,13 @@ import { PluginRegistry } from "./registry/plugin-registry"
 import { buildHooks } from "./hooks/dispatcher"
 import { log } from "./shared/logger"
 import type { OpenCodeContext } from "./types/plugin"
-import type { OpenHeadConfig } from "./types/config"
+import type { OcHeadConfig } from "./types/config"
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const rawConfig = await loadConfig(ctx.directory)
 
   const validation = validateConfig(rawConfig ?? {})
-  let config: OpenHeadConfig
+  let config: OcHeadConfig
   if (validation.success) {
     config = validation.config
   } else {
