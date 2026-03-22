@@ -30,5 +30,18 @@ export async function spawnBackgroundSession(
     throw new Error(`Failed to create background session: ${String(createResult.error)}`)
   }
 
-  return { sessionId: createResult.data.id }
+  const sessionId = createResult.data.id
+
+  const promptResult = await ctx.client.session.promptAsync({
+    path: { id: sessionId },
+    body: {
+      parts: [{ type: "text", text: input.prompt }],
+    },
+  })
+
+  if (promptResult.error) {
+    throw new Error(`Failed to send prompt to background session: ${String(promptResult.error)}`)
+  }
+
+  return { sessionId }
 }

@@ -16,11 +16,11 @@ export function setSessionState(
   const existing = store.get(sessionId)
   const now = Date.now()
   store.set(sessionId, {
+    ...existing,
+    ...state,
     sessionId,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
-    ...existing,
-    ...state,
   })
 }
 

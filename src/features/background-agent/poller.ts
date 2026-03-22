@@ -49,9 +49,9 @@ export async function pollUntilStable(
   maxPolls = 120,
 ): Promise<PollSnapshot> {
   let state = createPollState()
-  let latest = await fetchSnapshot()
 
   for (let attempt = 0; attempt < maxPolls; attempt += 1) {
+    const latest = await fetchSnapshot()
     const { stable, nextState } = checkStability(
       state,
       latest.messageCount,
@@ -68,7 +68,6 @@ export async function pollUntilStable(
     }
 
     await new Promise<void>((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS))
-    latest = await fetchSnapshot()
   }
 
   throw new Error("Background polling timed out before reaching stable completion")
