@@ -1,6 +1,7 @@
 export * from "./agent-builder"
 export * from "./agent-registry"
-export * from "./model-resolution"
+export { resolveModel } from "../shared/model-resolution-pipeline"
+export type { ModelResolutionInput, ModelResolutionSource, ModelResolutionResult } from "../shared/model-resolution-pipeline"
 export * from "./tool-restrictions"
 export * from "./fallback-chains"
 export * from "./builtin-agents"

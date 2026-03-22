@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test"
-import { resolveModel } from "./model-resolution"
+import { resolveModel } from "../shared/model-resolution-pipeline"
 
 describe("resolveModel", () => {
   describe("#given override, category, fallback, and system default", () => {
