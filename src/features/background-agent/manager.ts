@@ -2,6 +2,7 @@ import type { OpenCodeContext } from "../../types/plugin"
 
 import { log } from "../../shared/logger"
 import { resetMessageCursor } from "../session-state/session-cursor"
+import { deleteSessionTools } from "../session-state/session-tools-store"
 
 import { ConcurrencyManager } from "./concurrency"
 import { pollUntilStable } from "./poller"
@@ -76,7 +77,7 @@ export class BackgroundAgentManager {
       const finalSnapshot = await pollUntilStable(async () => {
         const [messagesResult, statusResult] = await Promise.all([
           ctx.client.session.messages({ path: { id: sessionId } }),
-          ctx.client.session.status(),
+          ctx.client.session.status({ query: { directory: ctx.directory } }),
         ])
 
         const messages = (messagesResult.data ?? []) as SessionMessage[]
@@ -107,7 +108,7 @@ export class BackgroundAgentManager {
     task.result = result
     task.completedAt = Date.now()
     this.concurrency.release(task.model)
-    if (task.sessionId) resetMessageCursor(task.sessionId)
+    this.cleanupSession(task.sessionId)
     this.evictStaleTasks()
     log("[manager] Task completed", { id })
   }
@@ -120,7 +121,7 @@ export class BackgroundAgentManager {
     task.error = error
     task.completedAt = Date.now()
     this.concurrency.release(task.model)
-    if (task.sessionId) resetMessageCursor(task.sessionId)
+    this.cleanupSession(task.sessionId)
     this.evictStaleTasks()
     log("[manager] Task failed", { id, error })
   }
@@ -130,13 +131,10 @@ export class BackgroundAgentManager {
     if (!task || isTerminalStatus(task.status)) return
 
     const wasRunning = task.status === "running"
-    const wasQueued = task.status === "queued"
     task.status = "cancelled"
     task.completedAt = Date.now()
 
-    if (wasQueued) {
-      this.concurrency.release(task.model)
-    } else if (wasRunning) {
+    if (wasRunning) {
       this.concurrency.release(task.model)
       if (task.sessionId) {
         try {
@@ -147,9 +145,15 @@ export class BackgroundAgentManager {
       }
     }
 
-    if (task.sessionId) resetMessageCursor(task.sessionId)
+    this.cleanupSession(task.sessionId)
     this.evictStaleTasks()
     log("[manager] Task cancelled", { id })
+  }
+
+  private cleanupSession(sessionId: string | undefined): void {
+    if (!sessionId) return
+    resetMessageCursor(sessionId)
+    deleteSessionTools(sessionId)
   }
 
   private evictStaleTasks(): void {
