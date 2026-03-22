@@ -55,8 +55,8 @@ function toCanonicalModelId(provider: ModelsDevProvider, model: ModelsDevModel, 
   const modelProvider = model.provider?.npm
   if (modelProvider) {
     const canonicalProvider = NPM_TO_PROVIDER_ID[modelProvider]
-    if (!canonicalProvider) return undefined
-    return `${canonicalProvider}/${modelId}`
+    if (canonicalProvider) return `${canonicalProvider}/${modelId}`
+    // fall through to other strategies if npm package is unrecognised
   }
 
   if (provider.npm) {
@@ -126,7 +126,10 @@ export function resolveWithModelsDevData(platformModelId: string, index: ModelsD
   return index.byPlatformModel.get(`${platformId}/${modelId}`)
 }
 
-export function createModelsDevCache(ttlMs: number = FIVE_MINUTES_MS): ModelsDevCache {
+export function createModelsDevCache(
+  ttlMs: number = FIVE_MINUTES_MS,
+  fetchFn: () => Promise<ModelsDevIndex> = fetchModelsDevData,
+): ModelsDevCache {
   let cached: ModelsDevIndex | undefined
   let expiresAt = 0
   let inflight: Promise<ModelsDevIndex> | undefined
@@ -137,12 +140,17 @@ export function createModelsDevCache(ttlMs: number = FIVE_MINUTES_MS): ModelsDev
       if (cached && now < expiresAt) return cached
       if (inflight) return inflight
 
-      inflight = fetchModelsDevData()
-      const result = await inflight
-      cached = result
-      expiresAt = Date.now() + ttlMs
-      inflight = undefined
-      return result
+      inflight = fetchFn()
+      try {
+        const result = await inflight
+        if (result.byPlatformModel.size > 0) {
+          cached = result
+          expiresAt = Date.now() + ttlMs
+        }
+        return result
+      } finally {
+        inflight = undefined
+      }
     },
     clear(): void {
       cached = undefined

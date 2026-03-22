@@ -2,7 +2,9 @@ import { describe, expect, it } from "bun:test"
 import {
   buildModelsDevIndex,
   resolveWithModelsDevData,
+  createModelsDevCache,
   type ModelsDevProvider,
+  type ModelsDevIndex,
 } from "./models-dev"
 
 const fixture: Record<string, ModelsDevProvider> = {
@@ -109,6 +111,126 @@ describe("resolveWithModelsDevData", () => {
     describe("#when resolving opencode model without provider metadata", () => {
       it("#then returns undefined", () => {
         expect(resolveWithModelsDevData("opencode/unknown-no-provider", index)).toBeUndefined()
+      })
+    })
+  })
+})
+
+describe("toCanonicalModelId fall-through", () => {
+  describe("#given a model with an unrecognised provider npm package", () => {
+    const data: Record<string, ModelsDevProvider> = {
+      someplatform: {
+        id: "someplatform",
+        name: "Some Platform",
+        models: {
+          "known-provider/some-model": {
+            id: "known-provider/some-model",
+            name: "Some Model",
+            provider: { npm: "@ai-sdk/unrecognised-package" },
+          },
+        },
+      },
+    }
+
+    describe("#when building the index", () => {
+      it("#then falls through to pass-through strategy and maps the model id", () => {
+        const index = buildModelsDevIndex(data)
+        expect(index.byPlatformModel.get("someplatform/known-provider/some-model")).toBe("known-provider/some-model")
+      })
+    })
+  })
+})
+
+describe("createModelsDevCache", () => {
+  const nonEmptyIndex = buildModelsDevIndex(fixture)
+  const emptyIndex: ModelsDevIndex = {
+    byPlatformModel: new Map(),
+    byCanonical: new Map(),
+    providers: new Map(),
+  }
+
+  describe("#given a fetch function that returns a non-empty index", () => {
+    describe("#when get is called twice within the TTL", () => {
+      it("#then returns the same cached instance on the second call", async () => {
+        let callCount = 0
+        const fetchFn = async (): Promise<ModelsDevIndex> => {
+          callCount++
+          return nonEmptyIndex
+        }
+        const cache = createModelsDevCache(60_000, fetchFn)
+
+        const result1 = await cache.get()
+        const result2 = await cache.get()
+
+        expect(callCount).toBe(1)
+        expect(result1).toBe(result2)
+      })
+    })
+
+    describe("#when get is called after the TTL expires", () => {
+      it("#then fetches fresh data on the next call", async () => {
+        let callCount = 0
+        const fetchFn = async (): Promise<ModelsDevIndex> => {
+          callCount++
+          return nonEmptyIndex
+        }
+        const cache = createModelsDevCache(0, fetchFn)
+
+        await cache.get()
+        await cache.get()
+
+        expect(callCount).toBe(2)
+      })
+    })
+
+    describe("#when get is called after clear", () => {
+      it("#then fetches fresh data", async () => {
+        let callCount = 0
+        const fetchFn = async (): Promise<ModelsDevIndex> => {
+          callCount++
+          return nonEmptyIndex
+        }
+        const cache = createModelsDevCache(60_000, fetchFn)
+
+        await cache.get()
+        cache.clear()
+        await cache.get()
+
+        expect(callCount).toBe(2)
+      })
+    })
+
+    describe("#when two concurrent get calls are made", () => {
+      it("#then only one fetch is issued", async () => {
+        let callCount = 0
+        const fetchFn = async (): Promise<ModelsDevIndex> => {
+          callCount++
+          return nonEmptyIndex
+        }
+        const cache = createModelsDevCache(60_000, fetchFn)
+
+        const [r1, r2] = await Promise.all([cache.get(), cache.get()])
+
+        expect(callCount).toBe(1)
+        expect(r1).toBe(r2)
+      })
+    })
+  })
+
+  describe("#given a fetch function that returns an empty index", () => {
+    describe("#when get is called", () => {
+      it("#then does not cache the empty result and retries on next call", async () => {
+        let callCount = 0
+        const fetchFn = async (): Promise<ModelsDevIndex> => {
+          callCount++
+          return emptyIndex
+        }
+        const cache = createModelsDevCache(60_000, fetchFn)
+
+        await cache.get()
+        await cache.get()
+
+        expect(callCount).toBe(2)
       })
     })
   })
