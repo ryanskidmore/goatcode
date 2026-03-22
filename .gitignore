@@ -1,5 +1,5 @@
 node_modules/
 dist/
-.sisyphus/evidence/
+.sisyphus/
 *.log
 .DS_Store
