@@ -1,0 +1,153 @@
+import { log } from "./logger"
+
+const MODELS_DEV_URL = "https://models.dev/api.json"
+const FIVE_MINUTES_MS = 5 * 60 * 1000
+
+const NPM_TO_PROVIDER_ID: Record<string, string> = {
+  "@ai-sdk/anthropic": "anthropic",
+  "@ai-sdk/openai": "openai",
+  "@ai-sdk/google": "google",
+  "@ai-sdk/mistral": "mistral",
+  "@ai-sdk/cohere": "cohere",
+  "@ai-sdk/groq": "groq",
+  "@ai-sdk/amazon-bedrock": "amazon-bedrock",
+  "@ai-sdk/azure": "azure",
+  "@ai-sdk/deepseek": "deepseek",
+  "@ai-sdk/xai": "xai",
+}
+
+export type ModelsDevModel = {
+  id: string
+  name: string
+  family?: string
+  provider?: { npm: string }
+  [key: string]: unknown
+}
+
+export type ModelsDevProvider = {
+  id: string
+  name: string
+  npm?: string
+  models: Record<string, ModelsDevModel>
+  [key: string]: unknown
+}
+
+export type ModelsDevIndex = {
+  byPlatformModel: Map<string, string>
+  byCanonical: Map<string, Set<string>>
+  providers: Map<string, ModelsDevProvider>
+}
+
+export type ModelsDevCache = {
+  get: () => Promise<ModelsDevIndex>
+  clear: () => void
+}
+
+function emptyIndex(): ModelsDevIndex {
+  return {
+    byPlatformModel: new Map<string, string>(),
+    byCanonical: new Map<string, Set<string>>(),
+    providers: new Map<string, ModelsDevProvider>(),
+  }
+}
+
+function toCanonicalModelId(provider: ModelsDevProvider, model: ModelsDevModel, modelId: string): string | undefined {
+  const modelProvider = model.provider?.npm
+  if (modelProvider) {
+    const canonicalProvider = NPM_TO_PROVIDER_ID[modelProvider]
+    if (!canonicalProvider) return undefined
+    return `${canonicalProvider}/${modelId}`
+  }
+
+  if (provider.npm) {
+    const canonicalProvider = NPM_TO_PROVIDER_ID[provider.npm]
+    if (canonicalProvider) return `${canonicalProvider}/${modelId}`
+  }
+
+  if (modelId.includes("/")) return modelId
+
+  return undefined
+}
+
+export function buildModelsDevIndex(data: Record<string, ModelsDevProvider>): ModelsDevIndex {
+  const index = emptyIndex()
+
+  for (const [providerKey, provider] of Object.entries(data)) {
+    const platformId = provider.id || providerKey
+    index.providers.set(platformId, provider)
+
+    for (const [modelKey, model] of Object.entries(provider.models ?? {})) {
+      const modelId = model.id || modelKey
+      const canonicalModelId = toCanonicalModelId(provider, model, modelId)
+      if (!canonicalModelId) continue
+
+      const platformModelId = `${platformId}/${modelId}`
+      index.byPlatformModel.set(platformModelId, canonicalModelId)
+
+      const mapped = index.byCanonical.get(canonicalModelId)
+      if (mapped) {
+        mapped.add(platformModelId)
+      } else {
+        index.byCanonical.set(canonicalModelId, new Set<string>([platformModelId]))
+      }
+    }
+  }
+
+  return index
+}
+
+export async function fetchModelsDevData(): Promise<ModelsDevIndex> {
+  try {
+    const response = await fetch(MODELS_DEV_URL)
+    if (!response.ok) {
+      throw new Error(`models.dev request failed with status ${response.status}`)
+    }
+
+    const parsed = (await response.json()) as unknown
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("models.dev response is not a provider map")
+    }
+
+    return buildModelsDevIndex(parsed as Record<string, ModelsDevProvider>)
+  } catch (error) {
+    log("failed to fetch models.dev data", error)
+    return emptyIndex()
+  }
+}
+
+export function resolveWithModelsDevData(platformModelId: string, index: ModelsDevIndex): string | undefined {
+  const separatorIndex = platformModelId.indexOf("/")
+  if (separatorIndex <= 0) return undefined
+
+  const platformId = platformModelId.slice(0, separatorIndex)
+  const modelId = platformModelId.slice(separatorIndex + 1)
+  if (!modelId) return undefined
+
+  return index.byPlatformModel.get(`${platformId}/${modelId}`)
+}
+
+export function createModelsDevCache(ttlMs: number = FIVE_MINUTES_MS): ModelsDevCache {
+  let cached: ModelsDevIndex | undefined
+  let expiresAt = 0
+  let inflight: Promise<ModelsDevIndex> | undefined
+
+  return {
+    async get(): Promise<ModelsDevIndex> {
+      const now = Date.now()
+      if (cached && now < expiresAt) return cached
+      if (inflight) return inflight
+
+      inflight = fetchModelsDevData()
+      const result = await inflight
+      cached = result
+      expiresAt = Date.now() + ttlMs
+      inflight = undefined
+      return result
+    },
+    clear(): void {
+      cached = undefined
+      expiresAt = 0
+      inflight = undefined
+    },
+  }
+}
