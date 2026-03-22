@@ -1,0 +1,1 @@
+export { buildToolHook } from "./bridge"
