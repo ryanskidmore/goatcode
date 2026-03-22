@@ -1,4 +1,5 @@
-export type PlatformId = "direct" | "zen"
+export type BuiltinPlatformId = "direct" | "zen"
+export type PlatformId = BuiltinPlatformId | (string & {})
 
 type PrefixMapping = {
   canonical: string
@@ -11,7 +12,7 @@ const ZEN_PREFIX_MAPPINGS: PrefixMapping[] = [
   { canonical: "google/", platform: "zen-google/" },
 ]
 
-const PLATFORM_MAPPINGS: Record<PlatformId, PrefixMapping[]> = {
+const PLATFORM_MAPPINGS: Record<string, PrefixMapping[]> = {
   direct: [],
   zen: ZEN_PREFIX_MAPPINGS,
 }
@@ -52,7 +53,7 @@ export function registerPlatformMappings(
   platform: string,
   mappings: PrefixMapping[],
 ): void {
-  ;(PLATFORM_MAPPINGS as Record<string, PrefixMapping[]>)[platform] = mappings
+  PLATFORM_MAPPINGS[platform] = mappings
 }
 
 export function getKnownPlatforms(): string[] {

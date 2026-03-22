@@ -40,6 +40,10 @@ export function buildAgent(
     }
   }
 
+  if (!base.model) {
+    base.model = model
+  }
+
   if (overrides) {
     if (overrides.model) {
       base.model = overrides.model
