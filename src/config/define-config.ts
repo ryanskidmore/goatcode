@@ -1,19 +1,19 @@
-import type { OpenHeadConfig } from "../types/config"
+import type { OcHeadConfig } from "../types/config"
 
 /**
- * Define your openhead configuration.
+ * Define your ochead configuration.
  * Provides TypeScript autocomplete and type checking for your config file.
  *
  * @example
- * // openhead.config.ts
- * import { defineConfig } from "openhead"
+ * // ochead.config.ts
+ * import { defineConfig } from "ochead"
  * export default defineConfig({
  *   agents: {
  *     orchestrator: { model: "anthropic/claude-opus-4-6" }
  *   }
  * })
  */
-export function defineConfig(config: OpenHeadConfig): OpenHeadConfig {
+export function defineConfig(config: OcHeadConfig): OcHeadConfig {
   return config
 }
 
@@ -28,7 +28,7 @@ export function defineConfig(config: OpenHeadConfig): OpenHeadConfig {
  * }))
  */
 export function defineConfigAsync(
-  config: OpenHeadConfig | (() => Promise<OpenHeadConfig> | OpenHeadConfig)
-): OpenHeadConfig | (() => Promise<OpenHeadConfig> | OpenHeadConfig) {
+  config: OcHeadConfig | (() => Promise<OcHeadConfig> | OcHeadConfig)
+): OcHeadConfig | (() => Promise<OcHeadConfig> | OcHeadConfig) {
   return config
 }

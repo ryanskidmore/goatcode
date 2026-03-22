@@ -19,7 +19,7 @@ export type AgentFactory = ((model: string) => AgentConfig) & {
   readonly mode: AgentMode
 }
 
-/** All built-in OpenHead agent names. */
+/** All built-in OcHead agent names. */
 export type BuiltinAgentName =
   | "orchestrator"
   | "deep-worker"

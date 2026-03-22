@@ -1,8 +1,8 @@
-import type { OpenHeadConfig } from "../types/config"
+import type { OcHeadConfig } from "../types/config"
 
 export const CONFIG_DEFAULTS: Required<
   Pick<
-    OpenHeadConfig,
+    OcHeadConfig,
     "auto_update" | "disabled_agents" | "disabled_hooks" | "disabled_tools" | "disabled_skills"
   >
 > = {

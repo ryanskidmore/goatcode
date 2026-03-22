@@ -2,7 +2,7 @@ import { appendFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-const LOG_FILE = join(tmpdir(), "openhead.log")
+const LOG_FILE = join(tmpdir(), "ochead.log")
 const BUFFER_SIZE_LIMIT = 50
 const FLUSH_INTERVAL_MS = 500
 
@@ -28,7 +28,7 @@ function scheduleFlush(): void {
   }, FLUSH_INTERVAL_MS)
 }
 
-/** Write a structured log entry to the openhead log file. */
+/** Write a structured log entry to the ochead log file. */
 export function log(message: string, data?: unknown): void {
   try {
     const timestamp = new Date().toISOString()
