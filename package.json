@@ -14,7 +14,7 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "find src -name '*.test.ts' -print0 | xargs -0 bun test",
     "clean": "rm -rf dist"
   },
   "keywords": ["opencode", "plugin", "agents", "orchestration", "ai"],
