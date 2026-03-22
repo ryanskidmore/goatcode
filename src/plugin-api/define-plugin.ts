@@ -1,14 +1,14 @@
 import type { PluginDefinition } from "../types/plugin"
 
 /**
- * Define an OpenHead micro-plugin.
+ * Define an OcHead micro-plugin.
  *
  * This is the primary authoring API for creating plugins.
- * Both internal OpenHead plugins and external plugins use this function.
+ * Both internal OcHead plugins and external plugins use this function.
  *
  * @example
  * ```typescript
- * import { definePlugin } from "openhead"
+ * import { definePlugin } from "ochead"
  *
  * export default definePlugin({
  *   name: "my-plugin",

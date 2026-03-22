@@ -1,7 +1,7 @@
 import type { Plugin } from "@opencode-ai/plugin"
 
-const OpenHeadPlugin: Plugin = async (_ctx) => {
+const OcHeadPlugin: Plugin = async (_ctx) => {
   return {}
 }
 
-export default OpenHeadPlugin
+export default OcHeadPlugin

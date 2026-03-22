@@ -1,11 +1,11 @@
-import type { OpenHeadConfig } from "../types/config"
+import type { OcHeadConfig } from "../types/config"
 import { log } from "../shared/logger"
-import { OpenHeadConfigSchema } from "./schema"
+import { OcHeadConfigSchema } from "./schema"
 
 export type ValidationResult =
   | {
       success: true
-      config: OpenHeadConfig
+      config: OcHeadConfig
     }
   | {
       success: false
@@ -13,7 +13,7 @@ export type ValidationResult =
     }
 
 export function validateConfig(raw: unknown): ValidationResult {
-  const result = OpenHeadConfigSchema.safeParse(raw)
+  const result = OcHeadConfigSchema.safeParse(raw)
   if (result.success) {
     return { success: true, config: result.data }
   }
