@@ -72,14 +72,24 @@ describe("resolveModel", () => {
       expect(result).toEqual({ model: "openai/gpt-3.5-turbo", source: "system-default" })
     })
 
-    it("returns system default even when all others unavailable", () => {
+    it("returns system default when it is in available models", () => {
+      const result = resolveModel({
+        categoryDefault: "anthropic/claude-3",
+        fallbackChain: ["google/gemini-pro"],
+        systemDefault: "openai/gpt-3.5-turbo",
+        availableModels: new Set(["openai/gpt-3.5-turbo"]),
+      })
+      expect(result).toEqual({ model: "openai/gpt-3.5-turbo", source: "system-default" })
+    })
+
+    it("returns undefined when system default is not available", () => {
       const result = resolveModel({
         categoryDefault: "anthropic/claude-3",
         fallbackChain: ["google/gemini-pro"],
         systemDefault: "openai/gpt-3.5-turbo",
         availableModels: new Set(["openai/gpt-4"]),
       })
-      expect(result).toEqual({ model: "openai/gpt-3.5-turbo", source: "system-default" })
+      expect(result).toBeUndefined()
     })
   })
 

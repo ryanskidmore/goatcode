@@ -130,10 +130,13 @@ export class BackgroundAgentManager {
     if (!task || isTerminalStatus(task.status)) return
 
     const wasRunning = task.status === "running"
+    const wasQueued = task.status === "queued"
     task.status = "cancelled"
     task.completedAt = Date.now()
 
-    if (wasRunning) {
+    if (wasQueued) {
+      this.concurrency.release(task.model)
+    } else if (wasRunning) {
       this.concurrency.release(task.model)
       if (task.sessionId) {
         try {

@@ -35,7 +35,9 @@ export function resolveModel(input: ModelResolutionInput): ModelResolutionResult
   }
 
   const systemDefault = normalizeModel(input.systemDefault)
-  if (systemDefault) return { model: systemDefault, source: "system-default" }
+  if (systemDefault && isModelAvailable(systemDefault, available)) {
+    return { model: systemDefault, source: "system-default" }
+  }
 
   return undefined
 }
