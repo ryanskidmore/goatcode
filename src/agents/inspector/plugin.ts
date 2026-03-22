@@ -1,16 +1,7 @@
 import { definePlugin } from "../../plugin-api"
-import {
-  INSPECTOR_MODEL,
-  INSPECTOR_TEMPERATURE,
-  INSPECTOR_MODE,
-  INSPECTOR_ALLOWED_TOOLS,
-} from "./config"
+import { INSPECTOR_MODEL, INSPECTOR_TEMPERATURE, INSPECTOR_MODE } from "./config"
 import { INSPECTOR_PROMPT } from "./prompt"
-
-const tools: Record<string, boolean> = {}
-for (const tool of INSPECTOR_ALLOWED_TOOLS) {
-  tools[tool] = true
-}
+import { buildToolsMap } from "../tool-restrictions"
 
 export const inspectorPlugin = definePlugin({
   name: "inspector",
@@ -21,7 +12,7 @@ export const inspectorPlugin = definePlugin({
       temperature: INSPECTOR_TEMPERATURE,
       mode: INSPECTOR_MODE,
       prompt: INSPECTOR_PROMPT,
-      tools,
+      tools: buildToolsMap("inspector"),
     },
   },
 })

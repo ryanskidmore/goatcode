@@ -7,4 +7,4 @@ export const INSPECTOR_FALLBACK_MODELS = [
   "openai/gpt-5.3-codex",
   "anthropic/claude-opus-4-6",
 ]
-export const INSPECTOR_ALLOWED_TOOLS = ["read"]
+

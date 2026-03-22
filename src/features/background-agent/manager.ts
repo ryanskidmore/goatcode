@@ -63,6 +63,16 @@ export class BackgroundAgentManager {
       const { sessionId } = await spawnBackgroundSession(ctx, input)
       task.sessionId = sessionId
 
+      // cancel() may have mutated status concurrently while spawn was in-flight
+      if ((task as BackgroundTask).status === "cancelled") {
+        try {
+          await ctx.client.session.delete({ path: { id: sessionId } })
+        } catch (error) {
+          log("[manager] Failed to delete session after late cancel", { id: task.id, error })
+        }
+        return
+      }
+
       const finalSnapshot = await pollUntilStable(async () => {
         const [messagesResult, statusResult] = await Promise.all([
           ctx.client.session.messages({ path: { id: sessionId } }),

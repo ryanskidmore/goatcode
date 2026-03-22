@@ -1,16 +1,7 @@
 import { definePlugin } from "../../plugin-api"
-import {
-  ADVISOR_MODEL,
-  ADVISOR_TEMPERATURE,
-  ADVISOR_MODE,
-  ADVISOR_DENIED_TOOLS,
-} from "./config"
+import { ADVISOR_MODEL, ADVISOR_TEMPERATURE, ADVISOR_MODE } from "./config"
 import { ADVISOR_PROMPT } from "./prompt"
-
-const deniedTools: Record<string, boolean> = {}
-for (const tool of ADVISOR_DENIED_TOOLS) {
-  deniedTools[tool] = false
-}
+import { buildToolsMap } from "../tool-restrictions"
 
 export const advisorPlugin = definePlugin({
   name: "advisor",
@@ -21,7 +12,7 @@ export const advisorPlugin = definePlugin({
       temperature: ADVISOR_TEMPERATURE,
       mode: ADVISOR_MODE,
       prompt: ADVISOR_PROMPT,
-      tools: deniedTools,
+      tools: buildToolsMap("advisor"),
     },
   },
 })
