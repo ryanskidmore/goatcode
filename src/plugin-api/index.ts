@@ -1,0 +1,26 @@
+export { definePlugin } from "./define-plugin"
+export type {
+  PluginDefinition,
+  AggregatedPlugins,
+  OpenCodeContext,
+  OpenCodePluginInstance,
+  PluginHookHandler,
+  PluginHookContributions,
+  AgentConfig,
+  AgentMode,
+  AgentFactory,
+  BuiltinAgentName,
+  AgentOverrideConfig,
+  ToolDefinition,
+  ToolsRecord,
+  HookEventName,
+  HookHandler,
+  HookPriority,
+  BuiltinCategoryName,
+  CategoryConfig,
+  AvailableCategory,
+  OpenHeadConfig,
+  AgentOverrides,
+  HookName,
+} from "./types"
+export { HOOK_NAMES } from "./types"
