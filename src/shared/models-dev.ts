@@ -2,6 +2,7 @@ import { log } from "./logger"
 
 const MODELS_DEV_URL = "https://models.dev/api.json"
 const FIVE_MINUTES_MS = 5 * 60 * 1000
+const FETCH_TIMEOUT_MS = 10_000
 
 const NPM_TO_PROVIDER_ID: Record<string, string> = {
   "@ai-sdk/anthropic": "anthropic",
@@ -97,8 +98,10 @@ export function buildModelsDevIndex(data: Record<string, ModelsDevProvider>): Mo
 }
 
 export async function fetchModelsDevData(): Promise<ModelsDevIndex> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
   try {
-    const response = await fetch(MODELS_DEV_URL)
+    const response = await fetch(MODELS_DEV_URL, { signal: controller.signal })
     if (!response.ok) {
       throw new Error(`models.dev request failed with status ${response.status}`)
     }
@@ -112,6 +115,8 @@ export async function fetchModelsDevData(): Promise<ModelsDevIndex> {
   } catch (error) {
     log("failed to fetch models.dev data", error)
     return emptyIndex()
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
@@ -133,6 +138,7 @@ export function createModelsDevCache(
   let cached: ModelsDevIndex | undefined
   let expiresAt = 0
   let inflight: Promise<ModelsDevIndex> | undefined
+  let generation = 0
 
   return {
     async get(): Promise<ModelsDevIndex> {
@@ -140,10 +146,11 @@ export function createModelsDevCache(
       if (cached && now < expiresAt) return cached
       if (inflight) return inflight
 
+      const capturedGeneration = generation
       inflight = fetchFn()
       try {
         const result = await inflight
-        if (result.byPlatformModel.size > 0) {
+        if (generation === capturedGeneration && result.byPlatformModel.size > 0) {
           cached = result
           expiresAt = Date.now() + ttlMs
         }
@@ -156,6 +163,7 @@ export function createModelsDevCache(
       cached = undefined
       expiresAt = 0
       inflight = undefined
+      generation++
     },
   }
 }

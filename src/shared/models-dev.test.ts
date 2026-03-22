@@ -200,6 +200,34 @@ describe("createModelsDevCache", () => {
       })
     })
 
+    describe("#when clear is called while a fetch is in-flight", () => {
+      it("#then the in-flight result is not written to cache", async () => {
+        let resolveFirst!: (index: ModelsDevIndex) => void
+        let callCount = 0
+
+        const fetchFn = (): Promise<ModelsDevIndex> => {
+          callCount++
+          if (callCount === 1) {
+            return new Promise<ModelsDevIndex>((resolve) => {
+              resolveFirst = resolve
+            })
+          }
+          return Promise.resolve(nonEmptyIndex)
+        }
+
+        const cache = createModelsDevCache(60_000, fetchFn)
+
+        const firstGet = cache.get()
+        cache.clear()
+        resolveFirst(nonEmptyIndex)
+        await firstGet
+
+        const result = await cache.get()
+        expect(callCount).toBe(2)
+        expect(result).toBe(nonEmptyIndex)
+      })
+    })
+
     describe("#when two concurrent get calls are made", () => {
       it("#then only one fetch is issued", async () => {
         let callCount = 0
