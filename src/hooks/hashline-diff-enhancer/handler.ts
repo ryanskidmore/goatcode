@@ -114,9 +114,13 @@ export function createHashlineDiffEnhancerBeforeHandler(): PreToolUseHook {
     const filePath = extractFilePath(args)
     if (!filePath) return
 
+    const sessionID = typeof input.sessionID === "string" ? input.sessionID : ""
+    const callID = typeof input.callID === "string" ? input.callID : ""
+    if (!sessionID || !callID) return
+
     cleanupStaleEntries()
     const oldContent = await captureOldContent(filePath)
-    pendingCaptures.set(makeKey(input.sessionID as string, input.callID as string), {
+    pendingCaptures.set(makeKey(sessionID, callID), {
       content: oldContent,
       filePath,
       storedAt: Date.now(),
@@ -131,7 +135,11 @@ export function createHashlineDiffEnhancerAfterHandler(): PostToolUseHook {
     const tool = input.tool
     if (typeof tool !== "string" || !isWriteTool(tool)) return
 
-    const key = makeKey(input.sessionID as string, input.callID as string)
+    const sessionID = typeof input.sessionID === "string" ? input.sessionID : ""
+    const callID = typeof input.callID === "string" ? input.callID : ""
+    if (!sessionID || !callID) return
+
+    const key = makeKey(sessionID, callID)
     const captured = pendingCaptures.get(key)
     if (!captured) return
     pendingCaptures.delete(key)

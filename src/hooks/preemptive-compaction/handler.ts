@@ -21,10 +21,9 @@ function resolveTokenUsage(input: PreemptiveCompactionInput): { usedTokens: numb
   const usedTokens =
     usageFromUsage?.totalTokens ??
     usageFromTokenUsage?.total ??
-    (usageFromUsage?.inputTokens ?? 0) +
-      (usageFromUsage?.cacheReadTokens ?? 0) +
-      (usageFromTokenUsage?.input ?? 0) +
-      (usageFromTokenUsage?.cacheRead ?? 0)
+    (usageFromUsage
+      ? (usageFromUsage.inputTokens ?? 0) + (usageFromUsage.cacheReadTokens ?? 0)
+      : (usageFromTokenUsage?.input ?? 0) + (usageFromTokenUsage?.cacheRead ?? 0))
 
   const contextLimit = input.context?.limitTokens ?? input.contextLimit
 

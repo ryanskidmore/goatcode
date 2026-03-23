@@ -136,7 +136,8 @@ async function appendWriteHashlineOutput(output: Record<string, unknown>): Promi
   if (!(await file.exists())) return
 
   const content = await file.text()
-  const lineCount = content === "" ? 0 : content.split("\n").length
+  const lines = content.split("\n")
+  const lineCount = content === "" ? 0 : (lines[lines.length - 1] === "" ? lines.length - 1 : lines.length)
   output.output = `${WRITE_SUCCESS_MARKER} ${lineCount} lines written.`
 }
 

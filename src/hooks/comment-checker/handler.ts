@@ -4,7 +4,6 @@ import { log } from "../../shared/logger"
 type PreToolUseHook = NonNullable<PluginHookContributions["tool.execute.before"]>
 
 const EMPTY_CATCH_PATTERN = /catch\s*\([^)]*\)\s*\{\s*\}/g
-const EMPTY_CATCH_WITH_COMMENT_PATTERN = /catch\s*\([^)]*\)\s*\{\s*\/\//
 
 const WARNING_MARKER = "[COMMENT-CHECKER WARNING]"
 
@@ -22,11 +21,8 @@ function extractContent(output: Record<string, unknown>): string | undefined {
 }
 
 function hasEmptyCatchBlock(code: string): boolean {
-  const matches = code.match(EMPTY_CATCH_PATTERN)
-  if (!matches || matches.length === 0) {
-    return false
-  }
-  return !EMPTY_CATCH_WITH_COMMENT_PATTERN.test(code)
+  const matches = [...code.matchAll(EMPTY_CATCH_PATTERN)]
+  return matches.length > 0
 }
 
 export function createCommentCheckerHandler(): PreToolUseHook {
