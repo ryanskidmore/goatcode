@@ -2,7 +2,7 @@ import type { Hooks } from "@opencode-ai/plugin"
 import { loadConfig } from "./config/loader"
 import { validateConfig } from "./config/validator"
 import { PluginRegistry } from "./registry/plugin-registry"
-import { buildHooks } from "./hooks/dispatcher"
+import { compose } from "./plugin/compositor"
 import { log } from "./shared/logger"
 import type { OpenCodeContext } from "./types/plugin"
 import type { OcHeadConfig } from "./types/config"
@@ -46,5 +46,5 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   await registry.setup(resolved, ctx)
 
   const aggregated = registry.aggregate(resolved)
-  return buildHooks(aggregated.hooks, aggregated.tools)
+  return compose(aggregated)
 }
