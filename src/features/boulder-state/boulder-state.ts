@@ -1,4 +1,5 @@
 import { join } from "node:path"
+import { unlinkSync } from "node:fs"
 import { log } from "../../shared/logger"
 
 const SISYPHUS_DIR = ".sisyphus"
@@ -61,7 +62,6 @@ export async function clearBoulderState(directory: string): Promise<void> {
       return
     }
 
-    const { unlinkSync } = await import("node:fs")
     unlinkSync(filePath)
     log("boulder-state: cleared", { directory })
   } catch (err) {

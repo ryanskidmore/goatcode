@@ -15,16 +15,16 @@ You are starting a Sisyphus work session.
 ## WHAT TO DO
 
 1. **Find available plans**: Search for Prometheus-generated plan files at \`.sisyphus/plans/\`
-2. **Check for active boulder state**: Read \`.sisyphus/boulder.json\` if it exists
+2. **Check for active boulder state**: Read \`.sisyphus/boulder-state.json\` if it exists
 3. **Decision logic**:
-   - If \`.sisyphus/boulder.json\` exists AND plan is NOT complete: continue work on existing plan
+   - If \`.sisyphus/boulder-state.json\` exists AND plan is NOT complete: continue work on existing plan
    - If no active plan OR plan is complete: list available plan files and select
-4. **Create/Update boulder.json** before starting work
+4. **Create/Update boulder-state.json** before starting work
 5. **Read the plan file** and start executing tasks
 
 ## CRITICAL
 
-- Always update boulder.json BEFORE starting work
+- Always update boulder-state.json BEFORE starting work
 - Read the FULL plan file before delegating any tasks
 - Follow atlas delegation protocols (7-section format)
 - Decompose every plan task into granular, implementation-level sub-steps
