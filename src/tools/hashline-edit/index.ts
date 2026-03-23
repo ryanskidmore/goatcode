@@ -1,0 +1,5 @@
+export { hashlineEditPlugin, hashlineEditTool } from "./plugin"
+export { executeHashlineEdit } from "./handler"
+export { computeLineHash, formatHashLine } from "./hash-computation"
+export { applyHashlineEdits, applyEditOperations, planEditOperations } from "./edit-operations"
+export type { HashlineEdit, HashlineEditToolArgs, EditOperation, ParsedHashline } from "./types"
