@@ -1,9 +1,4 @@
-const NIBBLE_STR = "ZPMQVRWSNKTXJBYH"
-const HASHLINE_DICT = Array.from({ length: 256 }, (_, i) => {
-  const high = i >>> 4
-  const low = i & 0x0f
-  return `${NIBBLE_STR[high]}${NIBBLE_STR[low]}`
-})
+import { HASHLINE_DICT } from "./constants"
 
 const RE_SIGNIFICANT = /[\p{L}\p{N}]/u
 
