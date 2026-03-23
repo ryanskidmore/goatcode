@@ -110,7 +110,10 @@ async function pollForResult(
     })
 
     const sessionStatus = statusResult.data?.[sessionId]?.type
-    if (sessionStatus === "idle") {
+    if (!sessionStatus || sessionStatus === "idle") {
+      return await fetchLastAssistantMessage(client, sessionId)
+    }
+    if (sessionStatus !== "busy" && sessionStatus !== "retry") {
       return await fetchLastAssistantMessage(client, sessionId)
     }
 

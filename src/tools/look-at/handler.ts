@@ -38,10 +38,7 @@ export function extractLatestAssistantText(messages: unknown[]): string | null {
 async function readFileAsBase64(filePath: string): Promise<string> {
   const file = Bun.file(filePath)
   const buffer = await file.arrayBuffer()
-  const bytes = new Uint8Array(buffer)
-  let binary = ""
-  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i])
-  return btoa(binary)
+  return Buffer.from(buffer).toString("base64")
 }
 
 function inferMimeType(filePath: string): string {

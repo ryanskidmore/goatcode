@@ -39,7 +39,7 @@ export async function handleSessionSearch(args: SessionSearchArgs, ctx: OpenCode
         return searchInSession(ctx, args.session_id, args.query, caseSensitive, resultLimit)
       }
 
-      const listResponse = await ctx.client.session.list()
+      const listResponse = await ctx.client.session.list({ query: { directory: ctx.directory } })
       const sessions: Session[] = listResponse.data ?? []
       const sessionsToScan = sessions.slice(0, MAX_SESSIONS_TO_SCAN)
 
