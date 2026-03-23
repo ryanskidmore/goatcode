@@ -1,13 +1,22 @@
-import type { CategoryConfig, CategoryResolver } from "./types"
-import { DEFAULT_CATEGORIES, CATEGORY_NAMES } from "./constants"
+import type { CategoryConfig } from "../../types/category"
+import {
+  CategoryResolver,
+  type CategoryOverrides,
+  resolveCategory as resolveCategoryFromFeature,
+} from "../../features/categories"
 
-export function createCategoryResolver(): CategoryResolver {
-  return {
-    resolve(categoryName: string): CategoryConfig | undefined {
-      return DEFAULT_CATEGORIES[categoryName]
-    },
-    list(): string[] {
-      return CATEGORY_NAMES
-    },
-  }
+const resolver = new CategoryResolver()
+
+export function resolveCategory(
+  name: string,
+  configOverrides?: CategoryOverrides,
+): CategoryConfig | undefined {
+  return resolver.resolve(name, configOverrides)
+}
+
+export function resolveCategoryWithDefaults(
+  name: string,
+  configOverrides?: CategoryOverrides,
+): CategoryConfig | undefined {
+  return resolveCategoryFromFeature(name, configOverrides)
 }
