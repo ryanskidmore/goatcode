@@ -1,6 +1,6 @@
 import type { PluginHookContributions } from "../../types/hook"
 import { log } from "../../shared/logger"
-import { writeFileSync } from "node:fs"
+import { writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -31,11 +31,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
-function writeTruncatedOutput(content: string, tool: string): string {
+async function writeTruncatedOutput(content: string, tool: string): Promise<string> {
   const filename = `ochead-truncated-${tool}-${Date.now()}.txt`
   const filePath = join(tmpdir(), filename)
   try {
-    writeFileSync(filePath, content)
+    await writeFile(filePath, content)
     return filePath
   } catch {
     log("[tool-output-truncator] failed to write truncated output file", { filePath })
@@ -43,7 +43,7 @@ function writeTruncatedOutput(content: string, tool: string): string {
   }
 }
 
-function truncateOutput(output: string, tool: string): string {
+async function truncateOutput(output: string, tool: string): Promise<string> {
   const lines = output.split("\n")
   const byteLength = Buffer.byteLength(output, "utf8")
 
@@ -51,7 +51,7 @@ function truncateOutput(output: string, tool: string): string {
     return output
   }
 
-  const filePath = writeTruncatedOutput(output, tool)
+  const filePath = await writeTruncatedOutput(output, tool)
 
   const kept = lines.slice(0, MAX_LINES)
   const truncatedBytes = Buffer.byteLength(kept.join("\n"), "utf8")
@@ -73,7 +73,7 @@ export function createToolOutputTruncatorHandler(): PostToolUseHook {
     if (typeof tool !== "string" || !TRUNCATABLE_TOOLS.has(tool)) return
     if (typeof toolOutput !== "string") return
 
-    const truncated = truncateOutput(toolOutput, tool)
+    const truncated = await truncateOutput(toolOutput, tool)
     if (truncated !== toolOutput) {
       output.output = truncated
       log("[tool-output-truncator] truncated output", { tool, originalLength: toolOutput.length })

@@ -43,10 +43,6 @@ function isCompactionEvent(input: unknown): boolean {
     return false
   }
 
-  if (typeof input.sessionID === "string") {
-    return true
-  }
-
   if (!isRecord(input.event)) {
     return false
   }

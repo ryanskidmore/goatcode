@@ -12,12 +12,12 @@ interface SessionTodo {
 }
 
 const STOP_PATTERNS = [
-  /\bi['’]?m done\b/i,
+  /\bi['']?m done\b/i,
   /\btask complete\b/i,
   /\btasks? complete\b/i,
   /\ball done\b/i,
   /\bwork is complete\b/i,
-  /\bfinished\b/i,
+  /\bfinished (all tasks|the work|everything)\b/i,
 ] as const
 
 function isRecord(value: unknown): value is Record<string, unknown> {

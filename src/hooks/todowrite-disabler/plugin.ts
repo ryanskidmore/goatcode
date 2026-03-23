@@ -30,5 +30,16 @@ export const todowriteDisablerPlugin = definePlugin({
         await handler(input, output)
       }
     },
+    event: async (input) => {
+      const evt = (input as { event?: { type?: string; properties?: unknown } }).event
+      if (evt?.type === "session.deleted") {
+        const props = evt.properties as Record<string, unknown> | undefined
+        const sessionID = (
+          props?.sessionID ??
+          (props?.info as Record<string, unknown> | undefined)?.id
+        ) as string | undefined
+        if (sessionID) handlersBySession.delete(sessionID)
+      }
+    },
   },
 })
