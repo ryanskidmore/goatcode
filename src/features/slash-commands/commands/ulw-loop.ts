@@ -23,7 +23,7 @@ You are starting an ULTRAWORK Loop - a self-referential development loop that ru
 ## Exit Conditions
 
 1. **Verified Completion**: Oracle verifies the result and the system confirms it
-2. **Cancel**: User runs \`/cancel-ralph\`
+2. **Cancel**: User runs \`/cancel-ulw\` (clears both in-memory and persisted ULW state)
 
 ## Your Task
 

@@ -3,6 +3,7 @@ import type { SlashCommand } from "./types"
 import { ralphLoopCommand } from "./commands/ralph-loop"
 import { ulwLoopCommand } from "./commands/ulw-loop"
 import { cancelRalphCommand } from "./commands/cancel-ralph"
+import { cancelUlwCommand } from "./commands/cancel-ulw"
 import { startWorkCommand } from "./commands/start-work"
 import { stopContinuationCommand } from "./commands/stop-continuation"
 import { handoffCommand } from "./commands/handoff"
@@ -13,6 +14,7 @@ const COMMANDS: SlashCommand[] = [
   ralphLoopCommand,
   ulwLoopCommand,
   cancelRalphCommand,
+  cancelUlwCommand,
   startWorkCommand,
   stopContinuationCommand,
   handoffCommand,
