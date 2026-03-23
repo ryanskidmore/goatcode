@@ -10,18 +10,18 @@ export async function handleUpdateCommand(): Promise<void> {
 
     const result = await checkForUpdate(VERSION)
 
-    if (!result.latestVersion) {
+    if (!result.latest) {
       process.stdout.write("Failed to check for updates. Please try again later.\n")
       return
     }
 
-    if (!result.needsUpdate) {
-      process.stdout.write(`Already up to date (v${result.currentVersion})\n`)
+    if (!result.updateAvailable) {
+      process.stdout.write(`Already up to date (v${result.current})\n`)
       return
     }
 
     process.stdout.write(
-      `Update available: v${result.currentVersion} -> v${result.latestVersion}\n`
+      `Update available: v${result.current} -> v${result.latest}\n`
     )
     process.stdout.write("Running: bun update ochead\n")
 
