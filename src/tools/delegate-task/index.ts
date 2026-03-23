@@ -1,0 +1,7 @@
+export type { TaskInput, CategoryConfig, CategoryResolver } from "./types"
+export type { ExecutorDeps } from "./executor"
+export { DEFAULT_CATEGORIES, CATEGORY_NAMES } from "./constants"
+export { createCategoryResolver } from "./category-resolver"
+export { createTaskTool } from "./handler"
+export { executeBackground, executeSync } from "./executor"
+export { default as delegateTaskPlugin } from "./plugin"

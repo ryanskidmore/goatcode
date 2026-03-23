@@ -9,3 +9,8 @@ export {
 } from "./poller"
 export { spawnBackgroundSession } from "./spawner"
 export { BackgroundAgentManager } from "./manager"
+export {
+  backgroundAgentManager,
+  initBackgroundAgentContext,
+  getBackgroundAgentContext,
+} from "./singleton"
