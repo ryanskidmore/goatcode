@@ -122,7 +122,9 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
       try {
         await client.session.promptAsync({ path: { id: sessionId }, body: { agent: INSPECTOR_AGENT_NAME, parts } })
       } catch (promptError) {
-        log(`[look_at] Prompt error (will still fetch messages):`, promptError)
+        log(`[look_at] Prompt error:`, promptError)
+        const msg = promptError instanceof Error ? promptError.message : String(promptError)
+        return `Error: Failed to send prompt to Inspector agent: ${msg}`
       }
 
       try {

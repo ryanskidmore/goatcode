@@ -110,9 +110,11 @@ function createMockCtx(overrides: Record<string, unknown> = {}): OpenCodeContext
     client: {
       session: {
         list: async () => ({ data: mockSessions }),
-        messages: async (opts: { path: { id: string } }) => ({
-          data: mockMessages[opts.path.id] ?? [],
-        }),
+        messages: async (opts: { path: { id: string } }) => {
+          const data = mockMessages[opts.path.id as keyof typeof mockMessages]
+          if (!data) return { data: undefined, error: "session not found" }
+          return { data }
+        },
         todo: async () => ({ data: mockTodos }),
       },
     },

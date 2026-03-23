@@ -32,9 +32,10 @@ export async function handleSessionList(args: SessionListArgs, ctx: OpenCodeCont
 
     filtered.sort((a, b) => b.time.updated - a.time.updated)
 
-    if (args.limit && args.limit > 0) {
-      filtered = filtered.slice(0, args.limit)
-    }
+    const MAX_DEFAULT_SESSIONS = 20
+    filtered = args.limit && args.limit > 0
+      ? filtered.slice(0, args.limit)
+      : filtered.slice(0, MAX_DEFAULT_SESSIONS)
 
     const summaryPromises = filtered.map(async (session) => {
       const msgResponse = await ctx.client.session.messages({ path: { id: session.id } })

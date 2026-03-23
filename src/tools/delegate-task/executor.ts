@@ -15,6 +15,10 @@ export async function executeBackground(
   config: CategoryConfig,
   deps: ExecutorDeps,
 ): Promise<string> {
+  if (input.session_id) {
+    return "Error: 'session_id' is not supported for background tasks. Use run_in_background=false to resume a session."
+  }
+
   const { manager, client, directory } = deps
   const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 

@@ -59,14 +59,5 @@ export async function executeSkillMcp(args: SkillMcpArgs): Promise<string> {
   const operation = resolveOperation(args)
   const parsedArgs = parseArguments(args.arguments)
 
-  const result = {
-    mcp_name: args.mcp_name,
-    operation: operation.type,
-    name: operation.name,
-    arguments: parsedArgs,
-    status: "MCP invocation not yet wired. Full MCP system requires ctx.client integration.",
-  }
-
-  const output = JSON.stringify(result, null, 2)
-  return applyGrepFilter(output, args.grep)
+  return `Error: skill_mcp is not yet implemented. Full MCP invocation requires ctx.client integration.`
 }
