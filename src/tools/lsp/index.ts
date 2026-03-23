@@ -1,0 +1,6 @@
+export { lspGotoDefinitionPlugin } from "./goto-definition/plugin"
+export { lspFindReferencesPlugin } from "./find-references/plugin"
+export { lspSymbolsPlugin } from "./symbols/plugin"
+export { lspDiagnosticsPlugin } from "./diagnostics/plugin"
+export { lspPrepareRenamePlugin } from "./prepare-rename/plugin"
+export { lspRenamePlugin } from "./rename/plugin"
