@@ -49,6 +49,7 @@ function tokenizeCommand(cmd: string): string[] {
     }
   }
 
+  if (escaped) current += "\\"
   if (current) tokens.push(current)
   return tokens
 }

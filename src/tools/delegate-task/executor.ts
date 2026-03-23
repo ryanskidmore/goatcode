@@ -63,18 +63,25 @@ export async function executeSync(
     model: config.model,
   })
 
-  const createResult = await client.session.create({
-    body: { title: `task:${input.category}:${input.description.slice(0, 50)}` },
-    query: { directory },
-  })
+  let sessionId: string
 
-  if (createResult.error) {
-    const errorMsg = `Failed to create session: ${String(createResult.error)}`
-    log("[delegate-task] Session creation failed", { error: errorMsg })
-    return errorMsg
+  if (input.session_id) {
+    sessionId = input.session_id
+    log("[delegate-task] Resuming existing session", { sessionId })
+  } else {
+    const createResult = await client.session.create({
+      body: { title: `task:${input.category}:${input.description.slice(0, 50)}` },
+      query: { directory },
+    })
+
+    if (createResult.error) {
+      const errorMsg = `Failed to create session: ${String(createResult.error)}`
+      log("[delegate-task] Session creation failed", { error: errorMsg })
+      return errorMsg
+    }
+
+    sessionId = createResult.data.id
   }
-
-  const sessionId = createResult.data.id
   const parsed = parseModelId(config.model)
 
   const promptResult = await client.session.promptAsync({
@@ -110,9 +117,15 @@ async function pollForResult(
     })
 
     const sessionStatus = statusResult.data?.[sessionId]?.type
-    if (!sessionStatus || sessionStatus === "idle") {
+    // undefined means session not yet visible in status map — keep polling
+    if (sessionStatus === undefined) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
+      continue
+    }
+    if (sessionStatus === "idle") {
       return await fetchLastAssistantMessage(client, sessionId)
     }
+    // any status other than active running states is terminal
     if (sessionStatus !== "busy" && sessionStatus !== "retry") {
       return await fetchLastAssistantMessage(client, sessionId)
     }

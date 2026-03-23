@@ -7,11 +7,10 @@ import { log } from "../../../shared/logger"
 export async function handleSessionRead(args: SessionReadArgs, ctx: OpenCodeContext): Promise<string> {
   try {
     const msgResponse = await ctx.client.session.messages({ path: { id: args.session_id } })
-    let messages: Array<{ info: Message; parts: Part[] }> = msgResponse.data ?? []
-
-    if (messages.length === 0) {
+    if (msgResponse.error) {
       return `Session not found: ${args.session_id}`
     }
+    let messages: Array<{ info: Message; parts: Part[] }> = msgResponse.data ?? []
 
     if (args.limit && args.limit > 0) {
       messages = messages.slice(0, args.limit)
