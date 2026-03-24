@@ -16,9 +16,12 @@ export function createProgram(): Command {
   program
     .command("install")
     .description("Install and configure ochead")
-    .action(() => {
+    .option("--non-interactive", "Skip interactive prompts and use defaults")
+    .option("--force", "Overwrite existing config file")
+    .action(async (options) => {
       log("cli: install command invoked")
-      process.stdout.write("install: not yet implemented\n")
+      const { installCommand } = await import("./commands/install")
+      await installCommand({ nonInteractive: options.nonInteractive, force: options.force })
     })
 
   program

@@ -1,4 +1,7 @@
 import { describe, it, expect, afterEach, mock } from "bun:test"
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
 import { checkConfigExists, formatCheckLine } from "./doctor"
 
 describe("#given doctor checks", () => {
@@ -6,20 +9,32 @@ describe("#given doctor checks", () => {
     mock.restore()
   })
 
-  describe("#when checkConfigExists is called", () => {
-    it("#then returns fail when config file is absent", () => {
-      const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
-      expect(result.status).toBe("fail")
-      expect(result.name).toBe("ochead.config.ts exists")
-      expect(result.detail).toBe("ochead.config.ts not found")
-    })
+   describe("#when checkConfigExists is called", () => {
+     it("#then returns fail when config file is absent", () => {
+       const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
+       expect(result.status).toBe("fail")
+       expect(result.name).toBe("ochead.config.ts exists")
+       expect(result.detail).toBe("ochead.config.ts not found")
+     })
 
-    it("#then returns a result with the correct name regardless of presence", () => {
-      const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
-      expect(result.name).toBe("ochead.config.ts exists")
-      expect(result.status === "pass" || result.status === "fail").toBe(true)
-    })
-  })
+     it("#then returns pass when config file exists", () => {
+       const tempDir = mkdtempSync(join(tmpdir(), "ochead-doctor-test-"))
+       try {
+         writeFileSync(join(tempDir, "ochead.config.ts"), "", "utf8")
+         const result = checkConfigExists(tempDir)
+         expect(result.status).toBe("pass")
+         expect(result.name).toBe("ochead.config.ts exists")
+       } finally {
+         rmSync(tempDir, { recursive: true, force: true })
+       }
+     })
+
+     it("#then returns a result with the correct name regardless of presence", () => {
+       const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
+       expect(result.name).toBe("ochead.config.ts exists")
+       expect(result.status === "pass" || result.status === "fail").toBe(true)
+     })
+   })
 
   describe("#when formatCheckLine is called", () => {
     it("#then formats a pass result correctly", () => {

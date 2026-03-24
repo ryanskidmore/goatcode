@@ -10,7 +10,7 @@ export async function handleUpdateCommand(): Promise<void> {
 
     const result = await checkForUpdate(VERSION)
 
-    if (!result.latest) {
+    if (result.error) {
       process.stdout.write("Failed to check for updates. Please try again later.\n")
       return
     }

@@ -44,7 +44,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     }
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
-        input.agent[name] = agentConfig
+        input.agent[name] = structuredClone(agentConfig)
       }
     }
     for (const handler of configHandlers) {
@@ -55,7 +55,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
   for (const key of FUNCTION_HOOK_SLOTS) {
     if (key === "config") continue
     const handlers = aggregated.hooks.get(key) ?? []
-    ;(hooks as Record<string, unknown>)[key] = buildSlotHandler(handlers)
+    ;(hooks as Record<typeof key, PluginHookHandler>)[key] = buildSlotHandler(handlers)
   }
 
   const toolCount = Object.keys(aggregated.tools).length

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test"
-import { writeFileSync, unlinkSync, existsSync } from "node:fs"
+import { writeFileSync, mkdtempSync, rmSync } from "node:fs"
 import { join, resolve } from "node:path"
 import { spawnSync } from "node:child_process"
+import { tmpdir } from "node:os"
 import { generateConfig } from "./config-generator"
 
 const PROJECT_ROOT = resolve(__dirname, "../..")
@@ -45,14 +46,14 @@ describe("#given generateConfig with default options", () => {
 
     it("#then the output contains all built-in category names in comments", () => {
       const result = generateConfig()
-      expect(result).toContain("//   visual:")
-      expect(result).toContain("//   reasoning:")
-      expect(result).toContain("//   deep:")
-      expect(result).toContain("//   creative:")
-      expect(result).toContain("//   quick:")
-      expect(result).toContain("//   standard:")
-      expect(result).toContain("//   complex:")
-      expect(result).toContain("//   writing:")
+      expect(result).toContain('//   "visual-engineering":')
+      expect(result).toContain('//   "ultrabrain":')
+      expect(result).toContain('//   "deep":')
+      expect(result).toContain('//   "artistry":')
+      expect(result).toContain('//   "quick":')
+      expect(result).toContain('//   "unspecified-low":')
+      expect(result).toContain('//   "unspecified-high":')
+      expect(result).toContain('//   "writing":')
     })
 
     it("#then the output contains the plugins array", () => {
@@ -125,17 +126,18 @@ describe("#given generateConfig with includeCategories: false", () => {
 })
 
 describe("#given the generated config written to a temp file", () => {
-  const tempFile = join(PROJECT_ROOT, `src/__ochead_config_typecheck_${Date.now()}__.ts`)
+  let tempDir: string
+  let tempFile: string
 
   beforeAll(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "ochead-config-test-"))
+    tempFile = join(tempDir, "ochead.config.ts")
     const content = generateConfig()
     writeFileSync(tempFile, content, "utf8")
   })
 
   afterAll(() => {
-    if (existsSync(tempFile)) {
-      unlinkSync(tempFile)
-    }
+    rmSync(tempDir, { recursive: true, force: true })
   })
 
   describe("#when typechecked with tsc", () => {

@@ -1,46 +1,15 @@
 import { log } from "../shared/logger"
+import { BUILTIN_AGENT_PLUGINS } from "../agents/builtin-agents"
+import { DEFAULT_CATEGORY_DEFINITIONS } from "../features/categories/category-config"
 
-/** All built-in agent names in the order they appear in the schema. */
-const BUILTIN_AGENT_NAMES = [
-  "orchestrator",
-  "deep-worker",
-  "plan-builder",
-  "advisor",
-  "researcher",
-  "explorer",
-  "executor",
-  "analyst",
-  "reviewer",
-  "inspector",
-  "worker",
-] as const
+/** All built-in agent names derived from BUILTIN_AGENT_PLUGINS. */
+const BUILTIN_AGENT_NAMES = BUILTIN_AGENT_PLUGINS.map((p) => p.name)
 
-/** All built-in category names in the order they appear in the schema. */
-const BUILTIN_CATEGORY_NAMES = [
-  "visual",
-  "reasoning",
-  "deep",
-  "creative",
-  "quick",
-  "standard",
-  "complex",
-  "writing",
-] as const
+/** All built-in category names derived from DEFAULT_CATEGORY_DEFINITIONS. */
+const BUILTIN_CATEGORY_NAMES = Object.keys(DEFAULT_CATEGORY_DEFINITIONS)
 
 /** All built-in micro-plugin package names. */
-const BUILTIN_MICRO_PLUGINS = [
-  "ochead/orchestrator",
-  "ochead/deep-worker",
-  "ochead/plan-builder",
-  "ochead/advisor",
-  "ochead/researcher",
-  "ochead/explorer",
-  "ochead/executor",
-  "ochead/analyst",
-  "ochead/reviewer",
-  "ochead/inspector",
-  "ochead/worker",
-] as const
+const BUILTIN_MICRO_PLUGINS = BUILTIN_AGENT_PLUGINS.map((p) => `ochead/${p.name}`)
 
 /** Options for config generation. */
 export interface GenerateConfigOptions {
@@ -85,7 +54,7 @@ function buildCategoryOverridesSection(): string {
   lines.push("  // Categories map to the type of work being performed.")
   lines.push("  // categories: {")
   for (const name of BUILTIN_CATEGORY_NAMES) {
-    lines.push(`  //   ${name}: {`)
+    lines.push(`  //   "${name}": {`)
     lines.push("  //     // model: \"provider/model-name\",")
     lines.push("  //     // variant: \"high\",")
     lines.push("  //     // prompt_append: \"Additional instructions...\",")

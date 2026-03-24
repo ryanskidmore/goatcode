@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "bun:test"
+import { describe, it, expect, beforeEach, afterEach } from "bun:test"
 import { handleUpdateCommand } from "./update"
 
 describe("#given update command", () => {
@@ -19,6 +19,12 @@ describe("#given update command", () => {
     }) as any
   })
 
+  afterEach(() => {
+    process.stdout.write = originalWrite
+    globalThis.fetch = originalFetch
+    Bun.spawn = originalSpawn
+  })
+
   describe("#when update is available", () => {
     it("#then runs bun update ochead", async () => {
       globalThis.fetch = (() => {
@@ -33,19 +39,13 @@ describe("#given update command", () => {
         }
       }) as any
 
-      try {
-        await handleUpdateCommand()
-        expect(stdoutWrites.some((w) => w.includes("Update available"))).toBe(
-          true
-        )
-        expect(stdoutWrites.some((w) => w.includes("bun update ochead"))).toBe(
-          true
-        )
-      } finally {
-        process.stdout.write = originalWrite
-        globalThis.fetch = originalFetch
-        Bun.spawn = originalSpawn
-      }
+      await handleUpdateCommand()
+      expect(stdoutWrites.some((w) => w.includes("Update available"))).toBe(
+        true
+      )
+      expect(stdoutWrites.some((w) => w.includes("bun update ochead"))).toBe(
+        true
+      )
     })
   })
 
@@ -57,15 +57,10 @@ describe("#given update command", () => {
         )
       }) as any
 
-      try {
-        await handleUpdateCommand()
-        expect(
-          stdoutWrites.some((w) => w.includes("Already up to date"))
-        ).toBe(true)
-      } finally {
-        process.stdout.write = originalWrite
-        globalThis.fetch = originalFetch
-      }
+      await handleUpdateCommand()
+      expect(
+        stdoutWrites.some((w) => w.includes("Already up to date"))
+      ).toBe(true)
     })
   })
 
@@ -75,15 +70,10 @@ describe("#given update command", () => {
         return Promise.reject(new Error("Network error"))
       }) as any
 
-      try {
-        await handleUpdateCommand()
-        expect(
-          stdoutWrites.some((w) => w.includes("Failed to check for updates"))
-        ).toBe(true)
-      } finally {
-        process.stdout.write = originalWrite
-        globalThis.fetch = originalFetch
-      }
+      await handleUpdateCommand()
+      expect(
+        stdoutWrites.some((w) => w.includes("Failed to check for updates"))
+      ).toBe(true)
     })
   })
 
@@ -101,14 +91,8 @@ describe("#given update command", () => {
         }
       }) as any
 
-      try {
-        await handleUpdateCommand()
-        expect(stdoutWrites.some((w) => w.includes("exit code 1"))).toBe(true)
-      } finally {
-        process.stdout.write = originalWrite
-        globalThis.fetch = originalFetch
-        Bun.spawn = originalSpawn
-      }
+      await handleUpdateCommand()
+      expect(stdoutWrites.some((w) => w.includes("exit code 1"))).toBe(true)
     })
   })
 })

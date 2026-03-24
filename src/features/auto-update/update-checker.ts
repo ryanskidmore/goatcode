@@ -4,6 +4,7 @@ export interface UpdateCheckResult {
   updateAvailable: boolean
   latest: string
   current: string
+  error?: boolean
 }
 
 export async function checkForUpdate(
@@ -18,6 +19,7 @@ export async function checkForUpdate(
         updateAvailable: false,
         latest: currentVersion,
         current: currentVersion,
+        error: true,
       }
     }
 
@@ -37,6 +39,7 @@ export async function checkForUpdate(
       updateAvailable: false,
       latest: currentVersion,
       current: currentVersion,
+      error: true,
     }
   }
 }

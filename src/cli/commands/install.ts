@@ -1,6 +1,7 @@
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
 import { writeFile } from "node:fs/promises"
+import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import { BUILTIN_AGENT_PLUGINS } from "../../agents/builtin-agents"
 import { log } from "../../shared/logger"
@@ -12,6 +13,7 @@ interface InstallDefaults {
 
 export interface InstallCommandOptions {
   nonInteractive?: boolean
+  force?: boolean
   cwd?: string
 }
 
@@ -42,7 +44,7 @@ function parsePluginInput(inputValue: string, fallback: string[]): string[] {
 }
 
 function getConfigTemplate(config: InstallDefaults): string {
-  const pluginLines = config.plugins.map((plugin) => `    "${plugin}",`).join("\n")
+  const pluginLines = config.plugins.map((plugin) => `    ${JSON.stringify(plugin)},`).join("\n")
   return `import { defineConfig } from "ochead"
 
 export default defineConfig({
@@ -95,6 +97,11 @@ export async function installCommand(options: InstallCommandOptions = {}): Promi
   const configContent = getConfigTemplate(config)
   const targetDirectory = options.cwd ?? process.cwd()
   const configPath = resolve(targetDirectory, CONFIG_FILE_NAME)
+
+  if (existsSync(configPath) && !options.force) {
+    output.write(`${CONFIG_FILE_NAME} already exists at ${configPath}. Use --force to overwrite.\n`)
+    return configPath
+  }
 
   await writeFile(configPath, configContent, "utf8")
 
