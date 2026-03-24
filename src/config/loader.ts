@@ -20,9 +20,20 @@ export async function loadConfigFile(configPath: string): Promise<GoatCodeConfig
 
 export async function loadConfig(projectDir: string): Promise<GoatCodeConfig | null> {
   const configPath = join(projectDir, "goatcode.config.ts")
-  if (!existsSync(configPath)) {
-    return null
+  if (existsSync(configPath)) {
+    return loadConfigFile(configPath)
   }
 
-  return loadConfigFile(configPath)
+  const legacyConfigPath = join(projectDir, "ochead.config.ts")
+  if (existsSync(legacyConfigPath)) {
+    log("[config/loader] Found legacy ochead.config.ts — please rename it to goatcode.config.ts", {
+      legacyPath: legacyConfigPath,
+    })
+    process.stderr.write(
+      `[goatcode] DEPRECATION: ochead.config.ts is deprecated. Please rename it to goatcode.config.ts\n`
+    )
+    return loadConfigFile(legacyConfigPath)
+  }
+
+  return null
 }
