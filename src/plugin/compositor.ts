@@ -48,7 +48,10 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     }
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
-        input.agent[name] = structuredClone(agentConfig)
+        input.agent[name] = {
+          ...agentConfig,
+          tools: agentConfig.tools ? { ...agentConfig.tools } : undefined,
+        }
       }
     }
     for (const handler of configHandlers) {
