@@ -1,11 +1,8 @@
 import { tool } from "@opencode-ai/plugin"
-import type { BackgroundAgentManager } from "../../../features/background-agent/manager"
 import { getBackgroundAgent } from "../../../features/background-agent/singleton"
 import { definePlugin } from "../../../plugin-api/define-plugin"
 import { handleBackgroundOutput } from "./handler"
 import type { BackgroundOutputArgs } from "./types"
-
-let manager: BackgroundAgentManager | undefined
 
 const backgroundOutputTool = tool({
   description:
@@ -31,9 +28,7 @@ const backgroundOutputTool = tool({
     thinking_max_chars: tool.schema.number().optional().describe("Max characters for thinking content (default: 2000)"),
   },
   async execute(args: BackgroundOutputArgs) {
-    if (!manager) {
-      throw new Error("BackgroundAgent not initialized. Ensure delegate-task plugin setup has run.")
-    }
+    const { manager } = getBackgroundAgent()
     return handleBackgroundOutput(manager, args)
   },
 })
@@ -42,12 +37,6 @@ export default definePlugin({
   name: "background-output",
   version: "1.0.0",
   dependencies: ["delegate-task"],
-  setup() {
-    manager = getBackgroundAgent().manager
-  },
-  teardown() {
-    manager = undefined
-  },
   tools: {
     background_output: backgroundOutputTool,
   },
