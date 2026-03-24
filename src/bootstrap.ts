@@ -64,6 +64,10 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const resolved = registry.resolve()
   await registry.setup(resolved, ctx)
 
-  const aggregated = registry.aggregate(resolved)
+  const aggregated = registry.aggregate(resolved, {
+    disabledAgents: config.disabled_agents,
+    disabledHooks: config.disabled_hooks,
+    disabledTools: config.disabled_tools,
+  })
   return compose(aggregated)
 }

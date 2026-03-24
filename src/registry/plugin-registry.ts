@@ -6,6 +6,12 @@ import { resolvePluginOrder } from "./dependency-resolver"
 import { aggregateHooks } from "./hook-aggregator"
 import { aggregateTools } from "./tool-aggregator"
 
+export interface AggregateOptions {
+  disabledAgents?: string[]
+  disabledHooks?: string[]
+  disabledTools?: string[]
+}
+
 export class PluginRegistry {
   private readonly plugins = new Map<string, PluginDefinition>()
 
@@ -23,11 +29,11 @@ export class PluginRegistry {
     return result.order
   }
 
-  aggregate(resolvedOrder: PluginDefinition[]): AggregatedPlugins {
+  aggregate(resolvedOrder: PluginDefinition[], options?: AggregateOptions): AggregatedPlugins {
     return {
-      hooks: aggregateHooks(resolvedOrder),
-      tools: aggregateTools(resolvedOrder),
-      agents: aggregateAgents(resolvedOrder),
+      hooks: aggregateHooks(resolvedOrder, options?.disabledHooks),
+      tools: aggregateTools(resolvedOrder, options?.disabledTools),
+      agents: aggregateAgents(resolvedOrder, options?.disabledAgents),
     }
   }
 

@@ -1,6 +1,11 @@
 import type { PluginDefinition, PluginHookHandler } from "../types/plugin"
+import { log } from "../shared/logger"
 
-export function aggregateHooks(plugins: PluginDefinition[]): Map<string, PluginHookHandler[]> {
+export function aggregateHooks(
+  plugins: PluginDefinition[],
+  disabledHooks?: string[],
+): Map<string, PluginHookHandler[]> {
+  const disabled = new Set(disabledHooks ?? [])
   // TODO(priority): Hook priority system exists in src/hooks/hook-ordering.ts (sortByPriority,
   // withPriority) and src/hooks/hook-types.ts (HOOK_TIERS mapping each event to a tier).
   // Currently hooks execute in plugin registration order. To implement priority-based ordering:
@@ -18,6 +23,10 @@ export function aggregateHooks(plugins: PluginDefinition[]): Map<string, PluginH
 
     for (const [eventName, handler] of Object.entries(plugin.hooks)) {
       if (handler === undefined) {
+        continue
+      }
+      if (disabled.has(eventName)) {
+        log(`[hook-aggregator] Skipping disabled hook: "${eventName}"`)
         continue
       }
 
