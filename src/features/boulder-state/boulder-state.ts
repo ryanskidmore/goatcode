@@ -1,5 +1,6 @@
 import { join } from "node:path"
-import { unlinkSync } from "node:fs"
+import { unlink } from "node:fs/promises"
+import { z } from "zod"
 import { log } from "../../shared/logger"
 
 const SISYPHUS_DIR = ".sisyphus"
@@ -16,6 +17,14 @@ export interface BoulderState {
 function getBoulderStatePath(directory: string): string {
   return join(directory, SISYPHUS_DIR, BOULDER_STATE_FILE)
 }
+
+const BoulderStateSchema = z.object({
+  planName: z.string(),
+  currentTask: z.string(),
+  completedTasks: z.array(z.string()),
+  notes: z.string(),
+  updatedAt: z.number(),
+})
 
 export async function saveBoulderState(directory: string, state: BoulderState): Promise<void> {
   const filePath = getBoulderStatePath(directory)
@@ -46,7 +55,12 @@ export async function loadBoulderState(directory: string): Promise<BoulderState 
       return undefined
     }
 
-    return parsed as BoulderState
+    const result = BoulderStateSchema.safeParse(parsed)
+    if (!result.success) {
+      log("boulder-state: invalid schema", { error: result.error.message })
+      return undefined
+    }
+    return result.data
   } catch {
     return undefined
   }
@@ -62,7 +76,7 @@ export async function clearBoulderState(directory: string): Promise<void> {
       return
     }
 
-    unlinkSync(filePath)
+    await unlink(filePath)
     log("boulder-state: cleared", { directory })
   } catch (err) {
     log("boulder-state: failed to clear", { error: String(err) })

@@ -20,6 +20,17 @@ let ulwStateFilePath = resolve(process.cwd(), ".sisyphus", "ulw-state.json")
 let loadedFromDisk = false
 const loopStates = new Map<string, UlwLoopState>()
 
+function isValidUlwLoopState(value: unknown): value is UlwLoopState {
+  if (typeof value !== "object" || value === null) return false
+  const obj = value as Record<string, unknown>
+  return (
+    typeof obj.active === "boolean" &&
+    typeof obj.iteration === "number" &&
+    typeof obj.maxIterations === "number" &&
+    typeof obj.completionDetected === "boolean"
+  )
+}
+
 function ensureLoadedFromDisk(): void {
   if (loadedFromDisk) return
   loadedFromDisk = true
@@ -32,7 +43,11 @@ function ensureLoadedFromDisk(): void {
     const fileContent = readFileSync(ulwStateFilePath, "utf-8")
     const parsed = JSON.parse(fileContent) as Record<string, UlwLoopState>
     for (const [sessionId, state] of Object.entries(parsed)) {
-      loopStates.set(sessionId, { ...state })
+      if (isValidUlwLoopState(state)) {
+        loopStates.set(sessionId, { ...state })
+      } else {
+        log("[ulw-loop] skipping invalid persisted state", { sessionId })
+      }
     }
   } catch (error) {
     log("[ulw-loop] failed to load persisted state", { error: String(error) })

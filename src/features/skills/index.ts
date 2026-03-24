@@ -2,6 +2,7 @@ import { log } from "../../shared/logger"
 import { gitMasterSkill } from "./builtin/git-master"
 import { createProjectSkillLoader, loadProjectSkills, type Skill, type SkillLoader } from "./skill-loader"
 import { mergeSkills } from "./skill-merger"
+import * as skillHandler from "../../tools/skill/handler"
 
 export { gitMasterSkill } from "./builtin/git-master"
 export { createProjectSkillLoader, loadProjectSkills } from "./skill-loader"
@@ -24,26 +25,14 @@ export function createMergedSkillLoader(directory: string): SkillLoader {
   }
 }
 
-export async function registerProjectSkillLoader(directory: string): Promise<void> {
+export function registerProjectSkillLoader(directory: string): void {
   const loader = createMergedSkillLoader(directory)
 
-  try {
-    const handlerModulePath = "../../tools/skill/handler"
-    const handlerModule = (await import(handlerModulePath)) as {
-      registerSkillLoader?: (loader: SkillLoader) => void
-    }
-
-    if (typeof handlerModule.registerSkillLoader === "function") {
-      handlerModule.registerSkillLoader(loader)
-      return
-    }
-
-    log("[skills] registerSkillLoader not available in handler module")
-  } catch (error) {
-    log("[skills] failed to register project skill loader", { error })
+  if (typeof skillHandler.registerSkillLoader === "function") {
+    skillHandler.registerSkillLoader(loader)
+    return
   }
+
+  log("[skills] registerSkillLoader not available in handler module")
 }
 
-export function createProjectOnlySkillLoader(directory: string): SkillLoader {
-  return createProjectSkillLoader(directory)
-}

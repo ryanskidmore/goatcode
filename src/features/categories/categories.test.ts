@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { CategoryResolver, resolveCategory } from "./category-resolver"
+import { DEFAULT_CATEGORIES } from "./category-config"
 
 describe("category-resolver", () => {
   describe("#given built-in category names", () => {
@@ -7,14 +8,14 @@ describe("category-resolver", () => {
       it("#then resolves each category to its default model", () => {
         const resolver = new CategoryResolver()
 
-        expect(resolver.resolve("visual-engineering")?.model).toBe("google/gemini-3.1-pro")
-        expect(resolver.resolve("ultrabrain")?.model).toBe("openai/gpt-5.4")
-        expect(resolver.resolve("deep")?.model).toBe("openai/gpt-5.3-codex")
-        expect(resolver.resolve("artistry")?.model).toBe("google/gemini-3.1-pro")
-        expect(resolver.resolve("quick")?.model).toBe("openai/gpt-5.4-mini")
-        expect(resolver.resolve("unspecified-low")?.model).toBe("anthropic/claude-sonnet-4-6")
-        expect(resolver.resolve("unspecified-high")?.model).toBe("anthropic/claude-opus-4-6")
-        expect(resolver.resolve("writing")?.model).toBe("kimi-for-coding/k2p5")
+         expect(resolver.resolve("visual-engineering")?.model).toBe(DEFAULT_CATEGORIES["visual-engineering"].model)
+         expect(resolver.resolve("ultrabrain")?.model).toBe(DEFAULT_CATEGORIES.ultrabrain.model)
+         expect(resolver.resolve("deep")?.model).toBe(DEFAULT_CATEGORIES.deep.model)
+         expect(resolver.resolve("artistry")?.model).toBe(DEFAULT_CATEGORIES.artistry.model)
+         expect(resolver.resolve("quick")?.model).toBe(DEFAULT_CATEGORIES.quick.model)
+         expect(resolver.resolve("unspecified-low")?.model).toBe(DEFAULT_CATEGORIES["unspecified-low"].model)
+         expect(resolver.resolve("unspecified-high")?.model).toBe(DEFAULT_CATEGORIES["unspecified-high"].model)
+         expect(resolver.resolve("writing")?.model).toBe(DEFAULT_CATEGORIES.writing.model)
       })
     })
   })

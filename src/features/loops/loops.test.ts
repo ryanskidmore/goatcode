@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdtempSync } from "node:fs"
+import { mkdtempSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 
@@ -21,10 +21,11 @@ import {
 describe("loops", () => {
   const ulwSessionId = "ulw-session"
   let ulwStatePath = ""
+  let tempDir = ""
 
   beforeEach(() => {
     clearRalphLoopStateForTests()
-    const tempDir = mkdtempSync(join(tmpdir(), "ochead-loops-"))
+    tempDir = mkdtempSync(join(tmpdir(), "ochead-loops-"))
     ulwStatePath = join(tempDir, "ulw-state.json")
     configureUlwStateFilePathForTests(ulwStatePath)
     clearUlwLoopStateForTests(true)
@@ -33,6 +34,9 @@ describe("loops", () => {
   afterEach(() => {
     clearRalphLoopStateForTests()
     clearUlwLoopStateForTests(true)
+    if (tempDir) {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
   })
 
   describe("#given an active Ralph loop", () => {

@@ -3,12 +3,16 @@ export interface SkillEntry {
   description: string
 }
 
+function normaliseInline(value: string): string {
+  return value.replace(/\r?\n/g, " ").trim()
+}
+
 export function buildSkillsSection(skills: SkillEntry[]): string {
   if (skills.length === 0) return ""
 
   const items = skills.map((skill) => {
     const shortDesc = skill.description.split(".")[0] || skill.description
-    return `- \`${skill.name}\`: ${shortDesc}`
+    return `- \`${normaliseInline(skill.name)}\`: ${normaliseInline(shortDesc)}`
   })
 
   return [

@@ -22,9 +22,13 @@ const COMMANDS: SlashCommand[] = [
   refactorCommand,
 ]
 
-const COMMAND_MAP: Map<string, SlashCommand> = new Map(
-  COMMANDS.map((cmd) => [cmd.name, cmd])
-)
+const COMMAND_MAP: Map<string, SlashCommand> = new Map()
+for (const cmd of COMMANDS) {
+  if (COMMAND_MAP.has(cmd.name)) {
+    throw new Error(`Duplicate slash command name detected: ${cmd.name}`)
+  }
+  COMMAND_MAP.set(cmd.name, cmd)
+}
 
 export function getCommand(name: string): SlashCommand | undefined {
   const command = COMMAND_MAP.get(name)
@@ -34,5 +38,5 @@ export function getCommand(name: string): SlashCommand | undefined {
 
 export function getAllCommands(): SlashCommand[] {
   log("slash-commands: getAllCommands", { count: COMMANDS.length })
-  return COMMANDS
+  return [...COMMANDS]
 }

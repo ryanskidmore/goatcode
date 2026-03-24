@@ -19,8 +19,6 @@ export class CategoryResolver {
     }
 
     return {
-      ...baseConfig,
-      ...override,
       model: override.model ?? baseConfig.model,
       variant: override.variant ?? baseConfig.variant,
       description: override.description ?? baseConfig.description,

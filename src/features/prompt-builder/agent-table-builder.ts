@@ -7,12 +7,16 @@ export interface AgentTableEntry {
 const TABLE_HEADER = "| Agent | Description | When to Use |"
 const TABLE_SEPARATOR = "|-------|-------------|-------------|"
 
+function escapeTableCell(value: string): string {
+  return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ").trim()
+}
+
 export function buildAgentTable(agents: AgentTableEntry[]): string {
   if (agents.length === 0) return ""
 
   const rows = agents.map((agent) => {
     const desc = agent.description.split(".")[0] || agent.description
-    return `| \`${agent.name}\` | ${desc} | ${agent.whenToUse} |`
+    return `| \`${escapeTableCell(agent.name)}\` | ${escapeTableCell(desc)} | ${escapeTableCell(agent.whenToUse)} |`
   })
 
   return [

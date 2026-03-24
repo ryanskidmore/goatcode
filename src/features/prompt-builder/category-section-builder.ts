@@ -5,7 +5,8 @@ export function buildCategoriesSection(categories: AvailableCategory[]): string 
 
   const rows = categories.map((cat) => {
     const model = cat.model ?? "default"
-    return `| \`${cat.name}\` | ${cat.description} | ${model} |`
+    const safeDescription = cat.description.replace(/\|/g, "\\|")
+    return `| \`${cat.name}\` | ${safeDescription} | ${model} |`
   })
 
   return [

@@ -42,8 +42,9 @@ export async function checkForUpdate(
 }
 
 function isNewerVersion(latest: string, current: string): boolean {
-  const latestParts = latest.split(".").map((p) => parseInt(p, 10))
-  const currentParts = current.split(".").map((p) => parseInt(p, 10))
+  const parseVersion = (v: string) => v.split("-")[0].split(".").map((p) => parseInt(p, 10))
+  const latestParts = parseVersion(latest)
+  const currentParts = parseVersion(current)
 
   for (let i = 0; i < Math.max(latestParts.length, currentParts.length); i++) {
     const latestPart = latestParts[i] ?? 0

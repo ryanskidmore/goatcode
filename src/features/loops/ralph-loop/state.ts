@@ -36,7 +36,7 @@ export function stopLoop(sessionId: string): boolean {
     return false
   }
 
-  loopStates.set(sessionId, { ...existing, active: false })
+  loopStates.delete(sessionId)
   log("[ralph-loop] stopped", { sessionId, iteration: existing.iteration })
   return true
 }
