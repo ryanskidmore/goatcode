@@ -5,6 +5,9 @@ import { hashlineEditPlugin } from "./hashline-edit"
 import { interactiveBashPlugin } from "./interactive-bash"
 import { lookAtPlugin } from "./look-at"
 import { skillPlugin } from "./skill"
+// skill_mcp is intentionally excluded — it requires ctx.client MCP integration
+// that is not yet available in the tool execute context. Re-enable once implemented.
+// import { skillMcpPlugin } from "./skill-mcp"
 import { delegateTaskPlugin } from "./delegate-task"
 import {
   lspGotoDefinitionPlugin,
