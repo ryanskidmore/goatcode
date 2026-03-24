@@ -1,12 +1,12 @@
-/** All built-in GoatCode category names (user-facing names). */
+/** All built-in GoatCode category names. */
 export type BuiltinCategoryName =
-  | "visual"
-  | "reasoning"
+  | "visual-engineering"
+  | "ultrabrain"
   | "deep"
-  | "creative"
+  | "artistry"
   | "quick"
-  | "standard"
-  | "complex"
+  | "unspecified-low"
+  | "unspecified-high"
   | "writing"
 
 /** Category configuration. */

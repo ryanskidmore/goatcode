@@ -34,13 +34,13 @@ export const AgentOverridesSchema = z.object({
 })
 
 export const CategoryOverridesSchema = z.object({
-  visual: CategoryConfigSchema.optional(),
-  reasoning: CategoryConfigSchema.optional(),
+  "visual-engineering": CategoryConfigSchema.optional(),
+  ultrabrain: CategoryConfigSchema.optional(),
   deep: CategoryConfigSchema.optional(),
-  creative: CategoryConfigSchema.optional(),
+  artistry: CategoryConfigSchema.optional(),
   quick: CategoryConfigSchema.optional(),
-  standard: CategoryConfigSchema.optional(),
-  complex: CategoryConfigSchema.optional(),
+  "unspecified-low": CategoryConfigSchema.optional(),
+  "unspecified-high": CategoryConfigSchema.optional(),
   writing: CategoryConfigSchema.optional(),
 })
 
