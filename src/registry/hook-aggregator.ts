@@ -14,6 +14,9 @@ export function aggregateHooks(plugins: PluginDefinition[]): Map<string, PluginH
       }
 
       const handlers = hookMap.get(eventName) ?? []
+      // Type cast is necessary: TypeScript cannot narrow the union type HookHandlerFor<Name>
+      // in a generic loop. The cast is safe because each handler is registered under its
+      // correct event name and will be called with the appropriate arguments by the compositor.
       handlers.push(handler as PluginHookHandler)
       hookMap.set(eventName, handlers)
     }
