@@ -1,4 +1,3 @@
-export { buildHooks } from "./dispatcher"
 export { composeHooks } from "./hook-composer"
 export { wrapSafely } from "./safe-hook-wrapper"
 export { HOOK_TIERS } from "./hook-types"

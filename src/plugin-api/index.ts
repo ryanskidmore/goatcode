@@ -23,4 +23,4 @@ export type {
   AgentOverrides,
   HookName,
 } from "./types"
-export { HOOK_NAMES } from "./types"
+export { HOOK_EVENT_NAMES } from "./types"

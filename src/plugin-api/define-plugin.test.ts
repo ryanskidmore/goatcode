@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test"
 
 import { definePlugin } from "./define-plugin"
-import { HOOK_NAMES } from "./types"
+import { HOOK_EVENT_NAMES } from "./types"
 
 describe("definePlugin", () => {
   describe("with minimal plugin", () => {
@@ -36,8 +36,8 @@ describe("definePlugin", () => {
   })
 })
 
-describe("HOOK_NAMES", () => {
-  test("contains all 11 OpenCode hook handler names", () => {
+describe("HOOK_EVENT_NAMES", () => {
+  test("contains all OpenCode hook handler names", () => {
     //#given
     const expected = [
       "tool",
@@ -51,11 +51,16 @@ describe("HOOK_NAMES", () => {
       "experimental.chat.messages.transform",
       "experimental.chat.system.transform",
       "tool.definition",
+      "permission.ask",
+      "command.execute.before",
+      "shell.env",
+      "experimental.session.compacting",
+      "experimental.text.complete",
     ]
     //#when / #then
-    expect(HOOK_NAMES).toHaveLength(11)
+    expect(HOOK_EVENT_NAMES).toHaveLength(16)
     for (const name of expected) {
-      expect(HOOK_NAMES).toContain(name)
+      expect(HOOK_EVENT_NAMES).toContain(name)
     }
   })
 })

@@ -1,18 +1,27 @@
 import type { Plugin } from "@opencode-ai/plugin"
 
-/** All OpenCode hook event names used by GoatCode. */
-export type HookEventName =
-  | "tool"
-  | "config"
-  | "chat.message"
-  | "chat.params"
-  | "chat.headers"
-  | "event"
-  | "tool.execute.before"
-  | "tool.execute.after"
-  | "experimental.chat.messages.transform"
-  | "experimental.chat.system.transform"
-  | "tool.definition"
+/** All OpenCode hook event names — single source of truth. */
+export const HOOK_EVENT_NAMES = [
+  "tool",
+  "config",
+  "chat.message",
+  "chat.params",
+  "chat.headers",
+  "event",
+  "tool.execute.before",
+  "tool.execute.after",
+  "experimental.chat.messages.transform",
+  "experimental.chat.system.transform",
+  "tool.definition",
+  "permission.ask",
+  "command.execute.before",
+  "shell.env",
+  "experimental.session.compacting",
+  "experimental.text.complete",
+] as const
+
+/** All OpenCode hook event names. */
+export type HookEventName = (typeof HOOK_EVENT_NAMES)[number]
 
 /** Generic hook handler signature fallback. */
 export type HookHandler = (input: unknown, output: unknown) => Promise<void> | void
