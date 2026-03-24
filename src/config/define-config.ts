@@ -28,7 +28,11 @@ export function defineConfig(config: GoatCodeConfig): GoatCodeConfig {
  * }))
  */
 export function defineConfigAsync(
-  config: GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig)
+  config: () => Promise<GoatCodeConfig> | GoatCodeConfig
+): () => Promise<GoatCodeConfig> | GoatCodeConfig
+export function defineConfigAsync(config: GoatCodeConfig): GoatCodeConfig
+export function defineConfigAsync(
+  config: GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig),
 ): GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig) {
   return config
 }
