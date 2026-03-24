@@ -33,8 +33,14 @@ export class PluginRegistry {
 
   async setup(resolvedOrder: PluginDefinition[], ctx: OpenCodeContext): Promise<void> {
     for (const plugin of resolvedOrder) {
-      if (plugin.setup) {
+      if (!plugin.setup) {
+        continue
+      }
+
+      try {
         await plugin.setup(ctx)
+      } catch (error) {
+        log(`[PluginRegistry] Setup failed for plugin: ${plugin.name}`, { error })
       }
     }
   }
