@@ -9,7 +9,7 @@ export function createProgram(): Command {
   const program = new Command()
 
   program
-    .name("goatcode")
+    .name("goatcode-sh")
     .description("Enterprise-grade OpenCode plugin with micro-plugin architecture and multi-agent orchestration")
     .version(VERSION, "-v, --version", "Show version number")
 

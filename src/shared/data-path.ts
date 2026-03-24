@@ -14,5 +14,5 @@ export function getOpenCodeStorageDir(): string {
 }
 
 export function getGoatCodeCacheDir(): string {
-  return join(getCacheDir(), "goatcode")
+  return join(getCacheDir(), "goatcode-sh")
 }

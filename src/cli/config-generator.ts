@@ -9,7 +9,7 @@ const BUILTIN_AGENT_NAMES = BUILTIN_AGENT_PLUGINS.map((p) => p.name)
 const BUILTIN_CATEGORY_NAMES = Object.keys(DEFAULT_CATEGORY_DEFINITIONS)
 
 /** All built-in micro-plugin package names. */
-const BUILTIN_MICRO_PLUGINS = BUILTIN_AGENT_PLUGINS.map((p) => `goatcode/${p.name}`)
+const BUILTIN_MICRO_PLUGINS = BUILTIN_AGENT_PLUGINS.map((p) => `goatcode-sh/${p.name}`)
 
 /** Options for config generation. */
 export interface GenerateConfigOptions {
@@ -109,7 +109,7 @@ export function generateConfig(options: GenerateConfigOptions = {}): string {
   const body = sections.join("\n\n")
 
   return [
-    `import { defineConfig } from "goatcode"`,
+    `import { defineConfig } from "goatcode-sh"`,
     ``,
     `export default defineConfig({`,
     body,

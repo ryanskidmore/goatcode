@@ -18,7 +18,7 @@ Key features:
 Install GoatCode via npm:
 
 ```bash
-npm install goatcode
+npm install goatcode-sh
 ```
 
 GoatCode requires Bun to run.
@@ -38,7 +38,7 @@ This command sets up the initial configuration and verifies your environment.
 GoatCode uses a `goatcode.config.ts` file in your project root. Use the `defineConfig` helper for full type support.
 
 ```typescript
-import { defineConfig } from "goatcode"
+import { defineConfig } from "goatcode-sh"
 
 export default defineConfig({
   agents: {

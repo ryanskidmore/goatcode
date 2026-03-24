@@ -8,7 +8,7 @@ import type { PluginDefinition } from "../types/plugin"
  *
  * @example
  * ```typescript
- * import { definePlugin } from "goatcode"
+ * import { definePlugin } from "goatcode-sh"
  *
  * export default definePlugin({
  *   name: "my-plugin",

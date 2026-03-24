@@ -1,5 +1,5 @@
 {
-  "name": "goatcode",
+  "name": "goatcode-sh",
   "version": "0.0.1",
   "description": "Enterprise-grade OpenCode plugin with micro-plugin architecture and multi-agent orchestration",
   "main": "index.js",

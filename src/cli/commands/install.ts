@@ -44,7 +44,7 @@ function parsePluginInput(inputValue: string, fallback: string[]): string[] {
 
 function getConfigTemplate(config: InstallDefaults): string {
   const pluginLines = config.plugins.map((plugin) => `    ${JSON.stringify(plugin)},`).join("\n")
-  return `import { defineConfig } from "goatcode"
+  return `import { defineConfig } from "goatcode-sh"
 
 export default defineConfig({
   // Agent-level model and behavior overrides.

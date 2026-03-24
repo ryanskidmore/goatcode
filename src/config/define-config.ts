@@ -6,7 +6,7 @@ import type { GoatCodeConfig } from "../types/config"
  *
  * @example
  * // goatcode.config.ts
- * import { defineConfig } from "goatcode"
+ * import { defineConfig } from "goatcode-sh"
  * export default defineConfig({
  *   agents: {
  *     orchestrator: { model: "anthropic/claude-opus-4-6" }

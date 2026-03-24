@@ -11,7 +11,7 @@ describe("#given generateConfig with default options", () => {
   describe("#when called with no arguments", () => {
     it("#then the output contains the defineConfig import", () => {
       const result = generateConfig()
-      expect(result).toContain('import { defineConfig } from "goatcode"')
+      expect(result).toContain('import { defineConfig } from "goatcode-sh"')
     })
 
     it("#then the output contains the defineConfig call", () => {
@@ -63,17 +63,17 @@ describe("#given generateConfig with default options", () => {
 
     it("#then the output lists all built-in micro-plugins", () => {
       const result = generateConfig()
-      expect(result).toContain('"goatcode/orchestrator"')
-      expect(result).toContain('"goatcode/deep-worker"')
-      expect(result).toContain('"goatcode/plan-builder"')
-      expect(result).toContain('"goatcode/advisor"')
-      expect(result).toContain('"goatcode/researcher"')
-      expect(result).toContain('"goatcode/explorer"')
-      expect(result).toContain('"goatcode/executor"')
-      expect(result).toContain('"goatcode/analyst"')
-      expect(result).toContain('"goatcode/reviewer"')
-      expect(result).toContain('"goatcode/inspector"')
-      expect(result).toContain('"goatcode/worker"')
+      expect(result).toContain('"goatcode-sh/orchestrator"')
+      expect(result).toContain('"goatcode-sh/deep-worker"')
+      expect(result).toContain('"goatcode-sh/plan-builder"')
+      expect(result).toContain('"goatcode-sh/advisor"')
+      expect(result).toContain('"goatcode-sh/researcher"')
+      expect(result).toContain('"goatcode-sh/explorer"')
+      expect(result).toContain('"goatcode-sh/executor"')
+      expect(result).toContain('"goatcode-sh/analyst"')
+      expect(result).toContain('"goatcode-sh/reviewer"')
+      expect(result).toContain('"goatcode-sh/inspector"')
+      expect(result).toContain('"goatcode-sh/worker"')
     })
 
     it("#then the output ends with a newline", () => {
@@ -92,7 +92,7 @@ describe("#given generateConfig with includePlugins: false", () => {
 
     it("#then the output still contains the defineConfig import", () => {
       const result = generateConfig({ includePlugins: false })
-      expect(result).toContain('import { defineConfig } from "goatcode"')
+      expect(result).toContain('import { defineConfig } from "goatcode-sh"')
     })
   })
 })
@@ -135,7 +135,7 @@ describe("#given the generated config written to a temp file", () => {
     const content = generateConfig()
     writeFileSync(tempFile, content, "utf8")
     
-    writeFileSync(join(tempDir, "goatcode.d.ts"), 'export function defineConfig(config: any): any\n', "utf8")
+    writeFileSync(join(tempDir, "goatcode-sh.d.ts"), 'export function defineConfig(config: any): any\n', "utf8")
   })
 
   afterAll(() => {

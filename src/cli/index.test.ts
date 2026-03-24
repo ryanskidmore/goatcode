@@ -5,7 +5,7 @@ describe("#given the goatcode CLI program", () => {
   describe("#when the program is created", () => {
     it("#then the program name is goatcode", () => {
       const program = createProgram()
-      expect(program.name()).toBe("goatcode")
+      expect(program.name()).toBe("goatcode-sh")
     })
 
     it("#then the program has a version from package.json", () => {

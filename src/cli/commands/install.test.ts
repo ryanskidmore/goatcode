@@ -15,7 +15,7 @@ describe("#given the install command", () => {
         const content = readFileSync(configPath, "utf8")
 
         expect(configPath).toBe(join(tempDir, "goatcode.config.ts"))
-        expect(content).toContain('import { defineConfig } from "goatcode"')
+        expect(content).toContain('import { defineConfig } from "goatcode-sh"')
         expect(content).toContain("export default defineConfig({")
       } finally {
         rmSync(tempDir, { recursive: true, force: true })
