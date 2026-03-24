@@ -21,5 +21,6 @@ export function getBackgroundAgent(): BackgroundAgentContext {
 }
 
 export function resetBackgroundAgent(): void {
+  instance?.manager.dispose()
   instance = undefined
 }

@@ -102,8 +102,28 @@ export class BackgroundAgentManager {
 
       this.complete(task.id, finalSnapshot.result ?? "")
     } catch (error) {
+      const isCancelledTask = task.status === "cancelled"
+      const isCancelledError = error instanceof Error && error.message === "Polling cancelled"
+      if (isCancelledTask || isCancelledError) {
+        if (!isCancelledTask) {
+          task.status = "cancelled"
+          task.completedAt = Date.now()
+          this.concurrency.release(task.model)
+          this.cleanupSession(task.sessionId)
+          this.evictStaleTasks()
+        }
+        return
+      }
       this.fail(task.id, error instanceof Error ? error.message : String(error))
     }
+  }
+
+  dispose(): void {
+    for (const [id, controller] of this.abortControllers) {
+      controller.abort()
+      log("[manager] Aborted pending task on dispose", { id })
+    }
+    this.abortControllers.clear()
   }
 
   complete(id: string, result: string): void {
