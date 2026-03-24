@@ -1,7 +1,7 @@
 import type { PluginDefinition } from "../types/plugin"
 
 /**
- * Define an GoatCode micro-plugin.
+ * Define a GoatCode micro-plugin.
  *
  * This is the primary authoring API for creating plugins.
  * Both internal GoatCode plugins and external plugins use this function.
