@@ -3,7 +3,7 @@ import { createProgram } from "./cli"
 
 describe("#given the goatcode CLI program", () => {
   describe("#when the program is created", () => {
-    it("#then the program name is goatcode", () => {
+    it("#then the program name is goatcode-sh", () => {
       const program = createProgram()
       expect(program.name()).toBe("goatcode-sh")
     })
