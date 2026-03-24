@@ -13,13 +13,30 @@ import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools"
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features"
 
 function isValidPluginDefinition(value: unknown): value is PluginDefinition {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof (value as Record<string, unknown>)["name"] === "string" &&
-    (value as Record<string, unknown>)["name"] !== ""
-  )
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false
+  const obj = value as Record<string, unknown>
+
+  // Required: non-empty name string
+  if (typeof obj["name"] !== "string" || obj["name"] === "") return false
+
+  // Optional: dependencies must be array of strings if present
+  if (obj["dependencies"] !== undefined) {
+    if (!Array.isArray(obj["dependencies"])) return false
+    if (!(obj["dependencies"] as unknown[]).every((d) => typeof d === "string")) return false
+  }
+
+  // Optional: hooks/tools/agents must be plain objects if present
+  for (const key of ["hooks", "tools", "agents"] as const) {
+    if (obj[key] !== undefined) {
+      if (typeof obj[key] !== "object" || obj[key] === null || Array.isArray(obj[key])) return false
+    }
+  }
+
+  // Optional: setup/teardown must be functions if present
+  if (obj["setup"] !== undefined && typeof obj["setup"] !== "function") return false
+  if (obj["teardown"] !== undefined && typeof obj["teardown"] !== "function") return false
+
+  return true
 }
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
@@ -78,9 +95,9 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   }
 
   const resolved = registry.resolve()
-  await registry.setup(resolved, ctx)
+  const initializedPlugins = await registry.setup(resolved, ctx)
 
-  const aggregated = registry.aggregate(resolved, {
+  const aggregated = registry.aggregate(initializedPlugins, {
     disabledAgents: config.disabled_agents,
     disabledHooks: config.disabled_hooks,
     disabledTools: config.disabled_tools,
