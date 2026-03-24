@@ -1,19 +1,11 @@
 import type { Hooks } from "@opencode-ai/plugin"
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin"
 import { log } from "../shared/logger"
+import { HOOK_EVENT_NAMES } from "../types/hook"
 
-const FUNCTION_HOOK_SLOTS = [
-  "config",
-  "chat.message",
-  "chat.params",
-  "chat.headers",
-  "event",
-  "tool.execute.before",
-  "tool.execute.after",
-  "experimental.chat.messages.transform",
-  "experimental.chat.system.transform",
-  "tool.definition",
-] as const
+const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
+  (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
+) as readonly Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool">[]
 
 function buildSlotHandler(handlers: PluginHookHandler[]): PluginHookHandler {
   if (handlers.length === 0) {
@@ -32,7 +24,7 @@ function buildSlotHandler(handlers: PluginHookHandler[]): PluginHookHandler {
 
 /**
  * Compose aggregated plugin contributions into a complete OpenCode Hooks instance.
- * Produces all 11 handler slots (1 tool record + 10 function hooks).
+ * Produces all handler slots (1 tool record + function hooks).
  * The `config` slot injects agents before delegating to registered hooks.
  * Slots without registered handlers are defined as no-ops.
  */
@@ -48,7 +40,10 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     }
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
-        input.agent[name] = structuredClone(agentConfig)
+        input.agent[name] = {
+          ...agentConfig,
+          ...(agentConfig.tools ? { tools: { ...agentConfig.tools } } : {}),
+        }
       }
     }
     for (const handler of configHandlers) {
@@ -64,7 +59,9 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
 
   const toolCount = Object.keys(aggregated.tools).length
   const agentCount = Object.keys(aggregated.agents).length
-  log(`[compositor] Composed plugin: ${toolCount} tools, ${agentCount} agents, 11 handler slots`)
+  log(
+    `[compositor] Composed plugin: ${toolCount} tools, ${agentCount} agents, ${HOOK_EVENT_NAMES.length} handler slots`,
+  )
 
   return hooks
 }

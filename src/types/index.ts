@@ -2,7 +2,7 @@
 export * from "./agent"
 /** Category types and configurations. */
 export * from "./category"
-/** Configuration types for OcHead. */
+/** Configuration types for GoatCode. */
 export * from "./config"
 /** Hook types and contributions. */
 export * from "./hook"

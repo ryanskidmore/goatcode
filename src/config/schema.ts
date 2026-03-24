@@ -34,17 +34,17 @@ export const AgentOverridesSchema = z.object({
 })
 
 export const CategoryOverridesSchema = z.object({
-  visual: CategoryConfigSchema.optional(),
-  reasoning: CategoryConfigSchema.optional(),
+  "visual-engineering": CategoryConfigSchema.optional(),
+  ultrabrain: CategoryConfigSchema.optional(),
   deep: CategoryConfigSchema.optional(),
-  creative: CategoryConfigSchema.optional(),
+  artistry: CategoryConfigSchema.optional(),
   quick: CategoryConfigSchema.optional(),
-  standard: CategoryConfigSchema.optional(),
-  complex: CategoryConfigSchema.optional(),
+  "unspecified-low": CategoryConfigSchema.optional(),
+  "unspecified-high": CategoryConfigSchema.optional(),
   writing: CategoryConfigSchema.optional(),
 })
 
-export const OcHeadConfigSchema = z.object({
+export const GoatCodeConfigSchema = z.object({
   agents: AgentOverridesSchema.optional(),
   categories: CategoryOverridesSchema.optional(),
   disabled_agents: z.array(z.string()).default(CONFIG_DEFAULTS.disabled_agents),
@@ -55,4 +55,4 @@ export const OcHeadConfigSchema = z.object({
   plugins: z.array(z.string()).optional(),
 })
 
-export type OcHeadConfigInput = z.input<typeof OcHeadConfigSchema>
+export type GoatCodeConfigInput = z.input<typeof GoatCodeConfigSchema>

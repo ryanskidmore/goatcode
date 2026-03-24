@@ -1,19 +1,19 @@
-import type { OcHeadConfig } from "../types/config"
+import type { GoatCodeConfig } from "../types/config"
 
 /**
- * Define your ochead configuration.
+ * Define your goatcode configuration.
  * Provides TypeScript autocomplete and type checking for your config file.
  *
  * @example
- * // ochead.config.ts
- * import { defineConfig } from "ochead"
+ * // goatcode.config.ts
+ * import { defineConfig } from "goatcode-sh"
  * export default defineConfig({
  *   agents: {
  *     orchestrator: { model: "anthropic/claude-opus-4-6" }
  *   }
  * })
  */
-export function defineConfig(config: OcHeadConfig): OcHeadConfig {
+export function defineConfig(config: GoatCodeConfig): GoatCodeConfig {
   return config
 }
 
@@ -28,7 +28,11 @@ export function defineConfig(config: OcHeadConfig): OcHeadConfig {
  * }))
  */
 export function defineConfigAsync(
-  config: OcHeadConfig | (() => Promise<OcHeadConfig> | OcHeadConfig)
-): OcHeadConfig | (() => Promise<OcHeadConfig> | OcHeadConfig) {
+  config: () => Promise<GoatCodeConfig> | GoatCodeConfig
+): () => Promise<GoatCodeConfig> | GoatCodeConfig
+export function defineConfigAsync(config: GoatCodeConfig): GoatCodeConfig
+export function defineConfigAsync(
+  config: GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig),
+): GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig) {
   return config
 }

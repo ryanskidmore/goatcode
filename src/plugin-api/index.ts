@@ -19,8 +19,8 @@ export type {
   BuiltinCategoryName,
   CategoryConfig,
   AvailableCategory,
-  OcHeadConfig,
+  GoatCodeConfig,
   AgentOverrides,
   HookName,
 } from "./types"
-export { HOOK_NAMES } from "./types"
+export { HOOK_EVENT_NAMES, HOOK_EVENT_NAMES as HOOK_NAMES } from "./types"

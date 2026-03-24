@@ -11,7 +11,7 @@ describe("#given generateConfig with default options", () => {
   describe("#when called with no arguments", () => {
     it("#then the output contains the defineConfig import", () => {
       const result = generateConfig()
-      expect(result).toContain('import { defineConfig } from "ochead"')
+      expect(result).toContain('import { defineConfig } from "goatcode-sh"')
     })
 
     it("#then the output contains the defineConfig call", () => {
@@ -63,17 +63,17 @@ describe("#given generateConfig with default options", () => {
 
     it("#then the output lists all built-in micro-plugins", () => {
       const result = generateConfig()
-      expect(result).toContain('"ochead/orchestrator"')
-      expect(result).toContain('"ochead/deep-worker"')
-      expect(result).toContain('"ochead/plan-builder"')
-      expect(result).toContain('"ochead/advisor"')
-      expect(result).toContain('"ochead/researcher"')
-      expect(result).toContain('"ochead/explorer"')
-      expect(result).toContain('"ochead/executor"')
-      expect(result).toContain('"ochead/analyst"')
-      expect(result).toContain('"ochead/reviewer"')
-      expect(result).toContain('"ochead/inspector"')
-      expect(result).toContain('"ochead/worker"')
+      expect(result).toContain('"goatcode-sh/orchestrator"')
+      expect(result).toContain('"goatcode-sh/deep-worker"')
+      expect(result).toContain('"goatcode-sh/plan-builder"')
+      expect(result).toContain('"goatcode-sh/advisor"')
+      expect(result).toContain('"goatcode-sh/researcher"')
+      expect(result).toContain('"goatcode-sh/explorer"')
+      expect(result).toContain('"goatcode-sh/executor"')
+      expect(result).toContain('"goatcode-sh/analyst"')
+      expect(result).toContain('"goatcode-sh/reviewer"')
+      expect(result).toContain('"goatcode-sh/inspector"')
+      expect(result).toContain('"goatcode-sh/worker"')
     })
 
     it("#then the output ends with a newline", () => {
@@ -92,7 +92,7 @@ describe("#given generateConfig with includePlugins: false", () => {
 
     it("#then the output still contains the defineConfig import", () => {
       const result = generateConfig({ includePlugins: false })
-      expect(result).toContain('import { defineConfig } from "ochead"')
+      expect(result).toContain('import { defineConfig } from "goatcode-sh"')
     })
   })
 })
@@ -130,12 +130,12 @@ describe("#given the generated config written to a temp file", () => {
   let tempFile: string
 
   beforeAll(() => {
-    tempDir = mkdtempSync(join(tmpdir(), "ochead-config-test-"))
-    tempFile = join(tempDir, "ochead.config.ts")
+    tempDir = mkdtempSync(join(tmpdir(), "goatcode-config-test-"))
+    tempFile = join(tempDir, "goatcode.config.ts")
     const content = generateConfig()
     writeFileSync(tempFile, content, "utf8")
     
-    writeFileSync(join(tempDir, "ochead.d.ts"), 'export function defineConfig(config: any): any\n', "utf8")
+    writeFileSync(join(tempDir, "goatcode-sh.d.ts"), 'export function defineConfig(config: any): any\n', "utf8")
   })
 
   afterAll(() => {

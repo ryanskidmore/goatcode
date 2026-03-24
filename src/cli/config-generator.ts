@@ -9,7 +9,7 @@ const BUILTIN_AGENT_NAMES = BUILTIN_AGENT_PLUGINS.map((p) => p.name)
 const BUILTIN_CATEGORY_NAMES = Object.keys(DEFAULT_CATEGORY_DEFINITIONS)
 
 /** All built-in micro-plugin package names. */
-const BUILTIN_MICRO_PLUGINS = BUILTIN_AGENT_PLUGINS.map((p) => `ochead/${p.name}`)
+const BUILTIN_MICRO_PLUGINS = BUILTIN_AGENT_PLUGINS.map((p) => `goatcode-sh/${p.name}`)
 
 /** Options for config generation. */
 export interface GenerateConfigOptions {
@@ -67,7 +67,7 @@ function buildCategoryOverridesSection(): string {
 function buildPluginsSection(): string {
   const lines: string[] = []
   lines.push("  // Micro-plugins to load — all built-in plugins are enabled by default.")
-  lines.push("  // Add external plugin package names here to extend ochead.")
+  lines.push("  // Add external plugin package names here to extend goatcode.")
   lines.push("  plugins: [")
   for (const plugin of BUILTIN_MICRO_PLUGINS) {
     lines.push(`    "${plugin}",`)
@@ -77,7 +77,7 @@ function buildPluginsSection(): string {
 }
 
 /**
- * Generate the content of an `ochead.config.ts` file.
+ * Generate the content of an `goatcode.config.ts` file.
  *
  * Returns a TypeScript source string that can be written directly to disk.
  * All agent and category overrides are commented out by default.
@@ -90,7 +90,7 @@ export function generateConfig(options: GenerateConfigOptions = {}): string {
     includeCategories = true,
   } = options
 
-  log("config-generator: generating ochead.config.ts", { includePlugins, includeAgents, includeCategories })
+  log("config-generator: generating goatcode.config.ts", { includePlugins, includeAgents, includeCategories })
 
   const sections: string[] = []
 
@@ -109,7 +109,7 @@ export function generateConfig(options: GenerateConfigOptions = {}): string {
   const body = sections.join("\n\n")
 
   return [
-    `import { defineConfig } from "ochead"`,
+    `import { defineConfig } from "goatcode-sh"`,
     ``,
     `export default defineConfig({`,
     body,

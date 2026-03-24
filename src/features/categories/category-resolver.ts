@@ -1,12 +1,12 @@
-import type { CategoryConfig } from "../../types/category"
+import type { BuiltinCategoryName, CategoryConfig } from "../../types/category"
 import { log } from "../../shared/logger"
-import { DEFAULT_CATEGORIES, type CategoryName } from "./category-config"
+import { DEFAULT_CATEGORIES } from "./category-config"
 
-export type CategoryOverrides = Partial<Record<CategoryName, CategoryConfig>>
+export type CategoryOverrides = Partial<Record<BuiltinCategoryName, CategoryConfig>>
 
 export class CategoryResolver {
   resolve(name: string, configOverrides?: CategoryOverrides): CategoryConfig | undefined {
-    const categoryName = name as CategoryName
+    const categoryName = name as BuiltinCategoryName
     const baseConfig = DEFAULT_CATEGORIES[categoryName]
     if (!baseConfig) {
       log(`[category-resolver] Unknown category: ${name}`)

@@ -19,7 +19,7 @@ export type AgentFactory = ((model: string) => AgentConfig) & {
   readonly mode: AgentMode
 }
 
-/** All built-in OcHead agent names. */
+/** All built-in GoatCode agent names. */
 export type BuiltinAgentName =
   | "orchestrator"
   | "deep-worker"

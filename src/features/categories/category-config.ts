@@ -1,15 +1,7 @@
-import type { CategoryConfig } from "../../types/category"
+import type { BuiltinCategoryName, CategoryConfig } from "../../types/category"
 import { CATEGORY_PROMPT_APPENDS } from "./prompt-appends"
 
-export type CategoryName =
-  | "visual-engineering"
-  | "ultrabrain"
-  | "deep"
-  | "artistry"
-  | "quick"
-  | "unspecified-low"
-  | "unspecified-high"
-  | "writing"
+export type CategoryName = BuiltinCategoryName
 
 export interface CategoryDefinition extends Required<Pick<CategoryConfig, "description">> {
   model: string

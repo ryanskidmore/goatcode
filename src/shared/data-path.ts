@@ -13,6 +13,6 @@ export function getOpenCodeStorageDir(): string {
   return join(getDataDir(), "opencode", "storage")
 }
 
-export function getOcHeadCacheDir(): string {
-  return join(getCacheDir(), "ochead")
+export function getGoatCodeCacheDir(): string {
+  return join(getCacheDir(), "goatcode-sh")
 }

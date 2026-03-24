@@ -13,7 +13,7 @@ import {
 const tempDirectories: string[] = []
 
 function createWorkspace(): string {
-  const workspace = mkdtempSync(join(tmpdir(), "ochead-hooks-"))
+  const workspace = mkdtempSync(join(tmpdir(), "goatcode-hooks-"))
   tempDirectories.push(workspace)
   return workspace
 }

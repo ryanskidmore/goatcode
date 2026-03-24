@@ -1,11 +1,11 @@
 import { describe, it, expect } from "bun:test"
 import { createProgram } from "./cli"
 
-describe("#given the ochead CLI program", () => {
+describe("#given the goatcode CLI program", () => {
   describe("#when the program is created", () => {
-    it("#then the program name is ochead", () => {
+    it("#then the program name is goatcode-sh", () => {
       const program = createProgram()
-      expect(program.name()).toBe("ochead")
+      expect(program.name()).toBe("goatcode-sh")
     })
 
     it("#then the program has a version from package.json", () => {

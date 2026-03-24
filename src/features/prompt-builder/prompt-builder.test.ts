@@ -21,8 +21,8 @@ const SAMPLE_SKILLS: SkillEntry[] = [
 ]
 
 const SAMPLE_CATEGORIES: AvailableCategory[] = [
-  { name: "visual", description: "Frontend and UI/UX work", model: "gpt-5.3-codex" },
-  { name: "reasoning", description: "Hard logic and architecture", model: "gpt-5.4" },
+  { name: "visual-engineering", description: "Frontend and UI/UX work", model: "gpt-5.3-codex" },
+  { name: "ultrabrain", description: "Hard logic and architecture", model: "gpt-5.4" },
   { name: "quick", description: "Trivial single-file fixes", model: "gpt-5-nano" },
 ]
 
@@ -119,9 +119,9 @@ describe("prompt-builder", () => {
         const result = buildCategoriesSection(categories)
 
         //#then
-        expect(result).toContain("visual")
+        expect(result).toContain("visual-engineering")
         expect(result).toContain("gpt-5.3-codex")
-        expect(result).toContain("reasoning")
+        expect(result).toContain("ultrabrain")
         expect(result).toContain("gpt-5.4")
         expect(result).toContain("quick")
         expect(result).toContain("gpt-5-nano")
@@ -130,7 +130,7 @@ describe("prompt-builder", () => {
       it("#then shows 'default' when model is undefined", () => {
         //#given
         const categories: AvailableCategory[] = [
-          { name: "standard", description: "General purpose" },
+          { name: "unspecified-low", description: "General purpose" },
         ]
 
         //#when
@@ -185,7 +185,7 @@ describe("prompt-builder", () => {
         expect(result).toContain("deep-worker")
         expect(result).toContain("playwright")
         expect(result).toContain("git-master")
-        expect(result).toContain("visual")
+        expect(result).toContain("visual-engineering")
         expect(result).toContain("gpt-5.3-codex")
       })
     })

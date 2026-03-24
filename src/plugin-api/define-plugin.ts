@@ -1,14 +1,14 @@
 import type { PluginDefinition } from "../types/plugin"
 
 /**
- * Define an OcHead micro-plugin.
+ * Define a GoatCode micro-plugin.
  *
  * This is the primary authoring API for creating plugins.
- * Both internal OcHead plugins and external plugins use this function.
+ * Both internal GoatCode plugins and external plugins use this function.
  *
  * @example
  * ```typescript
- * import { definePlugin } from "ochead"
+ * import { definePlugin } from "goatcode-sh"
  *
  * export default definePlugin({
  *   name: "my-plugin",

@@ -23,6 +23,7 @@ function isTerminalStatus(status: BackgroundTask["status"]): boolean {
 export class BackgroundAgentManager {
   private readonly tasks = new Map<string, BackgroundTask>()
   private readonly concurrency: ConcurrencyManager
+  private readonly abortControllers = new Map<string, AbortController>()
 
   constructor(concurrencyLimit = 5) {
     this.concurrency = new ConcurrencyManager(concurrencyLimit)
@@ -74,6 +75,9 @@ export class BackgroundAgentManager {
         return
       }
 
+      const controller = new AbortController()
+      this.abortControllers.set(task.id, controller)
+
       const finalSnapshot = await pollUntilStable(async () => {
         const [messagesResult, statusResult] = await Promise.all([
           ctx.client.session.messages({ path: { id: sessionId } }),
@@ -92,12 +96,34 @@ export class BackgroundAgentManager {
           isIdle,
           result: lastAssistantMessage?.content,
         }
-      })
+      }, 120, controller.signal)
+
+      this.abortControllers.delete(task.id)
 
       this.complete(task.id, finalSnapshot.result ?? "")
     } catch (error) {
+      const isCancelledTask = task.status === "cancelled"
+      const isCancelledError = error instanceof Error && error.message === "Polling cancelled"
+      if (isCancelledTask || isCancelledError) {
+        if (!isCancelledTask) {
+          task.status = "cancelled"
+          task.completedAt = Date.now()
+          this.concurrency.release(task.model)
+          this.cleanupSession(task.sessionId)
+          this.evictStaleTasks()
+        }
+        return
+      }
       this.fail(task.id, error instanceof Error ? error.message : String(error))
     }
+  }
+
+  dispose(): void {
+    for (const [id, controller] of this.abortControllers) {
+      controller.abort()
+      log("[manager] Aborted pending task on dispose", { id })
+    }
+    this.abortControllers.clear()
   }
 
   complete(id: string, result: string): void {
@@ -107,6 +133,7 @@ export class BackgroundAgentManager {
     task.status = "completed"
     task.result = result
     task.completedAt = Date.now()
+    this.abortControllers.delete(id)
     this.concurrency.release(task.model)
     this.cleanupSession(task.sessionId)
     this.evictStaleTasks()
@@ -120,6 +147,7 @@ export class BackgroundAgentManager {
     task.status = "failed"
     task.error = error
     task.completedAt = Date.now()
+    this.abortControllers.delete(id)
     this.concurrency.release(task.model)
     this.cleanupSession(task.sessionId)
     this.evictStaleTasks()
@@ -133,6 +161,9 @@ export class BackgroundAgentManager {
     const wasRunning = task.status === "running"
     task.status = "cancelled"
     task.completedAt = Date.now()
+
+    this.abortControllers.get(id)?.abort()
+    this.abortControllers.delete(id)
 
     if (wasRunning) {
       this.concurrency.release(task.model)

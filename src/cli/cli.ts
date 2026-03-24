@@ -9,13 +9,13 @@ export function createProgram(): Command {
   const program = new Command()
 
   program
-    .name("ochead")
+    .name("goatcode-sh")
     .description("Enterprise-grade OpenCode plugin with micro-plugin architecture and multi-agent orchestration")
     .version(VERSION, "-v, --version", "Show version number")
 
   program
     .command("install")
-    .description("Install and configure ochead")
+    .description("Install and configure goatcode")
     .option("--non-interactive", "Skip interactive prompts and use defaults")
     .option("--force", "Overwrite existing config file")
     .action(async (options) => {
@@ -26,7 +26,7 @@ export function createProgram(): Command {
 
   program
     .command("doctor")
-    .description("Check ochead installation health and diagnose issues")
+    .description("Check goatcode installation health and diagnose issues")
     .action(async () => {
       log("cli: doctor command invoked")
       const { runDoctor, printDoctorResult } = await import("./commands/doctor")
@@ -37,7 +37,7 @@ export function createProgram(): Command {
 
   program
     .command("update")
-    .description("Update ochead to the latest version")
+    .description("Update goatcode to the latest version")
     .action(async () => {
       await handleUpdateCommand()
     })

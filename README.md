@@ -1,10 +1,10 @@
-# OcHead
+# GoatCode
 
-OcHead is a professional agent harness for OpenCode. It provides a modular plugin architecture where every agent, tool, and hook is an independent plugin. This system allows for deep customization and reliable multi-agent orchestration.
+GoatCode is a professional agent harness for OpenCode. It provides a modular plugin architecture where every agent, tool, and hook is an independent plugin. This system allows for deep customization and reliable multi-agent orchestration.
 
 ## Overview
 
-OcHead reimplements core agent capabilities with a focus on engineering quality and modularity. It uses a TypeScript-native configuration system and a micro-plugin registry to compose features.
+GoatCode reimplements core agent capabilities with a focus on engineering quality and modularity. It uses a TypeScript-native configuration system and a micro-plugin registry to compose features.
 
 Key features:
 - 11 specialized agents for different task categories.
@@ -15,30 +15,30 @@ Key features:
 
 ## Installation
 
-Install OcHead via npm:
+Install GoatCode via npm:
 
 ```bash
-npm install ochead
+npm install goatcode-sh
 ```
 
-OcHead requires Bun to run.
+GoatCode requires Bun to run.
 
 ## Quick Start
 
-Initialize OcHead in your project:
+Initialize GoatCode in your project:
 
 ```bash
-ochead install
+goatcode install
 ```
 
 This command sets up the initial configuration and verifies your environment.
 
 ## Configuration
 
-OcHead uses a `ochead.config.ts` file in your project root. Use the `defineConfig` helper for full type support.
+GoatCode uses a `goatcode.config.ts` file in your project root. Use the `defineConfig` helper for full type support.
 
 ```typescript
-import { defineConfig } from "ochead"
+import { defineConfig } from "goatcode-sh"
 
 export default defineConfig({
   agents: {
@@ -55,7 +55,7 @@ export default defineConfig({
 
 ## Agents
 
-OcHead includes 11 specialized agents.
+GoatCode includes 11 specialized agents.
 
 | Agent | Description |
 |-------|-------------|
@@ -73,7 +73,7 @@ OcHead includes 11 specialized agents.
 
 ## Tools
 
-OcHead provides 26 tools for agents to interact with your codebase.
+GoatCode provides 26 tools for agents to interact with your codebase.
 
 | Category | Tools |
 |----------|-------|
@@ -89,7 +89,7 @@ OcHead provides 26 tools for agents to interact with your codebase.
 
 ## Hooks
 
-OcHead uses 30 hooks to manage the agent lifecycle and improve output quality.
+GoatCode uses 30 hooks to manage the agent lifecycle and improve output quality.
 
 | Category | Hooks |
 |----------|-------|
@@ -107,9 +107,9 @@ OcHead uses 30 hooks to manage the agent lifecycle and improve output quality.
 
 | Command | Description |
 |---------|-------------|
-| `ochead install` | Install and configure OcHead in the current directory. |
-| `ochead doctor` | Check the health of your OcHead installation. |
-| `ochead update` | Check for and install updates. |
+| `goatcode install` | Install and configure GoatCode in the current directory. |
+| `goatcode doctor` | Check the health of your GoatCode installation. |
+| `goatcode update` | Check for and install updates. |
 
 ## Contributing
 

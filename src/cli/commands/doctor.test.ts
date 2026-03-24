@@ -9,17 +9,17 @@ describe("#given doctor checks", () => {
      it("#then returns fail when config file is absent", () => {
        const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
        expect(result.status).toBe("fail")
-       expect(result.name).toBe("ochead.config.ts exists")
-       expect(result.detail).toBe("ochead.config.ts not found")
+       expect(result.name).toBe("goatcode.config.ts exists")
+       expect(result.detail).toBe("goatcode.config.ts not found")
      })
 
      it("#then returns pass when config file exists", () => {
-       const tempDir = mkdtempSync(join(tmpdir(), "ochead-doctor-test-"))
+       const tempDir = mkdtempSync(join(tmpdir(), "goatcode-doctor-test-"))
        try {
-         writeFileSync(join(tempDir, "ochead.config.ts"), "", "utf8")
+         writeFileSync(join(tempDir, "goatcode.config.ts"), "", "utf8")
          const result = checkConfigExists(tempDir)
          expect(result.status).toBe("pass")
-         expect(result.name).toBe("ochead.config.ts exists")
+         expect(result.name).toBe("goatcode.config.ts exists")
        } finally {
          rmSync(tempDir, { recursive: true, force: true })
        }
@@ -27,7 +27,7 @@ describe("#given doctor checks", () => {
 
       it("#then returns a result with the correct name when config is missing", () => {
        const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
-       expect(result.name).toBe("ochead.config.ts exists")
+       expect(result.name).toBe("goatcode.config.ts exists")
        expect(result.status === "pass" || result.status === "fail").toBe(true)
      })
    })
@@ -41,12 +41,12 @@ describe("#given doctor checks", () => {
 
     it("#then formats a fail result correctly", () => {
       const result = {
-        name: "ochead.config.ts exists",
+        name: "goatcode.config.ts exists",
         status: "fail" as const,
-        detail: "ochead.config.ts not found",
+        detail: "goatcode.config.ts not found",
       }
       const line = formatCheckLine(result)
-      expect(line).toBe("[FAIL] ochead.config.ts exists (ochead.config.ts not found)")
+      expect(line).toBe("[FAIL] goatcode.config.ts exists (goatcode.config.ts not found)")
     })
 
     it("#then uses PASS tag for pass status", () => {
@@ -106,14 +106,14 @@ describe("#given doctor checks", () => {
       const names = result.checks.map((c: { name: string }) => c.name)
       expect(names).toContain("TypeScript installed")
       expect(names).toContain("Bun installed")
-      expect(names).toContain("ochead.config.ts exists")
+      expect(names).toContain("goatcode.config.ts exists")
       expect(names).toContain("Config is valid")
     })
 
     it("#then config check has fail status for missing directory", async () => {
       const { runDoctor } = await import(`./doctor?run3=${Date.now()}`)
       const result = await runDoctor("/nonexistent/path/that/does/not/exist")
-      const configCheck = result.checks.find((c: { name: string }) => c.name === "ochead.config.ts exists")
+      const configCheck = result.checks.find((c: { name: string }) => c.name === "goatcode.config.ts exists")
       expect(configCheck?.status).toBe("fail")
     })
   })

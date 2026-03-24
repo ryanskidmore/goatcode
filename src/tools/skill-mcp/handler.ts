@@ -58,6 +58,12 @@ export async function executeSkillMcp(args: SkillMcpArgs): Promise<string> {
 
   const operation = resolveOperation(args)
   const parsedArgs = parseArguments(args.arguments)
+  void parsedArgs
 
-  return `Error: skill_mcp is not yet implemented. Full MCP invocation requires ctx.client integration.`
+  return [
+    `Error: skill_mcp tool is not yet available.`,
+    `Operation: ${operation.type} "${operation.name}"`,
+    `This tool requires MCP client integration that is pending implementation.`,
+    `Use alternative tools or contact the goatcode maintainers.`,
+  ].join("\n")
 }

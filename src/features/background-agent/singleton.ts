@@ -1,17 +1,26 @@
 import { BackgroundAgentManager } from "./manager"
-import type { OpenCodeContext } from "../../types/plugin"
 
-export const backgroundAgentManager = new BackgroundAgentManager()
-
-let storedContext: OpenCodeContext | undefined
-
-export function initBackgroundAgentContext(ctx: OpenCodeContext): void {
-  storedContext = ctx
+export type BackgroundAgentContext = {
+  manager: BackgroundAgentManager
 }
 
-export function getBackgroundAgentContext(): OpenCodeContext {
-  if (!storedContext) {
-    throw new Error("BackgroundAgentManager context not initialized. Call initBackgroundAgentContext first.")
+let instance: BackgroundAgentContext | undefined
+
+export function initBackgroundAgent(): BackgroundAgentContext {
+  instance = {
+    manager: new BackgroundAgentManager(),
   }
-  return storedContext
+  return instance
+}
+
+export function getBackgroundAgent(): BackgroundAgentContext {
+  if (!instance) {
+    throw new Error("BackgroundAgent not initialized. Call initBackgroundAgent first.")
+  }
+  return instance
+}
+
+export function resetBackgroundAgent(): void {
+  instance?.manager.dispose()
+  instance = undefined
 }

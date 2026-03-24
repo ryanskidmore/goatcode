@@ -1,5 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
-import { backgroundAgentManager } from "../../../features/background-agent/singleton"
+import { getBackgroundAgent } from "../../../features/background-agent/singleton"
 import { definePlugin } from "../../../plugin-api/define-plugin"
 import { handleBackgroundOutput } from "./handler"
 import type { BackgroundOutputArgs } from "./types"
@@ -28,13 +28,15 @@ const backgroundOutputTool = tool({
     thinking_max_chars: tool.schema.number().optional().describe("Max characters for thinking content (default: 2000)"),
   },
   async execute(args: BackgroundOutputArgs) {
-    return handleBackgroundOutput(backgroundAgentManager, args)
+    const { manager } = getBackgroundAgent()
+    return handleBackgroundOutput(manager, args)
   },
 })
 
 export default definePlugin({
   name: "background-output",
   version: "1.0.0",
+  dependencies: ["delegate-task"],
   tools: {
     background_output: backgroundOutputTool,
   },

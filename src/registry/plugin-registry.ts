@@ -6,6 +6,12 @@ import { resolvePluginOrder } from "./dependency-resolver"
 import { aggregateHooks } from "./hook-aggregator"
 import { aggregateTools } from "./tool-aggregator"
 
+export interface AggregateOptions {
+  disabledAgents?: string[]
+  disabledHooks?: string[]
+  disabledTools?: string[]
+}
+
 export class PluginRegistry {
   private readonly plugins = new Map<string, PluginDefinition>()
 
@@ -23,20 +29,30 @@ export class PluginRegistry {
     return result.order
   }
 
-  aggregate(resolvedOrder: PluginDefinition[]): AggregatedPlugins {
+  aggregate(resolvedOrder: PluginDefinition[], options?: AggregateOptions): AggregatedPlugins {
     return {
-      hooks: aggregateHooks(resolvedOrder),
-      tools: aggregateTools(resolvedOrder),
-      agents: aggregateAgents(resolvedOrder),
+      hooks: aggregateHooks(resolvedOrder, options?.disabledHooks),
+      tools: aggregateTools(resolvedOrder, options?.disabledTools),
+      agents: aggregateAgents(resolvedOrder, options?.disabledAgents),
     }
   }
 
-  async setup(resolvedOrder: PluginDefinition[], ctx: OpenCodeContext): Promise<void> {
+  async setup(resolvedOrder: PluginDefinition[], ctx: OpenCodeContext): Promise<PluginDefinition[]> {
+    const successful: PluginDefinition[] = []
     for (const plugin of resolvedOrder) {
-      if (plugin.setup) {
+      if (!plugin.setup) {
+        successful.push(plugin)
+        continue
+      }
+
+      try {
         await plugin.setup(ctx)
+        successful.push(plugin)
+      } catch (error) {
+        log(`[PluginRegistry] Setup failed for plugin: ${plugin.name}`, { error })
       }
     }
+    return successful
   }
 
   async teardown(resolvedOrder: PluginDefinition[]): Promise<void> {

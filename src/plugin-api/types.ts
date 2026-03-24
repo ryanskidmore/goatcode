@@ -19,6 +19,9 @@ export type {
 export type { ToolDefinition, ToolsRecord } from "../types/tool"
 
 export type { HookEventName, HookHandler, HookPriority } from "../types/hook"
+export { HOOK_EVENT_NAMES } from "../types/hook"
+export { HOOK_EVENT_NAMES as HOOK_NAMES } from "../types/hook"
+export type HookName = import("../types/hook").HookEventName
 
 export type {
   BuiltinCategoryName,
@@ -26,24 +29,4 @@ export type {
   AvailableCategory,
 } from "../types/category"
 
-export type { OcHeadConfig, AgentOverrides } from "../types/config"
-
-/**
- * All 11 OpenCode hook handler names.
- * A PluginDefinition can contribute to any of these.
- */
-export const HOOK_NAMES = [
-  "tool",
-  "config",
-  "chat.message",
-  "chat.params",
-  "chat.headers",
-  "event",
-  "tool.execute.before",
-  "tool.execute.after",
-  "experimental.chat.messages.transform",
-  "experimental.chat.system.transform",
-  "tool.definition",
-] as const satisfies readonly import("../types/hook").HookEventName[]
-
-export type HookName = (typeof HOOK_NAMES)[number]
+export type { GoatCodeConfig, AgentOverrides } from "../types/config"

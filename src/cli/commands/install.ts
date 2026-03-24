@@ -16,7 +16,7 @@ export interface InstallCommandOptions {
   cwd?: string
 }
 
-const CONFIG_FILE_NAME = "ochead.config.ts"
+const CONFIG_FILE_NAME = "goatcode.config.ts"
 
 function getDefaultInstallConfig(): InstallDefaults {
   return {
@@ -44,7 +44,7 @@ function parsePluginInput(inputValue: string, fallback: string[]): string[] {
 
 function getConfigTemplate(config: InstallDefaults): string {
   const pluginLines = config.plugins.map((plugin) => `    ${JSON.stringify(plugin)},`).join("\n")
-  return `import { defineConfig } from "ochead"
+  return `import { defineConfig } from "goatcode-sh"
 
 export default defineConfig({
   // Agent-level model and behavior overrides.
@@ -59,7 +59,7 @@ export default defineConfig({
   disabled_tools: [],
   disabled_skills: [],
 
-  // Keep ochead updated automatically.
+  // Keep goatcode updated automatically.
   auto_update: ${String(config.autoUpdate)},
 
   // External and internal micro-plugins to load.
@@ -73,7 +73,7 @@ ${pluginLines}
 async function promptInstallConfig(defaults: InstallDefaults): Promise<InstallDefaults> {
   const rl = createInterface({ input, output })
   try {
-    output.write("ochead install: interactive setup\n")
+    output.write("goatcode install: interactive setup\n")
     const autoUpdateAnswer = await rl.question(
       `Enable auto-update checks? (Y/n) [${defaults.autoUpdate ? "Y" : "N"}]: `,
     )

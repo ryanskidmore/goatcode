@@ -102,7 +102,7 @@ describe("#given registerProjectSkillLoader", () => {
 })
 
 function createTempProjectDirectory(): string {
-  const directory = mkdtempSync(join(tmpdir(), "ochead-skills-"))
+  const directory = mkdtempSync(join(tmpdir(), "goatcode-skills-"))
   tempDirectories.push(directory)
   return directory
 }

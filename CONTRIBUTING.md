@@ -1,10 +1,10 @@
-# Contributing to OcHead
+# Contributing to GoatCode
 
-We appreciate your interest in contributing to OcHead. This guide covers the development setup, architecture, and contribution process.
+We appreciate your interest in contributing to GoatCode. This guide covers the development setup, architecture, and contribution process.
 
 ## Development Setup
 
-OcHead is built with Bun. Ensure you have Bun installed before starting.
+GoatCode is built with Bun. Ensure you have Bun installed before starting.
 
 1. Clone the repository.
 2. Install dependencies:
@@ -22,7 +22,7 @@ OcHead is built with Bun. Ensure you have Bun installed before starting.
 
 ## Architecture Overview
 
-OcHead follows a micro-plugin architecture. The project was built in waves:
+GoatCode follows a micro-plugin architecture. The project was built in waves:
 
 1. **Foundation**: Project scaffolding, core types, and the plugin registry.
 2. **Core Systems**: Agent, tool, and hook systems, background manager, and session state.
@@ -35,7 +35,7 @@ OcHead follows a micro-plugin architecture. The project was built in waves:
 
 ## Adding a New Plugin
 
-Every feature in OcHead is a plugin. Use the `definePlugin` helper to create new contributions.
+Every feature in GoatCode is a plugin. Use the `definePlugin` helper to create new contributions.
 
 ### Adding a Tool Plugin
 

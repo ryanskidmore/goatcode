@@ -16,6 +16,6 @@ export function buildTool<
   return {
     description: input.description,
     args: input.args,
-    execute: input.execute as ToolDefinition["execute"],
+    execute: (args, context) => input.execute(args as TExecuteArgs, context),
   }
 }
