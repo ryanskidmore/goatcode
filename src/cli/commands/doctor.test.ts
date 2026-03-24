@@ -1,14 +1,10 @@
-import { describe, it, expect, afterEach, mock } from "bun:test"
+import { describe, it, expect } from "bun:test"
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { checkConfigExists, formatCheckLine } from "./doctor"
 
 describe("#given doctor checks", () => {
-  afterEach(() => {
-    mock.restore()
-  })
-
    describe("#when checkConfigExists is called", () => {
      it("#then returns fail when config file is absent", () => {
        const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
@@ -29,7 +25,7 @@ describe("#given doctor checks", () => {
        }
      })
 
-     it("#then returns a result with the correct name regardless of presence", () => {
+      it("#then returns a result with the correct name when config is missing", () => {
        const result = checkConfigExists("/nonexistent/path/that/does/not/exist")
        expect(result.name).toBe("ochead.config.ts exists")
        expect(result.status === "pass" || result.status === "fail").toBe(true)

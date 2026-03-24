@@ -4,7 +4,7 @@ export interface UpdateCheckResult {
   updateAvailable: boolean
   latest: string
   current: string
-  error?: boolean
+  error: boolean
 }
 
 export async function checkForUpdate(
@@ -32,6 +32,7 @@ export async function checkForUpdate(
       updateAvailable,
       latest: latestVersion,
       current: currentVersion,
+      error: false,
     }
   } catch (error) {
     log("[auto-update-checker] Error checking for update", { error })

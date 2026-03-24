@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test"
-import { writeFileSync, mkdtempSync, rmSync } from "node:fs"
+import { writeFileSync, mkdtempSync, rmSync, readFileSync } from "node:fs"
 import { join, resolve } from "node:path"
 import { spawnSync } from "node:child_process"
 import { tmpdir } from "node:os"
@@ -134,6 +134,8 @@ describe("#given the generated config written to a temp file", () => {
     tempFile = join(tempDir, "ochead.config.ts")
     const content = generateConfig()
     writeFileSync(tempFile, content, "utf8")
+    
+    writeFileSync(join(tempDir, "ochead.d.ts"), 'export function defineConfig(config: any): any\n', "utf8")
   })
 
   afterAll(() => {
@@ -144,9 +146,12 @@ describe("#given the generated config written to a temp file", () => {
     it("#then the generated config is valid TypeScript", () => {
       const result = spawnSync(
         "bunx",
-        ["tsc", "--noEmit"],
-        { encoding: "utf8", cwd: PROJECT_ROOT }
+        ["tsc", "--noEmit", "--skipLibCheck", "--isolatedModules", "--module", "esnext", "--target", "esnext", tempFile],
+        { encoding: "utf8", timeout: 30000 }
       )
+      if (result.error) {
+        throw new Error(`tsc failed to launch: ${result.error.message}`)
+      }
       expect(result.status).toBe(0)
     })
   })

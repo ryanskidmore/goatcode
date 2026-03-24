@@ -21,7 +21,11 @@ function buildSlotHandler(handlers: PluginHookHandler[]): PluginHookHandler {
   }
   return async (input: unknown, output: unknown) => {
     for (const handler of handlers) {
-      await handler(input, output)
+      try {
+        await handler(input, output)
+      } catch (err) {
+        log(`[compositor] Handler error: ${err instanceof Error ? err.message : String(err)}`)
+      }
     }
   }
 }
@@ -35,7 +39,7 @@ function buildSlotHandler(handlers: PluginHookHandler[]): PluginHookHandler {
 export function compose(aggregated: AggregatedPlugins): Hooks {
   const hooks: Hooks = {}
 
-  hooks.tool = aggregated.tools
+  hooks.tool = structuredClone(aggregated.tools)
 
   const configHandlers = aggregated.hooks.get("config") ?? []
   hooks.config = async (input) => {

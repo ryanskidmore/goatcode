@@ -1,7 +1,6 @@
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
 import { writeFile } from "node:fs/promises"
-import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import { BUILTIN_AGENT_PLUGINS } from "../../agents/builtin-agents"
 import { log } from "../../shared/logger"
@@ -98,12 +97,19 @@ export async function installCommand(options: InstallCommandOptions = {}): Promi
   const targetDirectory = options.cwd ?? process.cwd()
   const configPath = resolve(targetDirectory, CONFIG_FILE_NAME)
 
-  if (existsSync(configPath) && !options.force) {
-    output.write(`${CONFIG_FILE_NAME} already exists at ${configPath}. Use --force to overwrite.\n`)
-    return configPath
+  if (!options.force) {
+    try {
+      await writeFile(configPath, configContent, { encoding: "utf8", flag: "wx" })
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+        output.write(`${CONFIG_FILE_NAME} already exists at ${configPath}. Use --force to overwrite.\n`)
+        return configPath
+      }
+      throw err
+    }
+  } else {
+    await writeFile(configPath, configContent, "utf8")
   }
-
-  await writeFile(configPath, configContent, "utf8")
 
   log("cli: install config generated", {
     nonInteractive: options.nonInteractive ?? false,
