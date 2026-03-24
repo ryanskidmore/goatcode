@@ -15,6 +15,7 @@ export function aggregateHooks(
   // Note: importing from ../hooks/ here creates a cross-layer dependency — consider moving
   // HOOK_TIERS to src/types/ or src/shared/ to avoid the coupling.
   const hookMap = new Map<string, PluginHookHandler[]>()
+  const skippedHooks: string[] = []
 
   for (const plugin of plugins) {
     if (!plugin.hooks) {
@@ -26,7 +27,7 @@ export function aggregateHooks(
         continue
       }
       if (disabled.has(eventName)) {
-        log(`[hook-aggregator] Skipping disabled hook: "${eventName}"`)
+        skippedHooks.push(eventName)
         continue
       }
 
@@ -37,6 +38,10 @@ export function aggregateHooks(
       handlers.push(handler as PluginHookHandler)
       hookMap.set(eventName, handlers)
     }
+  }
+
+  if (skippedHooks.length > 0) {
+    log(`[hook-aggregator] Skipped ${skippedHooks.length} disabled hook(s): ${skippedHooks.join(", ")}`)
   }
 
   return hookMap

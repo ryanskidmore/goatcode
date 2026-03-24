@@ -8,6 +8,7 @@ export function aggregateAgents(
 ): Record<string, PluginAgentContribution> {
   const disabled = new Set(disabledAgents ?? [])
   const agents: Record<string, PluginAgentContribution> = {}
+  const skippedAgents: string[] = []
 
   for (const plugin of plugins) {
     if (!plugin.agents) {
@@ -16,7 +17,7 @@ export function aggregateAgents(
 
     for (const [name, agent] of Object.entries(plugin.agents)) {
       if (disabled.has(name)) {
-        log(`[agent-aggregator] Skipping disabled agent: "${name}"`)
+        skippedAgents.push(name)
         continue
       }
 
@@ -28,6 +29,10 @@ export function aggregateAgents(
       }
       agents[name] = agent
     }
+  }
+
+  if (skippedAgents.length > 0) {
+    log(`[agent-aggregator] Skipped ${skippedAgents.length} disabled agent(s): ${skippedAgents.join(", ")}`)
   }
 
   return agents

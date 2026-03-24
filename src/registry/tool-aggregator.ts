@@ -8,6 +8,7 @@ export function aggregateTools(
 ): Record<string, PluginToolContribution> {
   const disabled = new Set(disabledTools ?? [])
   const tools: Record<string, PluginToolContribution> = {}
+  const skippedTools: string[] = []
 
   for (const plugin of plugins) {
     if (!plugin.tools) {
@@ -16,7 +17,7 @@ export function aggregateTools(
 
     for (const [name, tool] of Object.entries(plugin.tools)) {
       if (disabled.has(name)) {
-        log(`[tool-aggregator] Skipping disabled tool: "${name}"`)
+        skippedTools.push(name)
         continue
       }
 
@@ -28,6 +29,10 @@ export function aggregateTools(
       }
       tools[name] = tool
     }
+  }
+
+  if (skippedTools.length > 0) {
+    log(`[tool-aggregator] Skipped ${skippedTools.length} disabled tool(s): ${skippedTools.join(", ")}`)
   }
 
   return tools
