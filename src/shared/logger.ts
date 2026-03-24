@@ -20,6 +20,10 @@ function flush(): void {
   }
 }
 
+// Flush buffer on process exit to avoid losing buffered log entries
+process.on('exit', flush)
+process.on('beforeExit', flush)
+
 function scheduleFlush(): void {
   if (flushTimer) return
   flushTimer = setTimeout(() => {
