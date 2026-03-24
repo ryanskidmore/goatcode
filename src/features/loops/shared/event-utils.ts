@@ -11,7 +11,7 @@ export function asEvent(input: unknown): HookEvent | null {
   }
 
   const value = (input as HookInput).event
-  if (!value || typeof value !== "object") {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null
   }
 

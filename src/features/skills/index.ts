@@ -26,9 +26,8 @@ export function createMergedSkillLoader(directory: string): SkillLoader {
 }
 
 export function registerProjectSkillLoader(directory: string): void {
-  const loader = createMergedSkillLoader(directory)
-
   if (typeof skillHandler.registerSkillLoader === "function") {
+    const loader = createMergedSkillLoader(directory)
     skillHandler.registerSkillLoader(loader)
     return
   }

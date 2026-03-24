@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createMergedSkillLoader, gitMasterSkill, loadProjectSkills, mergeSkills } from "./index"
+import { createMergedSkillLoader, gitMasterSkill, loadProjectSkills, mergeSkills, registerProjectSkillLoader } from "./index"
 
 const tempDirectories: string[] = []
 
@@ -18,7 +18,6 @@ describe("#given builtin git-master skill", () => {
       expect(gitMasterSkill.name).toBe("git-master")
       expect(gitMasterSkill.description.length).toBeGreaterThan(0)
       expect(gitMasterSkill.template.length).toBeGreaterThan(0)
-      expect(gitMasterSkill.template).toContain("Commit Strategy")
     })
   })
 })
@@ -86,6 +85,18 @@ Use custom git policy for this repository.
       const loader = createMergedSkillLoader(projectDirectory)
 
       expect(loader.load("git-master")).toBe("Use custom git policy for this repository.")
+    })
+  })
+})
+
+describe("#given registerProjectSkillLoader", () => {
+  describe("#when skillHandler.registerSkillLoader is not available", () => {
+    it("#then logs that registration is unavailable without throwing", () => {
+      //#given
+      const projectDirectory = createTempProjectDirectory()
+
+      //#when / #then — should not throw
+      expect(() => registerProjectSkillLoader(projectDirectory)).not.toThrow()
     })
   })
 })

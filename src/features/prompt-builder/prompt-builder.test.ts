@@ -6,6 +6,7 @@ import type { SkillEntry } from "./skill-section-builder"
 import { buildSkillsSection } from "./skill-section-builder"
 import { buildCategoriesSection } from "./category-section-builder"
 import { buildDynamicPrompt } from "./dynamic-prompt-builder"
+import { ORCHESTRATOR_PROMPT } from "../../agents/orchestrator/prompt"
 import type { AvailableCategory } from "../../types/category"
 
 const SAMPLE_AGENTS: AgentTableEntry[] = [
@@ -54,6 +55,19 @@ describe("prompt-builder", () => {
         //#then
         expect(result).toContain("First sentence")
         expect(result).not.toContain("Second sentence")
+      })
+
+      it("#then returns full description when no period present", () => {
+        //#given
+        const agents: AgentTableEntry[] = [
+          { name: "test-agent", description: "No period here", whenToUse: "Always" },
+        ]
+
+        //#when
+        const result = buildAgentTable(agents)
+
+        //#then
+        expect(result).toContain("No period here")
       })
     })
 
@@ -125,6 +139,20 @@ describe("prompt-builder", () => {
         //#then
         expect(result).toContain("default")
       })
+
+      it("#then escapes pipe characters in descriptions", () => {
+        //#given
+        const categories: AvailableCategory[] = [
+          { name: "test-cat", description: "Contains | pipe character", model: "gpt-5" },
+        ]
+
+        //#when
+        const result = buildCategoriesSection(categories)
+
+        //#then
+        expect(result).toContain("Contains \\| pipe character")
+        expect(result).not.toContain("Contains | pipe character")
+      })
     })
 
     describe("#when called with empty array", () => {
@@ -152,7 +180,7 @@ describe("prompt-builder", () => {
         const result = buildDynamicPrompt(input)
 
         //#then
-        expect(result).toContain("orchestrator")
+        expect(result).toContain(ORCHESTRATOR_PROMPT)
         expect(result).toContain("explorer")
         expect(result).toContain("deep-worker")
         expect(result).toContain("playwright")
@@ -171,7 +199,7 @@ describe("prompt-builder", () => {
         const result = buildDynamicPrompt(input)
 
         //#then
-        expect(result).toContain("orchestrator")
+        expect(result).toBe(ORCHESTRATOR_PROMPT)
         expect(result).not.toContain("### Available Agents")
         expect(result).not.toContain("### Available Skills")
         expect(result).not.toContain("### Category Mapping")
