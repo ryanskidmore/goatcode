@@ -47,10 +47,15 @@ export function checkStability(
 export async function pollUntilStable(
   fetchSnapshot: () => Promise<PollSnapshot>,
   maxPolls = 120,
+  signal?: AbortSignal,
 ): Promise<PollSnapshot> {
   let state = createPollState()
 
   for (let attempt = 0; attempt < maxPolls; attempt += 1) {
+    if (signal?.aborted) {
+      throw new Error("Polling cancelled")
+    }
+
     const latest = await fetchSnapshot()
     const { stable, nextState } = checkStability(
       state,
