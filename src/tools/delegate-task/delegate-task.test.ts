@@ -1,5 +1,5 @@
 import { describe, it, expect, mock } from "bun:test"
-import { createCategoryResolver } from "./category-resolver"
+import { resolveCategory } from "./category-resolver"
 import { DEFAULT_CATEGORIES, CATEGORY_NAMES } from "./constants"
 import type { BackgroundTask } from "../../features/background-agent/types"
 import { createTaskTool } from "./handler"
@@ -69,10 +69,8 @@ function makeMockClient() {
   }
 }
 
-describe("createCategoryResolver", () => {
-  describe("#given the default category resolver", () => {
-    const resolver = createCategoryResolver()
-
+describe("resolveCategory", () => {
+  describe("#given the resolveCategory function", () => {
     describe("#when resolving all 8 default categories", () => {
       it("#then each resolves to a valid config", () => {
         const expected = [
@@ -87,7 +85,7 @@ describe("createCategoryResolver", () => {
         ]
 
         for (const name of expected) {
-          const config = resolver.resolve(name)
+          const config = resolveCategory(name)
           expect(config).toBeDefined()
           expect(config!.model).toBeTypeOf("string")
           expect(config!.model.length).toBeGreaterThan(0)
@@ -97,18 +95,16 @@ describe("createCategoryResolver", () => {
 
     describe("#when resolving visual-engineering", () => {
       it("#then returns google/gemini-3.1-pro with high variant", () => {
-        const config = resolver.resolve("visual-engineering")
-        expect(config).toEqual({
-          model: "google/gemini-3.1-pro",
-          variant: "high",
-          description: "Frontend, UI/UX, design, styling, animation",
-        })
+        const config = resolveCategory("visual-engineering")
+        expect(config?.model).toBe("google/gemini-3.1-pro")
+        expect(config?.variant).toBe("high")
+        expect(config?.description).toBe("Frontend, UI/UX, design, styling, animation")
       })
     })
 
     describe("#when resolving ultrabrain", () => {
       it("#then returns openai/gpt-5.4 with xhigh variant", () => {
-        const config = resolver.resolve("ultrabrain")
+        const config = resolveCategory("ultrabrain")
         expect(config?.model).toBe("openai/gpt-5.4")
         expect(config?.variant).toBe("xhigh")
       })
@@ -116,23 +112,22 @@ describe("createCategoryResolver", () => {
 
     describe("#when resolving an unknown category", () => {
       it("#then returns undefined", () => {
-        const config = resolver.resolve("nonexistent-category")
+        const config = resolveCategory("nonexistent-category")
         expect(config).toBeUndefined()
       })
     })
 
     describe("#when listing categories", () => {
       it("#then returns all 8 category names", () => {
-        const names = resolver.list()
-        expect(names).toHaveLength(8)
-        expect(names).toContain("visual-engineering")
-        expect(names).toContain("ultrabrain")
-        expect(names).toContain("deep")
-        expect(names).toContain("artistry")
-        expect(names).toContain("quick")
-        expect(names).toContain("unspecified-low")
-        expect(names).toContain("unspecified-high")
-        expect(names).toContain("writing")
+        expect(CATEGORY_NAMES).toHaveLength(8)
+        expect(CATEGORY_NAMES).toContain("visual-engineering")
+        expect(CATEGORY_NAMES).toContain("ultrabrain")
+        expect(CATEGORY_NAMES).toContain("deep")
+        expect(CATEGORY_NAMES).toContain("artistry")
+        expect(CATEGORY_NAMES).toContain("quick")
+        expect(CATEGORY_NAMES).toContain("unspecified-low")
+        expect(CATEGORY_NAMES).toContain("unspecified-high")
+        expect(CATEGORY_NAMES).toContain("writing")
       })
     })
   })

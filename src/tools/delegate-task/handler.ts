@@ -1,12 +1,12 @@
 import type { ToolDefinition } from "@opencode-ai/plugin"
 import type { BackgroundAgentManager } from "../../features/background-agent/manager"
-import type { TaskInput } from "./types"
+import type { TaskInput, CategoryConfig } from "./types"
 import type { ExecutorDeps } from "./executor"
 import { z } from "zod"
 
 import { buildTool } from "../tool-builder"
 import { getClientFromToolContext } from "../lsp/client"
-import { createCategoryResolver } from "./category-resolver"
+import { resolveCategory } from "./category-resolver"
 import { executeBackground, executeSync } from "./executor"
 import { CATEGORY_NAMES } from "./constants"
 import { log } from "../../shared/logger"
@@ -29,8 +29,6 @@ const taskArgsSchema = z.object({
 })
 
 export function createTaskTool(manager: BackgroundAgentManager): ToolDefinition {
-  const resolver = createCategoryResolver()
-
   return buildTool({
     description: [
       "Delegate a task to a category-based agent.",
@@ -49,9 +47,9 @@ export function createTaskTool(manager: BackgroundAgentManager): ToolDefinition 
         session_id: args.session_id,
       }
 
-      const config = resolver.resolve(input.category)
+      const config = resolveCategory(input.category) as CategoryConfig | undefined
       if (!config) {
-        const available = resolver.list().join(", ")
+        const available = CATEGORY_NAMES.join(", ")
         log("[delegate-task] Unknown category", { category: input.category })
         return `Unknown category: "${input.category}". Available: ${available}`
       }
