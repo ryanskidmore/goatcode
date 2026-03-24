@@ -11,11 +11,17 @@
       "import": "./dist/index.js"
     }
   },
+  "bin": {
+    "goatcode": "./src/cli/index.ts"
+  },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "find src -name '*.test.ts' -print0 | xargs -0 bun test",
     "clean": "rm -rf dist"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
   },
   "keywords": ["opencode", "plugin", "agents", "orchestration", "ai"],
   "author": "",
