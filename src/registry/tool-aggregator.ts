@@ -12,8 +12,9 @@ export function aggregateTools(plugins: PluginDefinition[]): Record<string, Plug
 
     for (const [name, tool] of Object.entries(plugin.tools)) {
       if (tools[name]) {
-        log(`[tool-aggregator] Tool name conflict: "${name}" from plugin "${plugin.name}" overrides existing`, {
+        log(`[tool-aggregator] CONFLICT: Tool "${name}" from plugin "${plugin.name}" overwrites existing registration. To avoid this, ensure tool names are unique across plugins.`, {
           plugin: plugin.name,
+          tool: name,
         })
       }
       tools[name] = tool

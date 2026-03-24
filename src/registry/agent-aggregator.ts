@@ -12,8 +12,9 @@ export function aggregateAgents(plugins: PluginDefinition[]): Record<string, Plu
 
     for (const [name, agent] of Object.entries(plugin.agents)) {
       if (agents[name]) {
-        log(`[agent-aggregator] Agent name conflict: "${name}" from plugin "${plugin.name}" overrides existing`, {
+        log(`[agent-aggregator] CONFLICT: Agent "${name}" from plugin "${plugin.name}" overwrites existing registration. To avoid this, ensure agent names are unique across plugins.`, {
           plugin: plugin.name,
+          agent: name,
         })
       }
       agents[name] = agent
