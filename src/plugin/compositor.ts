@@ -42,7 +42,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       if (!input.agent[name]) {
         input.agent[name] = {
           ...agentConfig,
-          tools: agentConfig.tools ? { ...agentConfig.tools } : undefined,
+          ...(agentConfig.tools ? { tools: { ...agentConfig.tools } } : {}),
         }
       }
     }
