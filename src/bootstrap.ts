@@ -22,6 +22,10 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     log("[bootstrap] Config validation failed, using defaults", {
       errors: validation.errors,
     })
+    process.stderr.write(
+      `[goatcode] WARNING: goatcode.config.ts has validation errors — using defaults.\n` +
+      validation.errors.map((e) => `  - ${e}`).join("\n") + "\n"
+    )
     const fallback = validateConfig({})
     if (!fallback.success) {
       throw new Error("[bootstrap] Default config validation failed")
