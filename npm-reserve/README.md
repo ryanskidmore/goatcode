@@ -6,7 +6,7 @@ Enterprise-grade OpenCode plugin with micro-plugin architecture and multi-agent 
 
 ## What is goatcode?
 
-goatcode is a professionally-engineered OpenCode plugin that provides:
+goatcode is a professionally engineered OpenCode plugin that provides:
 
 - Multi-agent orchestration with 11 specialized agents
 - Micro-plugin architecture where every feature is independently composable
