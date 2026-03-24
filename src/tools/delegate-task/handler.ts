@@ -28,7 +28,7 @@ const taskArgsSchema = z.object({
   session_id: z.string().optional().describe("Resume an existing session"),
 })
 
-export function createTaskTool(manager: BackgroundAgentManager): ToolDefinition {
+export function createTaskTool(getManager: () => BackgroundAgentManager): ToolDefinition {
   return buildTool({
     description: [
       "Delegate a task to a category-based agent.",
@@ -55,6 +55,7 @@ export function createTaskTool(manager: BackgroundAgentManager): ToolDefinition 
       }
 
       const client = getClientFromToolContext(toolContext)
+      const manager = getManager()
       const deps: ExecutorDeps = {
         manager,
         client,

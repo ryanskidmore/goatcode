@@ -2,6 +2,7 @@ import { describe, it, expect, mock } from "bun:test"
 import { resolveCategory } from "./category-resolver"
 import { DEFAULT_CATEGORIES, CATEGORY_NAMES } from "./constants"
 import type { BackgroundTask } from "../../features/background-agent/types"
+import type { BackgroundAgentManager } from "../../features/background-agent/manager"
 import { createTaskTool } from "./handler"
 import type { ToolDefinition } from "@opencode-ai/plugin"
 
@@ -163,7 +164,7 @@ describe("CATEGORY_NAMES", () => {
 describe("createTaskTool", () => {
   describe("#given a task tool with mock manager", () => {
     const manager = makeMockManager()
-    const tool = createTaskTool(manager as unknown as Parameters<typeof createTaskTool>[0])
+    const tool = createTaskTool(() => manager as unknown as BackgroundAgentManager)
 
     describe("#when executing with an unknown category", () => {
       it("#then returns an error listing available categories", async () => {
@@ -186,9 +187,7 @@ describe("createTaskTool", () => {
     describe("#when executing background task with valid category", () => {
       it("#then launches via manager and returns task id", async () => {
         const bgManager = makeMockManager()
-        const bgTool = createTaskTool(
-          bgManager as unknown as Parameters<typeof createTaskTool>[0],
-        )
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager)
         const ctx = makeMockToolContext()
 
         const result = await bgTool.execute(
@@ -212,9 +211,7 @@ describe("createTaskTool", () => {
     describe("#when executing sync task with valid category", () => {
       it("#then creates session and returns result", async () => {
         const syncManager = makeMockManager()
-        const syncTool = createTaskTool(
-          syncManager as unknown as Parameters<typeof createTaskTool>[0],
-        )
+        const syncTool = createTaskTool(() => syncManager as unknown as BackgroundAgentManager)
         const ctx = makeMockToolContext()
 
         const result = await syncTool.execute(
@@ -234,7 +231,7 @@ describe("createTaskTool", () => {
 
   describe("#given the tool definition", () => {
     const manager = makeMockManager()
-    const tool = createTaskTool(manager as unknown as Parameters<typeof createTaskTool>[0])
+    const tool = createTaskTool(() => manager as unknown as BackgroundAgentManager)
 
     describe("#when checking tool metadata", () => {
       it("#then has a description mentioning categories", () => {
