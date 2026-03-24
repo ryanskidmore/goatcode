@@ -17,5 +17,5 @@ export function executeSkill(args: SkillArgs): string {
     }
   }
 
-  return `Skill '${args.name}' not yet registered. Full skill system wired in Task 45.`
+  return `Skill '${args.name}' not found. Available skills can be loaded from builtin skills (e.g. 'git-master') or project skills in .opencode/skills/.`
 }

@@ -11,6 +11,7 @@ import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents"
 import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks"
 import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools"
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features"
+import { registerProjectSkillLoader } from "./features/skills"
 
 function isValidPluginDefinition(value: unknown): value is PluginDefinition {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false
@@ -93,6 +94,8 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       log(`[bootstrap] Failed to load external plugin: ${packageName}`, { error })
     }
   }
+
+  registerProjectSkillLoader(ctx.directory)
 
   const resolved = registry.resolve()
   const initializedPlugins = await registry.setup(resolved, ctx)
