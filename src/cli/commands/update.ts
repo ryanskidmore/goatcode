@@ -3,6 +3,7 @@ import { checkForUpdate } from "../../features/auto-update/update-checker"
 import packageJson from "../../../package.json" with { type: "json" }
 
 const VERSION = packageJson.version
+const PACKAGE_NAME = packageJson.name
 
 export async function handleUpdateCommand(): Promise<void> {
   try {
@@ -23,9 +24,9 @@ export async function handleUpdateCommand(): Promise<void> {
     process.stdout.write(
       `Update available: v${result.current} -> v${result.latest}\n`
     )
-    process.stdout.write("Running: bun update goatcode-sh\n")
+    process.stdout.write(`Running: bun update ${PACKAGE_NAME}\n`)
 
-    const proc = Bun.spawn(["bun", "update", "goatcode-sh"], {
+    const proc = Bun.spawn(["bun", "update", PACKAGE_NAME], {
       stdio: ["inherit", "inherit", "inherit"],
     })
 
