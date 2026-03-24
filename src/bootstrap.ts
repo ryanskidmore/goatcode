@@ -7,6 +7,9 @@ import { log } from "./shared/logger"
 import type { OpenCodeContext } from "./types/plugin"
 import type { GoatCodeConfig } from "./types/config"
 import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents"
+import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks"
+import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools"
+import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features"
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const rawConfig = await loadConfig(ctx.directory)
@@ -29,6 +32,18 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const registry = new PluginRegistry()
 
   for (const plugin of BUILTIN_AGENT_PLUGINS) {
+    registry.register(plugin)
+  }
+
+  for (const plugin of BUILTIN_HOOK_PLUGINS) {
+    registry.register(plugin)
+  }
+
+  for (const plugin of BUILTIN_TOOL_PLUGINS) {
+    registry.register(plugin)
+  }
+
+  for (const plugin of BUILTIN_FEATURE_PLUGINS) {
     registry.register(plugin)
   }
 
