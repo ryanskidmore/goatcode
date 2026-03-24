@@ -6,10 +6,21 @@ import { compose } from "./plugin/compositor"
 import { log } from "./shared/logger"
 import type { OpenCodeContext } from "./types/plugin"
 import type { GoatCodeConfig } from "./types/config"
+import type { PluginDefinition } from "./types/plugin"
 import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents"
 import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks"
 import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools"
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features"
+
+function isValidPluginDefinition(value: unknown): value is PluginDefinition {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>)["name"] === "string" &&
+    (value as Record<string, unknown>)["name"] !== ""
+  )
+}
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const rawConfig = await loadConfig(ctx.directory)
@@ -55,6 +66,11 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     try {
       const mod = await import(packageName)
       const pluginDef = mod.default ?? mod
+      if (!isValidPluginDefinition(pluginDef)) {
+        log(`[bootstrap] External plugin "${packageName}" does not export a valid PluginDefinition (missing name field), skipping`)
+        process.stderr.write(`[goatcode] WARNING: Plugin "${packageName}" is not a valid PluginDefinition and was skipped.\n`)
+        continue
+      }
       registry.register(pluginDef)
     } catch (error) {
       log(`[bootstrap] Failed to load external plugin: ${packageName}`, { error })
