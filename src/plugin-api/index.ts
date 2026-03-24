@@ -19,7 +19,7 @@ export type {
   BuiltinCategoryName,
   CategoryConfig,
   AvailableCategory,
-  OcHeadConfig,
+  GoatCodeConfig,
   AgentOverrides,
   HookName,
 } from "./types"

@@ -26,7 +26,7 @@ export type {
   AvailableCategory,
 } from "../types/category"
 
-export type { OcHeadConfig, AgentOverrides } from "../types/config"
+export type { GoatCodeConfig, AgentOverrides } from "../types/config"
 
 /**
  * All 11 OpenCode hook handler names.

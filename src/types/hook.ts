@@ -1,6 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin"
 
-/** All OpenCode hook event names used by OcHead. */
+/** All OpenCode hook event names used by GoatCode. */
 export type HookEventName =
   | "tool"
   | "config"

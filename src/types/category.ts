@@ -1,4 +1,4 @@
-/** All built-in OcHead category names (user-facing names). */
+/** All built-in GoatCode category names (user-facing names). */
 export type BuiltinCategoryName =
   | "visual"
   | "reasoning"

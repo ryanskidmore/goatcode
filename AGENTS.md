@@ -1,6 +1,6 @@
 # Agent Reference
 
-OcHead includes 11 specialized agents. Each agent is tuned for specific tasks and has unique capabilities and tool restrictions.
+GoatCode includes 11 specialized agents. Each agent is tuned for specific tasks and has unique capabilities and tool restrictions.
 
 ## Orchestrator
 

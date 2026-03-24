@@ -1,11 +1,11 @@
-import type { OcHeadConfig } from "../types/config"
+import type { GoatCodeConfig } from "../types/config"
 import { log } from "../shared/logger"
-import { OcHeadConfigSchema } from "./schema"
+import { GoatCodeConfigSchema } from "./schema"
 
 export type ValidationResult =
   | {
       success: true
-      config: OcHeadConfig
+      config: GoatCodeConfig
     }
   | {
       success: false
@@ -13,7 +13,7 @@ export type ValidationResult =
     }
 
 export function validateConfig(raw: unknown): ValidationResult {
-  const result = OcHeadConfigSchema.safeParse(raw)
+  const result = GoatCodeConfigSchema.safeParse(raw)
   if (result.success) {
     return { success: true, config: result.data }
   }

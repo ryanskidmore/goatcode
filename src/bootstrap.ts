@@ -5,14 +5,14 @@ import { PluginRegistry } from "./registry/plugin-registry"
 import { compose } from "./plugin/compositor"
 import { log } from "./shared/logger"
 import type { OpenCodeContext } from "./types/plugin"
-import type { OcHeadConfig } from "./types/config"
+import type { GoatCodeConfig } from "./types/config"
 import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents"
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   const rawConfig = await loadConfig(ctx.directory)
 
   const validation = validateConfig(rawConfig ?? {})
-  let config: OcHeadConfig
+  let config: GoatCodeConfig
   if (validation.success) {
     config = validation.config
   } else {

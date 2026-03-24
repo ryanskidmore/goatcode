@@ -44,17 +44,17 @@ export async function checkBun(): Promise<CheckResult> {
 }
 
 export function checkConfigExists(cwd: string): CheckResult {
-  const configPath = join(cwd, "ochead.config.ts")
+  const configPath = join(cwd, "goatcode.config.ts")
   if (!existsSync(configPath)) {
-    return { name: "ochead.config.ts exists", status: "fail", detail: "ochead.config.ts not found" }
+    return { name: "goatcode.config.ts exists", status: "fail", detail: "goatcode.config.ts not found" }
   }
-  return { name: "ochead.config.ts exists", status: "pass", detail: configPath }
+  return { name: "goatcode.config.ts exists", status: "pass", detail: configPath }
 }
 
 export async function checkConfigValid(cwd: string): Promise<CheckResult> {
-  const configPath = join(cwd, "ochead.config.ts")
+  const configPath = join(cwd, "goatcode.config.ts")
   if (!existsSync(configPath)) {
-    return { name: "Config is valid", status: "fail", detail: "ochead.config.ts not found, cannot validate" }
+    return { name: "Config is valid", status: "fail", detail: "goatcode.config.ts not found, cannot validate" }
   }
   try {
     await import(configPath)

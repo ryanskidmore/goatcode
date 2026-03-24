@@ -8,10 +8,10 @@ export type AgentOverrides = Partial<Record<BuiltinAgentName, AgentOverrideConfi
 export type CategoryOverrides = Partial<Record<BuiltinCategoryName, CategoryConfig>>
 
 /**
- * Top-level OcHead configuration shape.
+ * Top-level GoatCode configuration shape.
  * Runtime validation and defaults are handled by the config schema layer.
  */
-export interface OcHeadConfig {
+export interface GoatCodeConfig {
   /** Agent model and behavior overrides. */
   agents?: AgentOverrides
   /** Category model and behavior overrides. */

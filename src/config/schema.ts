@@ -44,7 +44,7 @@ export const CategoryOverridesSchema = z.object({
   writing: CategoryConfigSchema.optional(),
 })
 
-export const OcHeadConfigSchema = z.object({
+export const GoatCodeConfigSchema = z.object({
   agents: AgentOverridesSchema.optional(),
   categories: CategoryOverridesSchema.optional(),
   disabled_agents: z.array(z.string()).default(CONFIG_DEFAULTS.disabled_agents),
@@ -55,4 +55,4 @@ export const OcHeadConfigSchema = z.object({
   plugins: z.array(z.string()).optional(),
 })
 
-export type OcHeadConfigInput = z.input<typeof OcHeadConfigSchema>
+export type GoatCodeConfigInput = z.input<typeof GoatCodeConfigSchema>

@@ -155,7 +155,7 @@ describe("code search tool micro-plugins", () => {
     let tempDirectory = ""
 
     beforeEach(async () => {
-      tempDirectory = await mkdtemp(join(tmpdir(), "ochead-glob-test-"))
+      tempDirectory = await mkdtemp(join(tmpdir(), "goatcode-glob-test-"))
       await writeFile(join(tempDirectory, "older.ts"), "export const older = true")
       await writeFile(join(tempDirectory, "newer.ts"), "export const newer = true")
 

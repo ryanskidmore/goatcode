@@ -23,9 +23,9 @@ export async function handleUpdateCommand(): Promise<void> {
     process.stdout.write(
       `Update available: v${result.current} -> v${result.latest}\n`
     )
-    process.stdout.write("Running: bun update ochead\n")
+    process.stdout.write("Running: bun update goatcode\n")
 
-    const proc = Bun.spawn(["bun", "update", "ochead"], {
+    const proc = Bun.spawn(["bun", "update", "goatcode"], {
       stdio: ["inherit", "inherit", "inherit"],
     })
 

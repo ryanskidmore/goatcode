@@ -26,7 +26,7 @@ describe("#given update command", () => {
   })
 
   describe("#when update is available", () => {
-    it("#then runs bun update ochead", async () => {
+    it("#then runs bun update goatcode", async () => {
       globalThis.fetch = (() => {
         return Promise.resolve(
           new Response(JSON.stringify({ version: "0.2.0" }))
@@ -43,7 +43,7 @@ describe("#given update command", () => {
       expect(stdoutWrites.some((w) => w.includes("Update available"))).toBe(
         true
       )
-      expect(stdoutWrites.some((w) => w.includes("bun update ochead"))).toBe(
+      expect(stdoutWrites.some((w) => w.includes("bun update goatcode"))).toBe(
         true
       )
     })

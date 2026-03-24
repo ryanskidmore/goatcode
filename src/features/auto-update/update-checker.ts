@@ -12,7 +12,7 @@ export async function checkForUpdate(
   fetchFn: typeof fetch = globalThis.fetch
 ): Promise<UpdateCheckResult> {
   try {
-    const response = await fetchFn("https://registry.npmjs.org/ochead/latest")
+    const response = await fetchFn("https://registry.npmjs.org/goatcode/latest")
     if (!response.ok) {
       log("[auto-update-checker] Failed to fetch npm registry", { status: response.status })
       return {

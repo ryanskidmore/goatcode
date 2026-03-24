@@ -25,7 +25,7 @@ describe("loops", () => {
 
   beforeEach(() => {
     clearRalphLoopStateForTests()
-    tempDir = mkdtempSync(join(tmpdir(), "ochead-loops-"))
+    tempDir = mkdtempSync(join(tmpdir(), "goatcode-loops-"))
     ulwStatePath = join(tempDir, "ulw-state.json")
     configureUlwStateFilePathForTests(ulwStatePath)
     clearUlwLoopStateForTests(true)

@@ -14,7 +14,7 @@ export type OpenCodePluginInstance = Awaited<ReturnType<Plugin>>
 export type PluginHookHandler = (...args: unknown[]) => Promise<void> | void
 
 /**
- * An OcHead micro-plugin definition.
+ * An GoatCode micro-plugin definition.
  * This is the contract used by internal and external plugins.
  */
 export interface PluginDefinition {

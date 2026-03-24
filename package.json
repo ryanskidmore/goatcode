@@ -1,5 +1,5 @@
 {
-  "name": "ochead",
+  "name": "goatcode",
   "version": "0.1.0",
   "description": "Enterprise-grade OpenCode plugin with micro-plugin architecture, multi-agent orchestration, and professional naming",
   "main": "dist/index.js",

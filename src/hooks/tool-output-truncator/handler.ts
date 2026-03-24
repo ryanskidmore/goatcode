@@ -32,7 +32,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 async function writeTruncatedOutput(content: string, tool: string): Promise<string> {
-  const filename = `ochead-truncated-${tool}-${Date.now()}.txt`
+  const filename = `goatcode-truncated-${tool}-${Date.now()}.txt`
   const filePath = join(tmpdir(), filename)
   try {
     await writeFile(filePath, content)
