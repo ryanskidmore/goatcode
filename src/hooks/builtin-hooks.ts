@@ -27,6 +27,8 @@ import { writeFileGuardPlugin } from "./write-file-guard/plugin"
 import { foregroundFallbackPlugin } from "./foreground-fallback"
 import { phaseReminderPlugin } from "./phase-reminder"
 import { postReadNudgePlugin } from "./post-read-nudge"
+import { costTrackerPlugin } from "./cost-tracker/plugin"
+import { errorDiagnosticsPlugin } from "./error-diagnostics/plugin"
 
 export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   thinkingBlockValidatorPlugin,
@@ -57,4 +59,6 @@ export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   foregroundFallbackPlugin,
   phaseReminderPlugin,
   postReadNudgePlugin,
+  costTrackerPlugin,
+  errorDiagnosticsPlugin,
 ]
