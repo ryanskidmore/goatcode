@@ -18,6 +18,7 @@
     "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "find src -name '*.test.ts' -print0 | xargs -0 bun test",
+    "eval": "bun run src/evals/run.ts",
     "clean": "rm -rf dist"
   },
   "engines": {
