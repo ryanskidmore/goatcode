@@ -7,9 +7,9 @@ GoatCode is a professional agent harness for OpenCode. It provides a modular plu
 GoatCode reimplements core agent capabilities with a focus on engineering quality and modularity. It uses a TypeScript-native configuration system and a micro-plugin registry to compose features.
 
 Key features:
-- 11 specialized agents for different task categories.
+- 7 specialized agents for different task categories.
 - 26 built-in tools including LSP integration and hash-anchored editing.
-- 30 lifecycle hooks for context injection, error recovery, and quality control.
+- 27 lifecycle hooks for context injection, error recovery, and quality control.
 - Background agent parallelism for non-blocking work.
 - TypeScript-native configuration with full type safety.
 
@@ -53,9 +53,11 @@ export default defineConfig({
 })
 ```
 
+You can also configure GoatCode at the user level by creating `~/.config/goatcode/config.ts`. User-level configuration is merged with project-level configuration, allowing for persistent preferences across projects.
+
 ## Agents
 
-GoatCode includes 11 specialized agents.
+GoatCode includes 7 specialized agents.
 
 | Agent | Description |
 |-------|-------------|
@@ -65,10 +67,6 @@ GoatCode includes 11 specialized agents.
 | Advisor | Read-only consultant for architecture and code review. |
 | Researcher | Specialist for documentation and code search. |
 | Explorer | Fast codebase search and pattern matching. |
-| Executor | Task-oriented worker that follows a specific plan. |
-| Analyst | Performs gap analysis and pre-planning reviews. |
-| Reviewer | Verifies plans and code changes against requirements. |
-| Inspector | Multimodal agent for analyzing images and PDFs. |
 | Worker | General purpose executor for standard tasks. |
 
 ## Tools
@@ -89,19 +87,19 @@ GoatCode provides 26 tools for agents to interact with your codebase.
 
 ## Hooks
 
-GoatCode uses 30 hooks to manage the agent lifecycle and improve output quality.
+GoatCode uses 27 hooks to manage the agent lifecycle and improve output quality.
 
 | Category | Hooks |
 |----------|-------|
-| Context | agents-injector, readme-injector, rules-injector, compaction |
+| Context | context-injector, compaction-context, phase-reminder |
 | Recovery | edit-error, json-error, session-recovery, context-window-limit |
 | Models | model-fallback, runtime-fallback, preemptive-compaction |
 | Quality | comment-checker, write-file-guard, thinking-block-validator |
 | Productivity | keyword-detector, think-mode, anthropic-effort |
 | Output | tool-output-truncator, hashline-read-enhancer, hashline-diff-enhancer |
-| Continuation | todo-enforcer, compaction-todo-preserver, stop-guard |
+| Continuation | todo-enforcer, compaction-todo-preserver, stop-guard, foreground-fallback |
 | Tasks | delegate-retry, empty-response-detector, task-resume-info, todowrite-disabler |
-| Updates | auto-update-checker |
+| Nudges | post-read-nudge |
 
 ## CLI Commands
 

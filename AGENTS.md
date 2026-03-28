@@ -1,6 +1,6 @@
 # Agent Reference
 
-GoatCode includes 11 specialized agents. Each agent is tuned for specific tasks and has unique capabilities and tool restrictions.
+GoatCode includes 7 specialized agents. Each agent is tuned for specific tasks and has unique capabilities and tool restrictions.
 
 ## Orchestrator
 
@@ -49,38 +49,6 @@ A fast agent for codebase search and pattern matching using grep and glob tools.
 - **When to use**: For quick searches across the entire project.
 - **Key Capabilities**: Fast pattern matching, file discovery, and parallel tool execution.
 - **Example Prompt**: "Find all occurrences of the 'PluginRegistry' class and its usages."
-
-## Executor
-
-A task-oriented worker that follows a specific plan or todo list.
-
-- **When to use**: For executing well-defined steps in a larger plan.
-- **Key Capabilities**: Sequential task execution, status tracking, and atomic commits.
-- **Example Prompt**: "Execute the next three steps in the migration plan."
-
-## Analyst
-
-Performs pre-planning gap analysis and reviews proposals for completeness.
-
-- **When to use**: To verify a plan before execution starts.
-- **Key Capabilities**: Gap analysis, edge case identification, and requirement verification.
-- **Example Prompt**: "Analyze this implementation plan for missing edge cases or potential performance bottlenecks."
-
-## Reviewer
-
-Verifies code changes and plans against the original requirements.
-
-- **When to use**: For final verification of a completed task or PR.
-- **Key Capabilities**: Requirement matching, code quality verification, and reference checking.
-- **Example Prompt**: "Verify that the implemented changes meet all the requirements specified in the original task."
-
-## Inspector
-
-A multimodal agent for analyzing images, diagrams, and PDFs.
-
-- **When to use**: When you need to extract information from non-text files.
-- **Key Capabilities**: Image analysis, PDF text extraction, and diagram interpretation.
-- **Example Prompt**: "Analyze this UI mockup and describe the layout and components."
 
 ## Worker
 
