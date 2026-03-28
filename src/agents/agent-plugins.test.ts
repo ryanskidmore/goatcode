@@ -5,10 +5,6 @@ import { planBuilderPlugin } from "./plan-builder/plugin"
 import { advisorPlugin } from "./advisor/plugin"
 import { researcherPlugin } from "./researcher/plugin"
 import { explorerPlugin } from "./explorer/plugin"
-import { executorPlugin } from "./executor/plugin"
-import { analystPlugin } from "./analyst/plugin"
-import { reviewerPlugin } from "./reviewer/plugin"
-import { inspectorPlugin } from "./inspector/plugin"
 import { workerPlugin } from "./worker/plugin"
 import { BUILTIN_AGENT_PLUGINS } from "./builtin-agents"
 
@@ -19,10 +15,6 @@ const ALL_PLUGINS = [
   advisorPlugin,
   researcherPlugin,
   explorerPlugin,
-  executorPlugin,
-  analystPlugin,
-  reviewerPlugin,
-  inspectorPlugin,
   workerPlugin,
 ]
 
@@ -90,29 +82,11 @@ describe("agent plugins", () => {
         expect(agent.tools!["task_create"]).toBe(false)
         expect(agent.tools!["task_update"]).toBe(false)
       })
-
-      it("#then reviewer has write, edit, bash, and task tools denied", () => {
-        const agent = reviewerPlugin.agents!["reviewer"]
-        expect(agent.tools).toBeDefined()
-        expect(agent.tools!["write"]).toBe(false)
-        expect(agent.tools!["edit"]).toBe(false)
-        expect(agent.tools!["bash"]).toBe(false)
-        expect(agent.tools!["interactive_bash"]).toBe(false)
-        expect(agent.tools!["delegate_task"]).toBe(false)
-        expect(agent.tools!["task_create"]).toBe(false)
-        expect(agent.tools!["task_update"]).toBe(false)
-      })
-
-      it("#then inspector has read allowed", () => {
-        const agent = inspectorPlugin.agents!["inspector"]
-        expect(agent.tools).toBeDefined()
-        expect(agent.tools!["read"]).toBe(true)
-      })
     })
 
     describe("#when checking BUILTIN_AGENT_PLUGINS barrel", () => {
-      it("#then it contains exactly 11 plugins", () => {
-        expect(BUILTIN_AGENT_PLUGINS).toHaveLength(11)
+      it("#then it contains exactly 7 plugins", () => {
+        expect(BUILTIN_AGENT_PLUGINS).toHaveLength(7)
       })
 
       it("#then it matches the individual plugin imports", () => {

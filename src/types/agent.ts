@@ -27,10 +27,6 @@ export type BuiltinAgentName =
   | "advisor"
   | "researcher"
   | "explorer"
-  | "executor"
-  | "analyst"
-  | "reviewer"
-  | "inspector"
   | "worker"
 
 /** Agent override config for user customization. */

@@ -8,7 +8,6 @@ import { startWorkCommand } from "./commands/start-work"
 import { stopContinuationCommand } from "./commands/stop-continuation"
 import { handoffCommand } from "./commands/handoff"
 import { initDeepCommand } from "./commands/init-deep"
-import { refactorCommand } from "./commands/refactor"
 
 const COMMANDS: SlashCommand[] = [
   ralphLoopCommand,
@@ -19,7 +18,6 @@ const COMMANDS: SlashCommand[] = [
   stopContinuationCommand,
   handoffCommand,
   initDeepCommand,
-  refactorCommand,
 ]
 
 const COMMAND_MAP: Map<string, SlashCommand> = new Map()
