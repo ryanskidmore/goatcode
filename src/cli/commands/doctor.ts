@@ -1,5 +1,7 @@
 import { existsSync } from "node:fs"
 import { join } from "node:path"
+import { loadConfig } from "../../config/loader"
+import { resolveProjectConfigPath, resolveUserConfigDir } from "../../config/paths"
 import { log } from "../../shared/logger"
 
 export type CheckStatus = "pass" | "fail"
@@ -43,26 +45,37 @@ export async function checkBun(): Promise<CheckResult> {
   return { name: "Bun installed", status: "pass", detail: output }
 }
 
-export function checkConfigExists(cwd: string): CheckResult {
-  const configPath = join(cwd, "goatcode.config.ts")
-  if (!existsSync(configPath)) {
-    return { name: "goatcode.config.ts exists", status: "fail", detail: "goatcode.config.ts not found" }
+export function getConfigLocations(cwd: string): { userConfigPath: string; projectConfigPath: string } {
+  return {
+    userConfigPath: join(resolveUserConfigDir(), "config.ts"),
+    projectConfigPath: resolveProjectConfigPath(cwd),
   }
-  return { name: "goatcode.config.ts exists", status: "pass", detail: configPath }
+}
+
+export function checkConfigExists(cwd: string): CheckResult {
+  const { userConfigPath, projectConfigPath } = getConfigLocations(cwd)
+  const userExists = existsSync(userConfigPath)
+  const projectExists = existsSync(projectConfigPath)
+
+  const detail = `user=${userConfigPath} (${userExists ? "found" : "missing"}), project=${projectConfigPath} (${projectExists ? "found" : "missing"})`
+  if (!userExists && !projectExists) {
+    return { name: "Config locations", status: "fail", detail }
+  }
+
+  return { name: "Config locations", status: "pass", detail }
 }
 
 export async function checkConfigValid(cwd: string): Promise<CheckResult> {
-  const configPath = join(cwd, "goatcode.config.ts")
-  if (!existsSync(configPath)) {
-    return { name: "Config is valid", status: "fail", detail: "goatcode.config.ts not found, cannot validate" }
+  const config = await loadConfig(cwd)
+  if (config === null) {
+    return {
+      name: "Config is valid",
+      status: "fail",
+      detail: "No valid user or project config found",
+    }
   }
-  try {
-    await import(configPath)
-    return { name: "Config is valid", status: "pass", detail: "imported without errors" }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return { name: "Config is valid", status: "fail", detail: message }
-  }
+
+  return { name: "Config is valid", status: "pass", detail: "resolved and validated" }
 }
 
 export function formatCheckLine(result: CheckResult): string {
