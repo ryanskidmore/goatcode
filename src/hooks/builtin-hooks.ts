@@ -24,6 +24,9 @@ import { jsonErrorPlugin } from "./json-error/plugin"
 import { todowriteDisablerPlugin } from "./todowrite-disabler/plugin"
 import { compactionTodoPreserverPlugin } from "./compaction-todo-preserver/plugin"
 import { writeFileGuardPlugin } from "./write-file-guard/plugin"
+import { foregroundFallbackPlugin } from "./foreground-fallback"
+import { phaseReminderPlugin } from "./phase-reminder"
+import { postReadNudgePlugin } from "./post-read-nudge"
 
 export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   thinkingBlockValidatorPlugin,
@@ -51,4 +54,7 @@ export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   todowriteDisablerPlugin,
   compactionTodoPreserverPlugin,
   writeFileGuardPlugin,
+  foregroundFallbackPlugin,
+  phaseReminderPlugin,
+  postReadNudgePlugin,
 ]
