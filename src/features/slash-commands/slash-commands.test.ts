@@ -2,10 +2,8 @@ import { describe, expect, it } from "bun:test"
 import { getAllCommands, getCommand } from "./command-registry"
 
 const EXPECTED_COMMAND_NAMES = [
-  "ralph-loop",
-  "ulw-loop",
-  "cancel-ralph",
-  "cancel-ulw",
+  "loop",
+  "cancel-loop",
   "start-work",
   "stop-continuation",
   "handoff",
@@ -15,7 +13,7 @@ const EXPECTED_COMMAND_NAMES = [
 describe("getAllCommands", () => {
   describe("#given the command registry is initialized", () => {
     describe("#when getAllCommands is called", () => {
-       it("#then returns all 8 commands", () => {
+       it("#then returns all 6 commands", () => {
          const commands = getAllCommands()
          expect(commands).toHaveLength(EXPECTED_COMMAND_NAMES.length)
        })

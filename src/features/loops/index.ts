@@ -1,39 +1,24 @@
 export {
-  clearRalphLoopStateForTests,
-  getLoopState as getRalphLoopState,
-  incrementIteration as incrementRalphLoopIteration,
-  isActive as isRalphLoopActive,
-  markCompletionDetected as markRalphCompletionDetected,
-  startLoop as startRalphLoop,
-  stopLoop as stopRalphLoop,
-  type RalphLoopStartOptions,
-  type RalphLoopState,
-} from "./ralph-loop/state"
-
+  DEFAULT_MAX_ITERATIONS,
+  UNBOUNDED_MAX_ITERATIONS,
+  type LoopOptions,
+  type LoopState,
+  type LoopStore,
+} from "./state"
+export { MemoryLoopStore } from "./memory-store"
+export { FileLoopStore } from "./file-store"
+export { buildLoopContinuationMessage, createLoopHandler, type LoopHandlerOptions } from "./handler"
 export {
-  buildRalphContinuationMessage,
-  createRalphLoopHandler,
-  type RalphLoopHandlerOptions,
-} from "./ralph-loop/handler"
-export { createRalphLoopPlugin, ralphLoopPlugin } from "./ralph-loop/plugin"
-
-export {
-  clearUlwLoopStateForTests,
-  configureUlwStateFilePathForTests,
-  getLoopState as getUlwLoopState,
-  incrementIteration as incrementUlwLoopIteration,
-  isActive as isUlwLoopActive,
-  loadPersistedUlwStateForTests,
-  markCompletionDetected as markUlwCompletionDetected,
-  startLoop as startUlwLoop,
-  stopLoop as stopUlwLoop,
-  type UlwLoopStartOptions,
-  type UlwLoopState,
-} from "./ulw-loop/state"
-
-export {
-  buildUlwContinuationMessage,
-  createUlwLoopHandler,
-  type UlwLoopHandlerOptions,
-} from "./ulw-loop/handler"
-export { createUlwLoopPlugin, ulwLoopPlugin } from "./ulw-loop/plugin"
+  clearLoopStateForTests,
+  configureLoopStateFilePathForTests,
+  createLoopPlugin,
+  defaultLoopStore,
+  fileLoopStore,
+  getLoopState,
+  isLoopActive,
+  loadPersistedLoopStateForTests,
+  loopPlugin,
+  memoryLoopStore,
+  startLoop,
+  stopLoop,
+} from "./plugin"

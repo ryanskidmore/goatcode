@@ -1,38 +1,31 @@
-import { log } from "../../../shared/logger"
-import {
-  getLoopState,
-  incrementIteration,
-  isActive,
-  markCompletionDetected,
-  stopLoop,
-  type RalphLoopState,
-} from "./state"
+import { log } from "../../shared/logger"
 import {
   type HookEvent,
   asEvent,
-  getSessionId,
   defaultCompletionDetector,
-} from "../shared/event-utils"
+  getSessionId,
+} from "./shared/event-utils"
+import { type LoopState, type LoopStore } from "./state"
 
-export interface RalphLoopHandlerOptions {
+export interface LoopHandlerOptions {
   completionPromise?: string
-  detectCompletion?: (event: HookEvent, state: RalphLoopState) => boolean
+  detectCompletion?: (event: HookEvent, state: LoopState) => boolean
   sendContinuationMessage?: (sessionId: string, message: string) => Promise<void> | void
 }
 
-export function buildRalphContinuationMessage(
-  state: RalphLoopState,
-  completionPromise: string,
-): string {
+export function buildLoopContinuationMessage(state: LoopState, completionPromise: string): string {
+  const maxIterations =
+    state.maxIterations === Number.MAX_SAFE_INTEGER ? "unbounded" : String(state.maxIterations)
+
   return [
-    "[SYSTEM DIRECTIVE: RALPH LOOP CONTINUE]",
-    `Iteration ${state.iteration}/${state.maxIterations}`,
+    "[SYSTEM DIRECTIVE: LOOP CONTINUE]",
+    `Iteration ${state.iteration}/${maxIterations}`,
     "Continue the task from your previous work.",
     `When fully complete, output <promise>${completionPromise}</promise>.`,
   ].join("\n")
 }
 
-export function createRalphLoopHandler(options?: RalphLoopHandlerOptions) {
+export function createLoopHandler(store: LoopStore, options?: LoopHandlerOptions) {
   const completionPromise = options?.completionPromise ?? "DONE"
 
   return async (input: unknown): Promise<void> => {
@@ -42,13 +35,13 @@ export function createRalphLoopHandler(options?: RalphLoopHandlerOptions) {
     }
 
     const sessionId = getSessionId(event.properties)
-    if (!sessionId || !isActive(sessionId)) {
+    if (!sessionId || !store.isActive(sessionId)) {
       return
     }
 
-    const state = getLoopState(sessionId)
+    const state = store.getLoopState(sessionId)
     if (!state || state.completionDetected) {
-      stopLoop(sessionId)
+      store.stopLoop(sessionId)
       return
     }
 
@@ -57,14 +50,14 @@ export function createRalphLoopHandler(options?: RalphLoopHandlerOptions) {
       : defaultCompletionDetector(event, completionPromise)
 
     if (completionDetected) {
-      markCompletionDetected(sessionId)
-      log("[ralph-loop] completion detected", { sessionId, iteration: state.iteration })
+      store.markCompletionDetected(sessionId)
+      log("[loop] completion detected", { sessionId, iteration: state.iteration })
       return
     }
 
     if (state.iteration >= state.maxIterations) {
-      stopLoop(sessionId)
-      log("[ralph-loop] max iterations reached", {
+      store.stopLoop(sessionId)
+      log("[loop] max iterations reached", {
         sessionId,
         iteration: state.iteration,
         maxIterations: state.maxIterations,
@@ -72,16 +65,17 @@ export function createRalphLoopHandler(options?: RalphLoopHandlerOptions) {
       return
     }
 
-    const updatedState = incrementIteration(sessionId)
+    store.incrementIteration(sessionId)
+    const updatedState = store.getLoopState(sessionId)
     if (!updatedState) {
       return
     }
 
-    const continuationMessage = buildRalphContinuationMessage(updatedState, completionPromise)
+    const continuationMessage = buildLoopContinuationMessage(updatedState, completionPromise)
     try {
       await options?.sendContinuationMessage?.(sessionId, continuationMessage)
     } catch (error) {
-      log("[ralph-loop] continuation injection failed", { sessionId, error: String(error) })
+      log("[loop] continuation injection failed", { sessionId, error: String(error) })
     }
   }
 }
