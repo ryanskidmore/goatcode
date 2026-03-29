@@ -101,4 +101,7 @@ export function createLoopPlugin(options?: LoopHandlerOptions) {
   })
 }
 
+/**
+ * Default plugin registration. The host injects sendContinuationMessage at runtime via createLoopPlugin().
+ */
 export const loopPlugin = createLoopPlugin()

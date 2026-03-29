@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 
 import { log } from "../../shared/logger"
@@ -135,7 +135,9 @@ export class FileLoopStore implements LoopStore {
     try {
       mkdirSync(dirname(this.stateFilePath), { recursive: true })
       const serializable = Object.fromEntries(this.loopStates.entries())
-      writeFileSync(this.stateFilePath, JSON.stringify(serializable, null, 2), "utf-8")
+      const tmpPath = `${this.stateFilePath}.tmp`
+      writeFileSync(tmpPath, JSON.stringify(serializable, null, 2), "utf-8")
+      renameSync(tmpPath, this.stateFilePath)
     } catch (error) {
       log("[loop] failed to persist state", { error: String(error) })
     }

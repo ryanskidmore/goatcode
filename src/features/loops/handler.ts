@@ -35,13 +35,21 @@ export function createLoopHandler(store: LoopStore, options?: LoopHandlerOptions
     }
 
     const sessionId = getSessionId(event.properties)
-    if (!sessionId || !store.isActive(sessionId)) {
+    if (!sessionId) {
       return
     }
 
     const state = store.getLoopState(sessionId)
-    if (!state || state.completionDetected) {
+    if (!state) {
+      return
+    }
+
+    if (state.completionDetected) {
       store.stopLoop(sessionId)
+      return
+    }
+
+    if (!store.isActive(sessionId)) {
       return
     }
 

@@ -44,6 +44,7 @@ const RATE_LIMIT_PATTERNS = [
 ] as const
 
 const DEDUP_WINDOW_MS = 5_000
+const SESSION_TTL_MS = 5 * 60 * 1000
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -180,12 +181,33 @@ export function createForegroundFallbackHandler(deps: ForegroundFallbackDependen
   const inProgress = new Set<string>()
   const lastTrigger = new Map<string, number>()
 
+  const cleanupExpiredSessionState = (currentTime: number) => {
+    for (const [key, timestamp] of lastTrigger.entries()) {
+      if (currentTime - timestamp > SESSION_TTL_MS) {
+        lastTrigger.delete(key)
+      }
+    }
+
+    for (const sessionID of sessionModels.keys()) {
+      const hasRecentTrigger = Array.from(lastTrigger.entries()).some(([key, timestamp]) => {
+        return key.startsWith(`${sessionID}:`) && currentTime - timestamp <= SESSION_TTL_MS
+      })
+
+      if (!hasRecentTrigger) {
+        sessionModels.delete(sessionID)
+      }
+    }
+  }
+
   const defaultSetCurrentModel = async (sessionID: string, model: string) => {
     sessionModels.set(sessionID, model)
   }
 
   return async (input: unknown) => {
     if (!isRecord(input)) return
+    if (lastTrigger.size > 100) {
+      cleanupExpiredSessionState(now())
+    }
 
     const envelope = input as EventEnvelope
     if (!isRecord(envelope.event)) return
@@ -201,12 +223,6 @@ export function createForegroundFallbackHandler(deps: ForegroundFallbackDependen
     if (!sessionID) return
 
     if (inProgress.has(sessionID)) return
-    const currentTime = now()
-    const lastTime = lastTrigger.get(sessionID)
-    if (typeof lastTime === "number" && currentTime - lastTime < DEDUP_WINDOW_MS) {
-      return
-    }
-    lastTrigger.set(sessionID, currentTime)
 
     inProgress.add(sessionID)
     try {
@@ -215,6 +231,13 @@ export function createForegroundFallbackHandler(deps: ForegroundFallbackDependen
       const currentModel =
         eventModel ?? deps.getCurrentModel?.(sessionID) ?? sessionModels.get(sessionID)
       if (!currentModel) return
+
+      const currentTime = now()
+      const dedupKey = `${sessionID}:${currentModel}`
+      const lastTime = lastTrigger.get(dedupKey)
+      if (typeof lastTime === "number" && currentTime - lastTime < DEDUP_WINDOW_MS) {
+        return
+      }
 
       const availableModels = deps.getAvailableModels?.(sessionID) ?? new Set<string>()
       const nextModel = getNextFallbackModel({
@@ -229,8 +252,10 @@ export function createForegroundFallbackHandler(deps: ForegroundFallbackDependen
         return
       }
 
-      const setCurrentModel = deps.setCurrentModel ?? defaultSetCurrentModel
-      await Promise.resolve(setCurrentModel(sessionID, nextModel))
+      if (deps.setCurrentModel) {
+        await Promise.resolve(deps.setCurrentModel(sessionID, nextModel))
+      }
+      await Promise.resolve(defaultSetCurrentModel(sessionID, nextModel))
 
       setRetryProperties(properties, nextModel)
       await Promise.resolve(deps.onRetryRequested?.({ sessionID, model: nextModel }))
@@ -242,6 +267,8 @@ export function createForegroundFallbackHandler(deps: ForegroundFallbackDependen
           reason: "rate-limit",
         }),
       )
+      lastTrigger.set(dedupKey, currentTime)
+      lastTrigger.set(`${sessionID}:${nextModel}`, currentTime)
 
       log("[foreground-fallback] switched model and requested retry", {
         sessionID,

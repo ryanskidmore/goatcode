@@ -16,8 +16,9 @@ You are starting a Sisyphus work session.
 
 1. **Find available plans**: Search for Prometheus-generated plan files at \`.sisyphus/plans/\`
 2. **Decision logic**:
-   - If a plan is in progress: continue work on the existing plan
-   - If no active plan: list available plan files and select
+   - If \`plan-name\` is provided: resolve by exact/partial match and use that plan (or report no match)
+   - Else if a plan is already in progress: continue the existing plan
+   - Else: list available plan files and select one
 3. **Read the plan file** and start executing tasks
 
 ## CRITICAL

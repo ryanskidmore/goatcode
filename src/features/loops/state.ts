@@ -21,15 +21,20 @@ export interface LoopStore {
 }
 
 export const DEFAULT_MAX_ITERATIONS = 100
-export const UNBOUNDED_MAX_ITERATIONS = Number.MAX_SAFE_INTEGER
+export const UNBOUNDED_MAX_ITERATIONS = 1000
 
 export function createInitialLoopState(options?: LoopOptions): LoopState {
   const persist = options?.persist ?? false
+  const configuredMaxIterations = options?.maxIterations
+  if (configuredMaxIterations !== undefined && (!Number.isSafeInteger(configuredMaxIterations) || configuredMaxIterations <= 0)) {
+    throw new RangeError("maxIterations must be a positive safe integer")
+  }
+
   return {
     active: true,
     iteration: 0,
     maxIterations:
-      options?.maxIterations ?? (persist ? UNBOUNDED_MAX_ITERATIONS : DEFAULT_MAX_ITERATIONS),
+      configuredMaxIterations ?? (persist ? UNBOUNDED_MAX_ITERATIONS : DEFAULT_MAX_ITERATIONS),
     completionDetected: false,
     persist,
   }

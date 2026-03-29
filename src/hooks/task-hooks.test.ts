@@ -296,7 +296,7 @@ describe("todowrite-disabler", () => {
         const input = { tool: "TodoWrite", sessionID: "s1", callID: "c1" }
         const output = { args: {} }
 
-        await expect(handler(input, output)).rejects.toThrow()
+        await expect(handler(input, output)).rejects.toThrow(SUBAGENT_TODOWRITE_BLOCK_MESSAGE)
       })
     })
   })

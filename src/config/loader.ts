@@ -41,13 +41,14 @@ export async function loadConfig(projectDir: string): Promise<GoatCodeConfig | n
   const userConfig = userConfigPath && existsSync(userConfigPath) ? await loadValidatedConfigFile(userConfigPath) : null
 
   const projectConfigPath = resolveProjectConfigPath(projectDir)
+  const hasProjectConfig = existsSync(projectConfigPath)
   let projectConfig: GoatCodeConfig | null = null
 
-  if (existsSync(projectConfigPath)) {
+  if (hasProjectConfig) {
     projectConfig = await loadValidatedConfigFile(projectConfigPath)
   }
 
-  if (projectConfig === null) {
+  if (!hasProjectConfig) {
     const legacyConfigPath = resolveLegacyProjectConfigPath(projectDir)
     if (existsSync(legacyConfigPath)) {
       log("[config/loader] Found legacy ochead.config.ts — please rename it to goatcode.config.ts", {

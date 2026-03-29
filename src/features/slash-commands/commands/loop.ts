@@ -19,7 +19,7 @@ You are starting a unified LOOP that can run in memory or with disk persistence.
 - \`--max-iterations=N\`: set an explicit iteration limit
 
 Default completion promise is "DONE".
-Default max iterations is 100 for in-memory loops and unbounded for persisted loops.
+Default max iterations is 100 for in-memory loops and 1000 for persisted loops.
 
 ## Exit Conditions
 

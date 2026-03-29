@@ -9,7 +9,7 @@ Cancel the currently active unified loop.
 This will:
 1. Stop the loop from continuing
 2. Clear in-memory loop state for the session
-3. Clear persisted loop state in .sisyphus/loop-state.json for the session
+3. Remove only this session's loop entry from .sisyphus/loop-state.json (do not delete other sessions)
 4. Allow the session to end normally
 
 Check if a loop is active, cancel it, and inform the user of the result.

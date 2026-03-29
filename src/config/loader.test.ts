@@ -13,6 +13,14 @@ async function withTempDir(prefix: string, run: (dir: string) => Promise<void> |
   }
 }
 
+function restoreGoatcodeConfigDir(previousDir: string | undefined): void {
+  if (previousDir === undefined) {
+    delete process.env.GOATCODE_CONFIG_DIR
+  } else {
+    process.env.GOATCODE_CONFIG_DIR = previousDir
+  }
+}
+
 describe("loadConfig", () => {
   test("returns null when no user or project config exists", async () => {
     await withTempDir("goatcode-loader-project-", async (projectDir) => {
@@ -24,7 +32,7 @@ describe("loadConfig", () => {
           const result = await loadConfig(projectDir)
           expect(result).toBeNull()
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })
@@ -46,7 +54,7 @@ describe("loadConfig", () => {
           expect(result?.auto_update).toBe(false)
           expect(result?.disabled_tools).toEqual(["bash"])
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })
@@ -68,7 +76,7 @@ describe("loadConfig", () => {
           expect(result?.auto_update).toBe(false)
           expect(result?.disabled_hooks).toEqual(["my-hook"])
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })
@@ -112,7 +120,7 @@ describe("loadConfig", () => {
           expect(result?.agents?.orchestrator?.temperature).toBe(0.2)
           expect(result?.agents?.explorer?.model).toBe("anthropic/claude-3-5-sonnet")
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })
@@ -131,7 +139,7 @@ describe("loadConfig", () => {
           const result = await loadConfig(projectDir)
           expect(result?.disabled_agents).toEqual(["advisor"])
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })
@@ -150,7 +158,7 @@ describe("loadConfig", () => {
           const result = await loadConfig(projectDir)
           expect(result?.auto_update).toBe(false)
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })
@@ -187,7 +195,7 @@ describe("loadConfig", () => {
           expect(result?.agents?.orchestrator?.temperature).toBe(0)
           expect(result?.agents?.orchestrator?.prompt_append).toBe("Project specific prompt")
         } finally {
-          process.env.GOATCODE_CONFIG_DIR = previousDir
+          restoreGoatcodeConfigDir(previousDir)
         }
       })
     })

@@ -7,14 +7,6 @@ type MessagePart = {
   text?: unknown
 }
 
-type Message = {
-  info?: {
-    role?: unknown
-    agent?: unknown
-  }
-  parts?: MessagePart[]
-}
-
 export const PHASE_REMINDER = `<reminder>Recall Workflow Rules:
 Understand → choose best path (delegate by rules and parallelize independent work) → execute → verify.
 If mentioning a specialist, launch it in the same turn.</reminder>`
@@ -45,7 +37,9 @@ export function createPhaseReminderHandler(): MessagesTransformHook {
     if (!Array.isArray(messages) || messages.length === 0) return
 
     for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index] as Message
+      const message = messages[index]
+      if (!isRecord(message)) continue
+
       const info = message.info
       if (!isRecord(info) || info.role !== "user") continue
       if (!isOrchestratorAgent(info.agent)) return

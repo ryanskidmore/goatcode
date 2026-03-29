@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { loadConfig } from "../../config/loader"
-import { resolveProjectConfigPath, resolveUserConfigDir } from "../../config/paths"
+import { resolveLegacyProjectConfigPath, resolveProjectConfigPath, resolveUserConfigDir } from "../../config/paths"
 import { log } from "../../shared/logger"
 
 export type CheckStatus = "pass" | "fail"
@@ -45,20 +45,26 @@ export async function checkBun(): Promise<CheckResult> {
   return { name: "Bun installed", status: "pass", detail: output }
 }
 
-export function getConfigLocations(cwd: string): { userConfigPath: string; projectConfigPath: string } {
+export function getConfigLocations(cwd: string): {
+  userConfigPath: string
+  projectConfigPath: string
+  legacyProjectConfigPath: string
+} {
   return {
     userConfigPath: join(resolveUserConfigDir(), "config.ts"),
     projectConfigPath: resolveProjectConfigPath(cwd),
+    legacyProjectConfigPath: resolveLegacyProjectConfigPath(cwd),
   }
 }
 
 export function checkConfigExists(cwd: string): CheckResult {
-  const { userConfigPath, projectConfigPath } = getConfigLocations(cwd)
+  const { userConfigPath, projectConfigPath, legacyProjectConfigPath } = getConfigLocations(cwd)
   const userExists = existsSync(userConfigPath)
   const projectExists = existsSync(projectConfigPath)
+  const legacyProjectExists = existsSync(legacyProjectConfigPath)
 
-  const detail = `user=${userConfigPath} (${userExists ? "found" : "missing"}), project=${projectConfigPath} (${projectExists ? "found" : "missing"})`
-  if (!userExists && !projectExists) {
+  const detail = `user=${userConfigPath} (${userExists ? "found" : "missing"}), project=${projectConfigPath} (${projectExists ? "found" : "missing"}), legacy=${legacyProjectConfigPath} (${legacyProjectExists ? "found" : "missing"})`
+  if (!userExists && !projectExists && !legacyProjectExists) {
     return { name: "Config locations", status: "fail", detail }
   }
 
