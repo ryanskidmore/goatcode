@@ -7,8 +7,9 @@ const PROJECT_CONFIG_FILE_NAME = "goatcode.config.ts"
 const LEGACY_PROJECT_CONFIG_FILE_NAME = "ochead.config.ts"
 
 export function resolveUserConfigDir(): string {
-  return process.env.GOATCODE_CONFIG_DIR && process.env.GOATCODE_CONFIG_DIR.trim() !== ""
-    ? process.env.GOATCODE_CONFIG_DIR
+  const configuredDir = process.env.GOATCODE_CONFIG_DIR?.trim()
+  return configuredDir && configuredDir !== ""
+    ? configuredDir
     : join(homedir(), ".config", "goatcode")
 }
 

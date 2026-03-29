@@ -73,6 +73,15 @@ export function formatMarkdownReport(report: EvalReport): string {
     lines.push(`| ${agent} | ${stats.passed} | ${stats.failed} | ${formatPercent(stats.score)} |`)
   }
 
+  lines.push("")
+  lines.push("### Summary by Category")
+  lines.push("")
+  lines.push("| Category | Passed | Failed | Score |")
+  lines.push("|---|---:|---:|---:|")
+  for (const [category, stats] of Object.entries(report.byCategory)) {
+    lines.push(`| ${category} | ${stats.passed} | ${stats.failed} | ${formatPercent(stats.score)} |`)
+  }
+
   return lines.join("\n")
 }
 

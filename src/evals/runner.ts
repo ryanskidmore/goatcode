@@ -45,6 +45,10 @@ function toolMentionTokens(tool: string): string[] {
   return aliases[normalized] ?? [normalized]
 }
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 function mentionsToolByAlias(output: string, tool: string): AssertionResult {
   const tokens = toolMentionTokens(tool)
   const passed = tokens.some((token) => mentionsTools(output, [token]).passed)
@@ -280,7 +284,7 @@ export class EvalRunner {
       }
 
       for (const delegateName of expected.shouldDelegateTo ?? []) {
-        assertions.push(matchesPattern(output, new RegExp(`\\b${delegateName}\\b`, "i")))
+        assertions.push(matchesPattern(output, new RegExp(`\\b${escapeRegex(delegateName)}\\b`, "i")))
       }
 
       const provisionalResult: EvalResult = {

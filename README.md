@@ -87,7 +87,7 @@ GoatCode provides 26 tools for agents to interact with your codebase.
 
 ## Hooks
 
-GoatCode uses 27 hooks to manage the agent lifecycle and improve output quality.
+GoatCode uses 28 hooks to manage the agent lifecycle and improve output quality.
 
 | Category | Hooks |
 |----------|-------|

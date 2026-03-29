@@ -273,8 +273,7 @@ export function createForegroundFallbackHandler(deps: ForegroundFallbackDependen
           reason: "rate-limit",
         }),
       )
-      lastTrigger.set(dedupKey, currentTime)
-      lastTrigger.set(`${sessionID}:${nextModel}`, currentTime)
+      lastTrigger.set(dedupKey, now())
 
       log("[foreground-fallback] switched model and requested retry", {
         sessionID,

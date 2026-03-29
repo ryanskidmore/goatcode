@@ -120,7 +120,13 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
       if (filePart) parts.push(filePart)
 
       try {
-        await client.session.promptAsync({ path: { id: sessionId }, body: { agent: LOOK_AT_AGENT_NAME, parts } })
+        const promptResult = await client.session.promptAsync({
+          path: { id: sessionId },
+          body: { agent: LOOK_AT_AGENT_NAME, parts },
+        })
+        if (promptResult?.error) {
+          return `Error: Failed to send prompt to analysis agent: ${promptResult.error}`
+        }
       } catch (promptError) {
         log(`[look_at] Prompt error:`, promptError)
         const msg = promptError instanceof Error ? promptError.message : String(promptError)
