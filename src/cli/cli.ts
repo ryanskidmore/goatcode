@@ -27,17 +27,6 @@ export function createProgram(): Command {
     });
 
   program
-    .command("doctor")
-    .description("Check goatcode installation health and diagnose issues")
-    .action(async () => {
-      log("cli: doctor command invoked");
-      const { runDoctor, printDoctorResult } = await import("./commands/doctor");
-      const result = await runDoctor(process.cwd());
-      printDoctorResult(result);
-      process.exit(result.exitCode);
-    });
-
-  program
     .command("update")
     .description("Update goatcode to the latest version")
     .action(async () => {

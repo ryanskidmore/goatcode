@@ -20,21 +20,15 @@ describe("#given the goatcode CLI program", () => {
       expect(names).toContain("install");
     });
 
-    it("#then the doctor subcommand is registered", () => {
-      const program = createProgram();
-      const names = program.commands.map((cmd) => cmd.name());
-      expect(names).toContain("doctor");
-    });
-
     it("#then the update subcommand is registered", () => {
       const program = createProgram();
       const names = program.commands.map((cmd) => cmd.name());
       expect(names).toContain("update");
     });
 
-    it("#then exactly three subcommands are registered", () => {
+    it("#then exactly two subcommands are registered", () => {
       const program = createProgram();
-      expect(program.commands).toHaveLength(3);
+      expect(program.commands).toHaveLength(2);
     });
   });
 });
