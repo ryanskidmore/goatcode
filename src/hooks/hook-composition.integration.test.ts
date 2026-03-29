@@ -4,10 +4,7 @@ import { EDIT_ERROR_RECOVERY_MESSAGE } from "./edit-error/handler";
 import { composeHooks } from "./hook-composer";
 import { withPriority } from "./hook-ordering";
 import { HOOK_TIERS, type HookTier } from "./hook-types";
-import {
-  clearSessionMode,
-  createKeywordDetectorHandler,
-} from "./keyword-detector/handler";
+import { clearSessionMode, createKeywordDetectorHandler } from "./keyword-detector/handler";
 import { createThinkModeHandler } from "./think-mode/handler";
 import { aggregateHooks } from "../registry/hook-aggregator";
 import type { PluginDefinition, PluginHookHandler } from "../types/plugin";
@@ -155,7 +152,12 @@ describe("hook composition integration", () => {
         const handlers = aggregated.get("tool.execute.after") ?? [];
         const composed = composeHooks("tool.execute.after", handlers);
 
-        const input = { tool: "bash", sessionID: "ses_accumulate", callID: "call_accumulate", args: {} };
+        const input = {
+          tool: "bash",
+          sessionID: "ses_accumulate",
+          callID: "call_accumulate",
+          args: {},
+        };
         const output = { output: "base", title: "tool execution", metadata: {} };
         await composed(input, output);
 
@@ -247,7 +249,12 @@ describe("hook composition integration", () => {
         const handlers = aggregateHooks(plugins).get("tool.execute.after") ?? [];
         const composed = composeHooks("tool.execute.after", handlers);
 
-        const input = { tool: "edit", sessionID: "ses_dual_mutation", callID: "call_dual_mutation", args: {} };
+        const input = {
+          tool: "edit",
+          sessionID: "ses_dual_mutation",
+          callID: "call_dual_mutation",
+          args: {},
+        };
         const output = {
           output: "oldString not found while applying patch",
           title: "tool execution",
@@ -257,7 +264,9 @@ describe("hook composition integration", () => {
         await composed(input, output);
 
         expect(typeof output.output).toBe("string");
-        expect(output.output).toContain("[Output truncated: synthetic notice for integration test.]");
+        expect(output.output).toContain(
+          "[Output truncated: synthetic notice for integration test.]",
+        );
         expect(output.output).toContain(EDIT_ERROR_RECOVERY_MESSAGE);
       });
     });

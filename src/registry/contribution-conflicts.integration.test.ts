@@ -84,7 +84,9 @@ describe("aggregateHooks", () => {
   describe("#given two plugins that register the same hook event", () => {
     describe("#when aggregateHooks runs in append conflict mode", () => {
       it("#then both handlers are collected in plugin order", () => {
-        type ToolExecuteBeforeHandler = NonNullable<PluginDefinition["hooks"]>["tool.execute.before"];
+        type ToolExecuteBeforeHandler = NonNullable<
+          PluginDefinition["hooks"]
+        >["tool.execute.before"];
         const first: ToolExecuteBeforeHandler = async () => {};
         const second: ToolExecuteBeforeHandler = async () => {};
         const plugins: PluginDefinition[] = [
