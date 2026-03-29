@@ -1,21 +1,18 @@
-import type { CategoryConfig } from "../../types/category"
-import {
-  CategoryResolver,
-  type CategoryOverrides,
-} from "../../features/categories"
+import type { CategoryConfig } from "../../types/category";
+import { CategoryResolver, type CategoryOverrides } from "../../runtime";
 
-const resolver = new CategoryResolver()
+const resolver = new CategoryResolver();
 
 export function resolveCategory(
   name: string,
   configOverrides?: CategoryOverrides,
 ): CategoryConfig | undefined {
-  return resolver.resolve(name, configOverrides)
+  return resolver.resolve(name, configOverrides);
 }
 
 export function resolveCategoryWithDefaults(
   name: string,
   configOverrides?: CategoryOverrides,
 ): CategoryConfig | undefined {
-  return resolver.resolve(name, configOverrides)
+  return resolver.resolve(name, configOverrides);
 }

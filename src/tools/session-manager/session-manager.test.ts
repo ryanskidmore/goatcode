@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "bun:test"
+import { describe, it, expect } from "bun:test"
 import type { OpenCodeContext } from "../../types/plugin"
 import { handleSessionList } from "./list/handler"
 import { handleSessionRead } from "./read/handler"
