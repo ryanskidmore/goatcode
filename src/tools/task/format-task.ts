@@ -8,7 +8,7 @@ export function formatTask(task: Task): string {
     `priority: ${task.priority}`,
   ];
 
-  if (task.content) {
+  if (task.content !== undefined) {
     lines.push(`content: ${task.content}`);
   }
 

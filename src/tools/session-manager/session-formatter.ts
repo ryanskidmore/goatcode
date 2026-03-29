@@ -3,6 +3,7 @@ import type { SessionSummary, SearchMatch, SessionDetail } from "./types";
 
 type TextPart = Part & { type: "text"; text: string };
 type ReasoningPart = Part & { type: "reasoning"; text: string };
+type ThinkingPart = Part & { type: "thinking"; thinking?: string; text?: string };
 type ToolPart = Part & {
   type: "tool";
   tool: string;
@@ -15,6 +16,14 @@ function isTextPart(part: Part): part is TextPart {
 
 function isReasoningPart(part: Part): part is ReasoningPart {
   return part.type === "reasoning" && typeof (part as { text?: unknown }).text === "string";
+}
+
+function isThinkingPart(part: Part): part is ThinkingPart {
+  const type = (part as { type?: unknown }).type;
+  if (type !== "thinking") return false;
+  const thinking = (part as { thinking?: unknown }).thinking;
+  const text = (part as { text?: unknown }).text;
+  return typeof thinking === "string" || typeof text === "string";
 }
 
 function isToolPart(part: Part): part is ToolPart {
@@ -45,6 +54,14 @@ function formatDate(timestamp: number): string {
 
 function formatTimestamp(timestamp: number): string {
   return new Date(timestamp).toISOString();
+}
+
+function safeTruncateJson(value: Record<string, unknown>, max = 100): string {
+  try {
+    return JSON.stringify(value).substring(0, max);
+  } catch {
+    return "[unserializable tool input]";
+  }
 }
 
 function computeDurationLabel(firstMs: number, lastMs: number): string | null {
@@ -143,12 +160,15 @@ export function formatMessages(
       if (isTextPart(part)) {
         const text = part.text.trim();
         if (text) lines.push(text);
-      } else if (isReasoningPart(part)) {
-        const text = part.text;
+      } else if (isReasoningPart(part) || isThinkingPart(part)) {
+        const text =
+          (part as { thinking?: string; text?: string }).thinking ??
+          (part as { text?: string }).text ??
+          "";
         lines.push(`[thinking] ${text.substring(0, 200)}...`);
       } else if (isToolPart(part)) {
         const tp = part;
-        const inputStr = tp.state.input ? JSON.stringify(tp.state.input).substring(0, 100) : "";
+        const inputStr = tp.state.input ? safeTruncateJson(tp.state.input, 100) : "";
         lines.push(`[tool: ${tp.tool}] ${inputStr}`);
       }
     }
@@ -253,6 +273,7 @@ export function searchMessages(
   maxResults: number,
 ): SearchMatch[] {
   const results: SearchMatch[] = [];
+  if (query.trim() === "" || maxResults <= 0) return results;
   const searchQuery = caseSensitive ? query : query.toLowerCase();
 
   for (const { info, parts } of messages) {

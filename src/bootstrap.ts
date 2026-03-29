@@ -41,6 +41,12 @@ function isValidPluginDefinition(value: unknown): value is PluginDefinition {
     }
   }
 
+  if (obj["hooks"] !== undefined) {
+    for (const handler of Object.values(obj["hooks"] as Record<string, unknown>)) {
+      if (handler !== undefined && typeof handler !== "function") return false;
+    }
+  }
+
   // Optional: setup/teardown must be functions if present
   if (obj["setup"] !== undefined && typeof obj["setup"] !== "function") return false;
   if (obj["teardown"] !== undefined && typeof obj["teardown"] !== "function") return false;
@@ -95,7 +101,7 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       const pluginDef = mod.default ?? mod;
       if (!isValidPluginDefinition(pluginDef)) {
         log(
-          `[bootstrap] External plugin "${packageName}" does not export a valid PluginDefinition (missing name field), skipping`,
+          `[bootstrap] External plugin "${packageName}" does not export a valid PluginDefinition, skipping`,
         );
         process.stderr.write(
           `[goatcode] WARNING: Plugin "${packageName}" is not a valid PluginDefinition and was skipped.\n`,
@@ -105,6 +111,8 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       registry.register(pluginDef);
     } catch (error) {
       log(`[bootstrap] Failed to load external plugin: ${packageName}`, { error });
+      const msg = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`[goatcode] WARNING: Failed to load plugin "${packageName}": ${msg}\n`);
     }
   }
 

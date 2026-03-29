@@ -17,7 +17,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
 }
 
 function normalizeModelID(modelId: string): string {
-  return modelId.trim().toLowerCase().replace(/[_.]/g, "-")
+  return modelId.trim().toLowerCase().replace(/_/g, "-")
 }
 
 export function lookupPricing(modelId: string): ModelPricing | null {
@@ -41,7 +41,11 @@ export function lookupPricing(modelId: string): ModelPricing | null {
 
   for (const [key, pricing] of Object.entries(MODEL_PRICING)) {
     for (const candidate of candidates) {
-      if (candidate.includes(key) || key.includes(candidate)) {
+      if (
+        candidate === key ||
+        candidate.startsWith(key + "-") ||
+        key.startsWith(candidate + "-")
+      ) {
         return pricing
       }
     }

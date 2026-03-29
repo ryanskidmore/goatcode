@@ -5,6 +5,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function resolveOperation(args: SkillMcpArgs): ResolvedOperation {
   const candidates: ResolvedOperation[] = [];
 
@@ -30,7 +34,12 @@ export function parseArguments(
   raw: string | Record<string, unknown> | undefined,
 ): Record<string, unknown> {
   if (!raw) return {};
-  if (typeof raw === "object") return raw;
+  if (typeof raw === "object") {
+    if (!isRecord(raw)) {
+      throw new Error("Arguments must be a JSON object");
+    }
+    return raw;
+  }
 
   const normalized = raw.startsWith("'") && raw.endsWith("'") ? raw.slice(1, -1) : raw;
   try {
@@ -50,7 +59,7 @@ export function parseArguments(
 export function applyGrepFilter(output: string, pattern: string | undefined): string {
   if (!pattern) return output;
   try {
-    const regex = new RegExp(pattern, "i");
+    const regex = new RegExp(escapeRegExp(pattern), "i");
     const lines = output.split("\n");
     const matched = lines.filter((line) => regex.test(line));
     return matched.length > 0 ? matched.join("\n") : `[grep] No lines matched pattern: ${pattern}`;

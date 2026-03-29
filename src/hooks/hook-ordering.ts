@@ -27,11 +27,15 @@ export function getHookPriority(handler: PluginHookHandler): number {
 }
 
 export function withPriority<T extends PluginHookHandler>(handler: T, priority: number): T {
-  Object.defineProperty(handler, HOOK_PRIORITY_SYMBOL, {
+  const wrapped = function (this: unknown, ...args: unknown[]) {
+    return (handler as (...args: unknown[]) => unknown).apply(this, args);
+  } as T;
+
+  Object.defineProperty(wrapped, HOOK_PRIORITY_SYMBOL, {
     configurable: false,
     enumerable: false,
     writable: false,
     value: priority,
   });
-  return handler;
+  return wrapped;
 }

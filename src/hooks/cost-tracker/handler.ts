@@ -13,6 +13,7 @@ type ModelContext = {
 }
 
 const modelContextBySession = new Map<string, ModelContext>()
+const MAX_SESSION_CONTEXTS = 5000
 let latestModelContext: ModelContext | null = null
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -107,10 +108,6 @@ function resolveModelContext(properties: Record<string, unknown>): ModelContext 
     }
   }
 
-  if (latestModelContext) {
-    return latestModelContext
-  }
-
   return {
     model: "unknown",
     provider: "unknown",
@@ -157,6 +154,12 @@ export function createChatParamsHandler(): ChatParamsHook {
 
       const sessionID = getSessionID(input)
       if (sessionID) {
+        if (!modelContextBySession.has(sessionID) && modelContextBySession.size >= MAX_SESSION_CONTEXTS) {
+          const oldestSessionID = modelContextBySession.keys().next().value
+          if (typeof oldestSessionID === "string") {
+            modelContextBySession.delete(oldestSessionID)
+          }
+        }
         modelContextBySession.set(sessionID, modelContext)
       }
     } catch (error) {
