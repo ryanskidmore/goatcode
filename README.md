@@ -106,7 +106,6 @@ GoatCode uses 27 hooks to manage the agent lifecycle and improve output quality.
 | Command | Description |
 |---------|-------------|
 | `goatcode install` | Install and configure GoatCode in the current directory. |
-| `goatcode doctor` | Check the health of your GoatCode installation. |
 | `goatcode update` | Check for and install updates. |
 
 ## Contributing
