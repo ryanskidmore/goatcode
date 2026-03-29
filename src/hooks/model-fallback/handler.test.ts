@@ -56,10 +56,7 @@ describe("createModelFallbackHandler", () => {
         });
 
         expect(setCurrentModel).toHaveBeenCalledTimes(1);
-        expect(setCurrentModel).toHaveBeenCalledWith(
-          "ses-503",
-          "anthropic/claude-3-5-sonnet",
-        );
+        expect(setCurrentModel).toHaveBeenCalledWith("ses-503", "anthropic/claude-3-5-sonnet");
       });
     });
 
@@ -159,10 +156,7 @@ describe("createModelFallbackHandler", () => {
         });
 
         expect(setCurrentModel).toHaveBeenCalledTimes(1);
-        expect(setCurrentModel).toHaveBeenCalledWith(
-          "ses-msg",
-          "anthropic/claude-3-5-sonnet",
-        );
+        expect(setCurrentModel).toHaveBeenCalledWith("ses-msg", "anthropic/claude-3-5-sonnet");
       });
     });
   });

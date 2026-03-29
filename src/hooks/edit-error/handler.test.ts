@@ -14,9 +14,7 @@ describe("createEditErrorHandler", () => {
         const output = { output: "oldString not found in file" };
         await handler(input, output);
         expect(output.output).toContain("[EDIT ERROR RECOVERY]");
-        expect(output.output).toBe(
-          `oldString not found in file\n${EDIT_ERROR_RECOVERY_MESSAGE}`,
-        );
+        expect(output.output).toBe(`oldString not found in file\n${EDIT_ERROR_RECOVERY_MESSAGE}`);
       });
     });
 

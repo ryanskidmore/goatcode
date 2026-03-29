@@ -1,11 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import {
-  createDelegateRetryHandler,
-  detectDelegateTaskError,
-  buildRetryGuidance,
-  DELEGATE_TASK_ERROR_PATTERNS,
-} from "./handler";
+import { createDelegateRetryHandler, detectDelegateTaskError, buildRetryGuidance } from "./handler";
 
 describe("createDelegateRetryHandler", () => {
   describe("#given a task tool with an error output", () => {
@@ -33,8 +28,7 @@ describe("createDelegateRetryHandler", () => {
         const input = { tool: "task", sessionID: "s1", callID: "c1", args: {} };
         const output = {
           title: "task",
-          output:
-            "Invalid arguments: Unknown agent 'badagent'. Available agents: explore, oracle",
+          output: "Invalid arguments: Unknown agent 'badagent'. Available agents: explore, oracle",
           metadata: {},
         };
 

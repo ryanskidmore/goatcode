@@ -21,11 +21,7 @@ describe("createForegroundFallbackHandler", () => {
           sessionID: "ses-fg-429",
           model: "anthropic/claude-3-5-sonnet",
           error: { statusCode: 429, message: "Rate limit exceeded" },
-          fallbackChain: [
-            "anthropic/claude-3-5-sonnet",
-            "openai/gpt-4o",
-            "google/gemini-2.5-pro",
-          ],
+          fallbackChain: ["anthropic/claude-3-5-sonnet", "openai/gpt-4o", "google/gemini-2.5-pro"],
         };
         await handler({
           event: {

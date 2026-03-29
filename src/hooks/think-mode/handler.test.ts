@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import {
-  clearSessionMode,
-  setSessionMode,
-} from "../keyword-detector/handler";
+import { clearSessionMode, setSessionMode } from "../keyword-detector/handler";
 import { createThinkModeHandler } from "./handler";
 
 const SESSION_ID = "ses_test";

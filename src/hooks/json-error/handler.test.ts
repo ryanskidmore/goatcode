@@ -65,7 +65,9 @@ describe("createJsonErrorHandler", () => {
 
     describe("#when output is not a record", () => {
       it("#then no-op", async () => {
-        await handler({}, "not-an-object");
+        const output = "not-an-object";
+        await handler({}, output);
+        expect(output).toBe("not-an-object");
       });
     });
 

@@ -28,10 +28,7 @@ describe("createRuntimeFallbackHandler", () => {
         });
 
         expect(setCurrentModel).toHaveBeenCalledTimes(1);
-        expect(setCurrentModel).toHaveBeenCalledWith(
-          "ses-notfound",
-          "openai/gpt-4.1-mini",
-        );
+        expect(setCurrentModel).toHaveBeenCalledWith("ses-notfound", "openai/gpt-4.1-mini");
       });
     });
 
@@ -62,10 +59,7 @@ describe("createRuntimeFallbackHandler", () => {
         });
 
         expect(setCurrentModel).toHaveBeenCalledTimes(1);
-        expect(setCurrentModel).toHaveBeenCalledWith(
-          "ses-ctx",
-          "anthropic/claude-3-5-haiku",
-        );
+        expect(setCurrentModel).toHaveBeenCalledWith("ses-ctx", "anthropic/claude-3-5-haiku");
         expect(onFallbackApplied).toHaveBeenCalledTimes(1);
       });
     });
@@ -141,10 +135,7 @@ describe("createRuntimeFallbackHandler", () => {
         });
 
         expect(setCurrentModel).toHaveBeenCalledTimes(1);
-        expect(setCurrentModel).toHaveBeenCalledWith(
-          "ses-tokens",
-          "openai/gpt-4o-mini",
-        );
+        expect(setCurrentModel).toHaveBeenCalledWith("ses-tokens", "openai/gpt-4o-mini");
       });
     });
   });

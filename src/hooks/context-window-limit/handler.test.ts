@@ -1,9 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import {
-  createContextWindowLimitHandler,
-  CONTEXT_WINDOW_LIMIT_RECOVERY_MESSAGE,
-} from "./handler";
+import { createContextWindowLimitHandler, CONTEXT_WINDOW_LIMIT_RECOVERY_MESSAGE } from "./handler";
 
 type UnknownHandler = (input: unknown) => Promise<void>;
 

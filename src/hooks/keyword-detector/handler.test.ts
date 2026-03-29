@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import {
-  clearSessionMode,
-  createKeywordDetectorHandler,
-  getSessionMode,
-} from "./handler";
+import { clearSessionMode, createKeywordDetectorHandler, getSessionMode } from "./handler";
 
 const SESSION_ID = "ses_test";
 

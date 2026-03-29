@@ -18,7 +18,9 @@ type GenericHook = (input: unknown) => Promise<void>;
 function seedTodos(sessionID: string, todos: NonNullable<MutableTodoState["todos"]>): void {
   setSessionState(sessionID, { status: "active" });
   const state = getSessionState(sessionID) as unknown as MutableTodoState | undefined;
-  if (!state) return;
+  if (!state) {
+    throw new Error(`Failed to seed session state for test (sessionID: ${sessionID})`);
+  }
   state.todos = todos;
 }
 
