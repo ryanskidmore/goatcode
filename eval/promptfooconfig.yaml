@@ -1,0 +1,41 @@
+description: "GoatCode A/B Evaluation — With vs Without Plugin"
+
+providers:
+  - id: file://providers/opencode-provider.ts
+    label: with-goatcode
+    config:
+      enablePlugin: true
+      model: "anthropic/claude-sonnet-4-20250514"
+  - id: file://providers/opencode-baseline.ts
+    label: baseline
+
+defaultTest:
+  assert:
+    - type: javascript
+      value: "output.length > 0"
+    - type: latency
+      threshold: 30000
+    - type: cost
+      threshold: 0.10
+
+prompts:
+  - "{{task}}"
+
+tests:
+  - vars:
+      task: "Find all usages of the function 'bootstrap'"
+    assert:
+      - type: javascript
+        value: "file://assertions/task-completion.ts"
+        threshold: 0.5
+  - vars:
+      task: "Fix the edit error and retry the write"
+    assert:
+      - type: javascript
+        value: "file://assertions/tool-accuracy.ts"
+        threshold: 0.5
+  - vars:
+      task: "Create a plan for refactoring the hooks module"
+    assert:
+      - type: contains
+        value: "plan"
