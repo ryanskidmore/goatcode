@@ -50,7 +50,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
-function collectErrorFragments(error: unknown): string[] {
+function collectErrorFragments(error: unknown, depth = 0): string[] {
+  if (depth > 5) return []
+
   if (typeof error === "string") {
     return [error]
   }
@@ -78,8 +80,8 @@ function collectErrorFragments(error: unknown): string[] {
   }
 
   const nested = error.error
-  if (nested !== undefined) {
-    parts.push(...collectErrorFragments(nested))
+  if (nested !== undefined && nested !== error) {
+    parts.push(...collectErrorFragments(nested, depth + 1))
   }
 
   return parts

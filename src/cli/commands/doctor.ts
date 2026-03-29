@@ -72,43 +72,19 @@ export function checkConfigExists(cwd: string): CheckResult {
 }
 
 export async function checkConfigValid(cwd: string): Promise<CheckResult> {
-  const { userConfigPath, projectConfigPath, legacyProjectConfigPath } = getConfigLocations(cwd)
-  const issues: string[] = []
-
-  if (existsSync(userConfigPath)) {
-    const userConfig = await loadConfig(cwd)
-    if (userConfig === null && !existsSync(projectConfigPath) && !existsSync(legacyProjectConfigPath)) {
-      issues.push(`user config invalid: ${userConfigPath}`)
-    }
-  }
-
-  if (existsSync(projectConfigPath)) {
-    const config = await loadConfig(cwd)
-    if (config === null) {
-      issues.push(`project config invalid: ${projectConfigPath}`)
-    }
-  } else if (existsSync(legacyProjectConfigPath)) {
-    const config = await loadConfig(cwd)
-    if (config === null) {
-      issues.push(`legacy config invalid: ${legacyProjectConfigPath}`)
-    }
-  }
-
   const config = await loadConfig(cwd)
   if (config === null) {
-    return {
-      name: "Config is valid",
-      status: "fail",
-      detail: issues.length > 0 ? issues.join("; ") : "No valid user or project config found",
-    }
-  }
+    const { userConfigPath, projectConfigPath, legacyProjectConfigPath } = getConfigLocations(cwd)
+    const present: string[] = []
+    if (existsSync(userConfigPath)) present.push(`user (${userConfigPath})`)
+    if (existsSync(projectConfigPath)) present.push(`project (${projectConfigPath})`)
+    if (existsSync(legacyProjectConfigPath)) present.push(`legacy (${legacyProjectConfigPath})`)
 
-  if (issues.length > 0) {
-    return {
-      name: "Config is valid",
-      status: "fail",
-      detail: `Resolved config OK but individual file issues: ${issues.join("; ")}`,
-    }
+    const detail = present.length > 0
+      ? `Config files found but invalid: ${present.join(", ")}`
+      : "No valid user or project config found"
+
+    return { name: "Config is valid", status: "fail", detail }
   }
 
   return { name: "Config is valid", status: "pass", detail: "resolved and validated" }

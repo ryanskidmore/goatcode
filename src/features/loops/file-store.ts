@@ -116,9 +116,14 @@ export class FileLoopStore implements LoopStore {
 
     try {
       const fileContent = readFileSync(this.stateFilePath, "utf-8")
-      const parsed = JSON.parse(fileContent) as Record<string, unknown>
+      const parsed: unknown = JSON.parse(fileContent)
 
-      for (const [sessionId, state] of Object.entries(parsed)) {
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        log("[loop] persisted state is not a plain object, ignoring")
+        return
+      }
+
+      for (const [sessionId, state] of Object.entries(parsed as Record<string, unknown>)) {
         if (!isValidLoopState(state)) {
           log("[loop] skipping invalid persisted state", { sessionId })
           continue
