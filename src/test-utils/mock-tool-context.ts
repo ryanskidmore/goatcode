@@ -7,7 +7,7 @@ import { createMockSdkClient } from "./mock-sdk-client";
  * Provides sensible defaults for all required context fields.
  */
 export function createMockToolContext(
-  overrides: Partial<Parameters<ToolDefinition["execute"]>[1]> = {}
+  overrides: Partial<Parameters<ToolDefinition["execute"]>[1]> = {},
 ): Parameters<ToolDefinition["execute"]>[1] {
   return {
     sessionID: "ses_test",

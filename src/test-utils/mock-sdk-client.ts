@@ -5,7 +5,7 @@ import { mock } from "bun:test";
  * Provides mock methods for all client operations.
  */
 export function createMockSdkClient(overrides: Record<string, unknown> = {}) {
-  return {
+  const base = {
     getProviders: mock(async () => []),
     getModels: mock(async () => []),
     getSession: mock(async () => null),
@@ -37,6 +37,16 @@ export function createMockSdkClient(overrides: Record<string, unknown> = {}) {
       })),
       delete: mock(async () => ({})),
     },
+  };
+
+  const overrideSession = (overrides as { session?: Record<string, unknown> }).session ?? {};
+
+  return {
+    ...base,
     ...overrides,
+    session: {
+      ...base.session,
+      ...overrideSession,
+    },
   };
 }

@@ -16,7 +16,7 @@ export function makeConfigOutput(overrides: Record<string, unknown> = {}): Recor
 }
 
 export function makeChatMessageOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     parts: [
@@ -30,7 +30,7 @@ export function makeChatMessageOutput(
 }
 
 export function makeChatParamsOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     options: {},
@@ -39,7 +39,7 @@ export function makeChatParamsOutput(
 }
 
 export function makeChatHeadersOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,
@@ -53,7 +53,7 @@ export function makeEventOutput(overrides: Record<string, unknown> = {}): Record
 }
 
 export function makeToolExecuteBeforeOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     args: {},
@@ -62,16 +62,18 @@ export function makeToolExecuteBeforeOutput(
 }
 
 export function makeToolExecuteAfterOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     output: "tool result",
+    title: "tool execution",
+    metadata: {},
     ...overrides,
   };
 }
 
 export function makeExperimentalChatMessagesTransformOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     messages: [
@@ -93,7 +95,7 @@ export function makeExperimentalChatMessagesTransformOutput(
 }
 
 export function makeExperimentalChatSystemTransformOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     title: "Test Title",
@@ -103,7 +105,7 @@ export function makeExperimentalChatSystemTransformOutput(
 }
 
 export function makeToolDefinitionOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,
@@ -111,7 +113,7 @@ export function makeToolDefinitionOutput(
 }
 
 export function makePermissionAskOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,
@@ -119,7 +121,7 @@ export function makePermissionAskOutput(
 }
 
 export function makeCommandExecuteBeforeOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,
@@ -127,7 +129,7 @@ export function makeCommandExecuteBeforeOutput(
 }
 
 export function makeShellEnvOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,
@@ -135,7 +137,7 @@ export function makeShellEnvOutput(
 }
 
 export function makeExperimentalSessionCompactingOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,
@@ -143,7 +145,7 @@ export function makeExperimentalSessionCompactingOutput(
 }
 
 export function makeExperimentalTextCompleteOutput(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     ...overrides,

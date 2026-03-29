@@ -23,8 +23,8 @@
     "lint": "oxlint src --deny-warnings",
     "fmt": "oxfmt --write 'src/**/*.ts'",
     "fmt:check": "oxfmt --check 'src/**/*.ts'",
-    "test:eval": "npx promptfoo eval -c eval/promptfooconfig.yaml",
-    "test:ablation": "npx promptfoo eval -c eval/ablation-config.yaml",
+    "test:eval": "npx promptfoo eval -c eval/spike/config.yaml",
+    "test:ablation": "npx promptfoo eval -c eval/spike/config.yaml",
     "clean": "rm -rf dist"
   },
   "engines": {
