@@ -35,4 +35,4 @@ You are working on WRITING / PROSE tasks.
 
 Favor clear, natural language and avoid AI-slop phrasing.
 </Category_Context>`,
-} as const
+} as const;

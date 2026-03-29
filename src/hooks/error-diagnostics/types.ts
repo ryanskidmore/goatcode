@@ -8,19 +8,19 @@ export type ErrorCategory =
   | "memory"
   | "syntax"
   | "type-error"
-  | "unknown"
+  | "unknown";
 
 export type DiagnosticPattern = {
-  category: ErrorCategory
-  patterns: RegExp[]
-  severity: "error" | "warning" | "info"
-  suggestion: string
-}
+  category: ErrorCategory;
+  patterns: RegExp[];
+  severity: "error" | "warning" | "info";
+  suggestion: string;
+};
 
 export type DiagnosticResult = {
-  category: ErrorCategory
-  severity: string
-  matched: string
-  suggestion: string
-  timestamp: string
-}
+  category: ErrorCategory;
+  severity: string;
+  matched: string;
+  suggestion: string;
+  timestamp: string;
+};

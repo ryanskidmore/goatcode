@@ -1,4 +1,4 @@
-import type { PromptMeta } from "../prompt-meta"
+import type { PromptMeta } from "../prompt-meta";
 
 export const PLAN_BUILDER_PROMPT_META: PromptMeta = {
   version: "1.0.0",
@@ -8,8 +8,7 @@ export const PLAN_BUILDER_PROMPT_META: PromptMeta = {
     {
       version: "1.0.0",
       date: "2025-03-28",
-      description:
-        "Production-grade prompt with structured sections and quality gates",
+      description: "Production-grade prompt with structured sections and quality gates",
     },
   ],
-}
+};

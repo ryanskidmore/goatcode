@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { lspSymbolsTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { lspSymbolsTool } from "./handler";
 
 export const lspSymbolsPlugin = definePlugin({
   name: "lsp-symbols",
@@ -7,4 +7,4 @@ export const lspSymbolsPlugin = definePlugin({
   tools: {
     lsp_symbols: lspSymbolsTool,
   },
-})
+});

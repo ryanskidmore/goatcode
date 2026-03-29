@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createTaskResumeInfoHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createTaskResumeInfoHandler } from "./handler";
 
-const toolExecuteAfterHook = safeCreateHook("task-resume-info", createTaskResumeInfoHandler)
+const toolExecuteAfterHook = safeCreateHook("task-resume-info", createTaskResumeInfoHandler);
 
 export const taskResumeInfoPlugin = definePlugin({
   name: "task-resume-info",
@@ -12,4 +12,4 @@ export const taskResumeInfoPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});

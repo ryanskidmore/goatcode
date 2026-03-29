@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const lspDiagnosticsArgsSchema = z.object({
   filePath: z.string(),
@@ -6,7 +6,10 @@ export const lspDiagnosticsArgsSchema = z.object({
     .enum(["error", "warning", "information", "hint", "all"])
     .optional()
     .describe("Filter by severity level"),
-  extension: z.string().optional().describe("Required if filePath is a directory. E.g., '.ts', '.py', '.go'"),
-})
+  extension: z
+    .string()
+    .optional()
+    .describe("Required if filePath is a directory. E.g., '.ts', '.py', '.go'"),
+});
 
-export type LspDiagnosticsArgs = z.infer<typeof lspDiagnosticsArgsSchema>
+export type LspDiagnosticsArgs = z.infer<typeof lspDiagnosticsArgsSchema>;

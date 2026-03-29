@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createDelegateRetryHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createDelegateRetryHandler } from "./handler";
 
-const toolExecuteAfterHook = safeCreateHook("delegate-retry", createDelegateRetryHandler)
+const toolExecuteAfterHook = safeCreateHook("delegate-retry", createDelegateRetryHandler);
 
 export const delegateRetryPlugin = definePlugin({
   name: "delegate-retry",
@@ -12,4 +12,4 @@ export const delegateRetryPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});

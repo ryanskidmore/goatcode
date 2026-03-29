@@ -1,60 +1,60 @@
-import type { PluginHookContributions } from "../../types/hook"
-import { log } from "../../shared/logger"
+import type { PluginHookContributions } from "../../types/hook";
+import { log } from "../../shared/logger";
 
-type PreToolUseHook = NonNullable<PluginHookContributions["tool.execute.before"]>
+type PreToolUseHook = NonNullable<PluginHookContributions["tool.execute.before"]>;
 
-const EMPTY_CATCH_PATTERN = /catch\s*\([^)]*\)\s*\{\s*\}/g
+const EMPTY_CATCH_PATTERN = /catch\s*\([^)]*\)\s*\{\s*\}/g;
 
-const WARNING_MARKER = "[COMMENT-CHECKER WARNING]"
+const WARNING_MARKER = "[COMMENT-CHECKER WARNING]";
 
 export const EMPTY_CATCH_WARNING =
   `${WARNING_MARKER}\nEmpty catch block detected with no comment explaining why the error is ignored. ` +
-  `Add a comment inside the catch block explaining the intent, e.g. // ignore: expected when X.`
+  `Add a comment inside the catch block explaining the intent, e.g. // ignore: expected when X.`;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" && value !== null;
 }
 
 function extractContent(output: Record<string, unknown>): string | undefined {
-  const content = output.content ?? output.newString ?? output.new_string
-  return typeof content === "string" ? content : undefined
+  const content = output.content ?? output.newString ?? output.new_string;
+  return typeof content === "string" ? content : undefined;
 }
 
 function hasEmptyCatchBlock(code: string): boolean {
-  const matches = [...code.matchAll(EMPTY_CATCH_PATTERN)]
-  return matches.length > 0
+  const matches = [...code.matchAll(EMPTY_CATCH_PATTERN)];
+  return matches.length > 0;
 }
 
 export function createCommentCheckerHandler(): PreToolUseHook {
   return async (input: unknown, output: unknown) => {
     if (!isRecord(input) || !isRecord(output)) {
-      return
+      return;
     }
 
-    const tool = input.tool
+    const tool = input.tool;
     if (typeof tool !== "string") {
-      return
+      return;
     }
 
-    const toolLower = tool.toLowerCase()
+    const toolLower = tool.toLowerCase();
     if (toolLower !== "write" && toolLower !== "edit" && toolLower !== "multiedit") {
-      return
+      return;
     }
 
-    const content = extractContent(output)
+    const content = extractContent(output);
     if (!content) {
-      return
+      return;
     }
 
     if (!hasEmptyCatchBlock(content)) {
-      return
+      return;
     }
 
-    log("[comment-checker] empty catch block detected", { tool: toolLower })
+    log("[comment-checker] empty catch block detected", { tool: toolLower });
 
-    const existingOutput = typeof output.output === "string" ? output.output : ""
+    const existingOutput = typeof output.output === "string" ? output.output : "";
     output.output = existingOutput
       ? `${existingOutput}\n${EMPTY_CATCH_WARNING}`
-      : EMPTY_CATCH_WARNING
-  }
+      : EMPTY_CATCH_WARNING;
+  };
 }

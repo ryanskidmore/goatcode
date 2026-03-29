@@ -140,4 +140,4 @@ When reporting back:
 - Provide verification evidence.
 - Note any assumptions and unresolved risks.
 - Offer next step only if it directly advances the current goal.
-`
+`;

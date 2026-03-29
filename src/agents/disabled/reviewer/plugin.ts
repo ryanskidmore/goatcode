@@ -1,7 +1,7 @@
-import { definePlugin } from "../../plugin-api"
-import { REVIEWER_MODEL, REVIEWER_TEMPERATURE, REVIEWER_MODE } from "./config"
-import { REVIEWER_PROMPT } from "./prompt"
-import { buildToolsMap } from "../tool-restrictions"
+import { definePlugin } from "../../plugin-api";
+import { REVIEWER_MODEL, REVIEWER_TEMPERATURE, REVIEWER_MODE } from "./config";
+import { REVIEWER_PROMPT } from "./prompt";
+import { buildToolsMap } from "../tool-restrictions";
 
 export const reviewerPlugin = definePlugin({
   name: "reviewer",
@@ -15,4 +15,4 @@ export const reviewerPlugin = definePlugin({
       tools: buildToolsMap("reviewer"),
     },
   },
-})
+});

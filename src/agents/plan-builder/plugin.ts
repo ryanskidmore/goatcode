@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  PLAN_BUILDER_MODEL,
-  PLAN_BUILDER_TEMPERATURE,
-  PLAN_BUILDER_MODE,
-} from "./config"
-import { PLAN_BUILDER_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { PLAN_BUILDER_MODEL, PLAN_BUILDER_TEMPERATURE, PLAN_BUILDER_MODE } from "./config";
+import { PLAN_BUILDER_PROMPT } from "./prompt";
 
 export const planBuilderPlugin = definePlugin({
   name: "plan-builder",
@@ -17,4 +13,4 @@ export const planBuilderPlugin = definePlugin({
       prompt: PLAN_BUILDER_PROMPT,
     },
   },
-})
+});

@@ -1,5 +1,5 @@
-export { compactionContextPlugin } from "./plugin"
+export { compactionContextPlugin } from "./plugin";
 export {
   createCompactionContextEventHandler,
   createCompactionContextSystemTransformHandler,
-} from "./handler"
+} from "./handler";

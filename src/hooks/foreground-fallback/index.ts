@@ -1,2 +1,2 @@
-export { createForegroundFallbackHandler } from "./handler"
-export { foregroundFallbackPlugin } from "./plugin"
+export { createForegroundFallbackHandler } from "./handler";
+export { foregroundFallbackPlugin } from "./plugin";

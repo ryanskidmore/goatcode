@@ -1,11 +1,11 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createThinkingBlockValidatorHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createThinkingBlockValidatorHandler } from "./handler";
 
 const messagesTransformHook = safeCreateHook(
   "thinking-block-validator",
   createThinkingBlockValidatorHandler,
-)
+);
 
 export const thinkingBlockValidatorPlugin = definePlugin({
   name: "thinking-block-validator",
@@ -15,4 +15,4 @@ export const thinkingBlockValidatorPlugin = definePlugin({
         "experimental.chat.messages.transform": messagesTransformHook,
       }
     : {},
-})
+});

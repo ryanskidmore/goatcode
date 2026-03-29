@@ -6,8 +6,8 @@ export const AGENT_FALLBACK_CHAINS: Record<string, string[]> = {
   researcher: ["anthropic/claude-sonnet-4-6"],
   explorer: ["anthropic/claude-sonnet-4-6"],
   worker: ["anthropic/claude-haiku-4-6"],
-}
+};
 
 export function getFallbackChain(agentName: string): string[] {
-  return AGENT_FALLBACK_CHAINS[agentName] ?? []
+  return AGENT_FALLBACK_CHAINS[agentName] ?? [];
 }

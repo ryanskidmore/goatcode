@@ -1,2 +1,2 @@
-export { deepWorkerPlugin } from "./plugin"
-export * from "./config"
+export { deepWorkerPlugin } from "./plugin";
+export * from "./config";

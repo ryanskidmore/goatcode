@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { lspGotoDefinitionTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { lspGotoDefinitionTool } from "./handler";
 
 export const lspGotoDefinitionPlugin = definePlugin({
   name: "lsp-goto-definition",
@@ -7,4 +7,4 @@ export const lspGotoDefinitionPlugin = definePlugin({
   tools: {
     lsp_goto_definition: lspGotoDefinitionTool,
   },
-})
+});

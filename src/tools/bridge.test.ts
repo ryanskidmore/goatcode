@@ -1,9 +1,9 @@
-import { describe, it, expect } from "bun:test"
-import { buildToolHook } from "./bridge"
-import type { PluginToolContribution } from "../types/tool"
+import { describe, it, expect } from "bun:test";
+import { buildToolHook } from "./bridge";
+import type { PluginToolContribution } from "../types/tool";
 
 function makeToolContribution(): PluginToolContribution {
-  return { execute: async () => "ok" } as unknown as PluginToolContribution
+  return { execute: async () => "ok" } as unknown as PluginToolContribution;
 }
 
 describe("buildToolHook", () => {
@@ -12,26 +12,26 @@ describe("buildToolHook", () => {
       it("#then it returns the tools record", () => {
         const tools: Record<string, PluginToolContribution> = {
           testTool: makeToolContribution(),
-        }
+        };
 
-        const result = buildToolHook(tools)
+        const result = buildToolHook(tools);
 
-        expect(result).toEqual(tools)
-      })
-    })
-  })
+        expect(result).toEqual(tools);
+      });
+    });
+  });
 
   describe("#given an empty tools record", () => {
     describe("#when buildToolHook is called", () => {
       it("#then it returns undefined", () => {
-        const tools: Record<string, PluginToolContribution> = {}
+        const tools: Record<string, PluginToolContribution> = {};
 
-        const result = buildToolHook(tools)
+        const result = buildToolHook(tools);
 
-        expect(result).toBeUndefined()
-      })
-    })
-  })
+        expect(result).toBeUndefined();
+      });
+    });
+  });
 
   describe("#given a tools record with multiple entries", () => {
     describe("#when buildToolHook is called", () => {
@@ -40,16 +40,16 @@ describe("buildToolHook", () => {
           tool1: makeToolContribution(),
           tool2: makeToolContribution(),
           tool3: makeToolContribution(),
-        }
+        };
 
-        const result = buildToolHook(tools)
+        const result = buildToolHook(tools);
 
-        expect(result).toEqual(tools)
-        expect(Object.keys(result!)).toHaveLength(3)
-        expect(result).toHaveProperty("tool1")
-        expect(result).toHaveProperty("tool2")
-        expect(result).toHaveProperty("tool3")
-      })
-    })
-  })
-})
+        expect(result).toEqual(tools);
+        expect(Object.keys(result!)).toHaveLength(3);
+        expect(result).toHaveProperty("tool1");
+        expect(result).toHaveProperty("tool2");
+        expect(result).toHaveProperty("tool3");
+      });
+    });
+  });
+});

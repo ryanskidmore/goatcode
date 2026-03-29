@@ -1,46 +1,46 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { join } from "node:path"
-import { log } from "../../shared/logger"
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { log } from "../../shared/logger";
 
 type EventInput = {
   event?: {
-    type?: string
-    properties?: unknown
-  }
-}
+    type?: string;
+    properties?: unknown;
+  };
+};
 
 type SessionLikeInput = {
-  sessionID?: string
+  sessionID?: string;
   session?: {
-    id?: string
-  }
-}
+    id?: string;
+  };
+};
 
 type SystemTransformOutput = {
-  system?: string
-  prompt?: string
-  text?: string
-  content?: string
-}
+  system?: string;
+  prompt?: string;
+  text?: string;
+  content?: string;
+};
 
 function readTextIfExists(path: string, maxChars = 4000): string | null {
   if (!existsSync(path)) {
-    return null
+    return null;
   }
 
   try {
-    const text = readFileSync(path, "utf8")
-    return text.length > maxChars ? `${text.slice(0, maxChars)}\n\n[truncated]` : text
+    const text = readFileSync(path, "utf8");
+    return text.length > maxChars ? `${text.slice(0, maxChars)}\n\n[truncated]` : text;
   } catch (error) {
-    log("[compaction-context] Failed to read context file", { path, error: String(error) })
-    return null
+    log("[compaction-context] Failed to read context file", { path, error: String(error) });
+    return null;
   }
 }
 
 function resolveLatestPlanPath(workspaceDirectory: string): string | null {
-  const plansDirectory = join(workspaceDirectory, ".sisyphus", "plans")
+  const plansDirectory = join(workspaceDirectory, ".sisyphus", "plans");
   if (!existsSync(plansDirectory)) {
-    return null
+    return null;
   }
 
   const planFiles = readdirSync(plansDirectory)
@@ -49,59 +49,59 @@ function resolveLatestPlanPath(workspaceDirectory: string): string | null {
       path: join(plansDirectory, name),
       mtimeMs: statSync(join(plansDirectory, name)).mtimeMs,
     }))
-    .sort((left, right) => right.mtimeMs - left.mtimeMs)
+    .sort((left, right) => right.mtimeMs - left.mtimeMs);
 
-  return planFiles[0]?.path ?? null
+  return planFiles[0]?.path ?? null;
 }
 
 function buildCompactionSnapshot(workspaceDirectory: string): string | null {
   const todoPaths = [
     join(workspaceDirectory, ".sisyphus", "todos.md"),
     join(workspaceDirectory, ".sisyphus", "todo.md"),
-  ]
+  ];
 
   const todoContent = todoPaths
     .map((path) => ({ path, content: readTextIfExists(path) }))
-    .find((entry) => entry.content !== null)
+    .find((entry) => entry.content !== null);
 
-  const planPath = resolveLatestPlanPath(workspaceDirectory)
-  const planContent = planPath ? readTextIfExists(planPath) : null
+  const planPath = resolveLatestPlanPath(workspaceDirectory);
+  const planContent = planPath ? readTextIfExists(planPath) : null;
 
   if (!todoContent?.content && !planContent) {
-    return null
+    return null;
   }
 
-  let snapshot = "[Compaction Recovery Context]\n"
+  let snapshot = "[Compaction Recovery Context]\n";
   if (todoContent?.content) {
-    snapshot += `\n## Current Todos\n[Source: ${todoContent.path}]\n${todoContent.content}\n`
+    snapshot += `\n## Current Todos\n[Source: ${todoContent.path}]\n${todoContent.content}\n`;
   }
   if (planContent && planPath) {
-    snapshot += `\n## Active Plan\n[Source: ${planPath}]\n${planContent}\n`
+    snapshot += `\n## Active Plan\n[Source: ${planPath}]\n${planContent}\n`;
   }
 
-  return snapshot
+  return snapshot;
 }
 
 function resolveSessionID(properties: unknown): string | null {
   if (!properties || typeof properties !== "object") {
-    return null
+    return null;
   }
 
-  const record = properties as Record<string, unknown>
-  const direct = record.sessionID
+  const record = properties as Record<string, unknown>;
+  const direct = record.sessionID;
   if (typeof direct === "string") {
-    return direct
+    return direct;
   }
 
-  const info = record.info
+  const info = record.info;
   if (info && typeof info === "object") {
-    const id = (info as Record<string, unknown>).id
+    const id = (info as Record<string, unknown>).id;
     if (typeof id === "string") {
-      return id
+      return id;
     }
   }
 
-  return null
+  return null;
 }
 
 export function createCompactionContextEventHandler(
@@ -109,69 +109,71 @@ export function createCompactionContextEventHandler(
   sessionSnapshots: Map<string, string>,
 ) {
   return async (input: unknown): Promise<void> => {
-    const typedInput = input as EventInput
-    const eventType = typedInput.event?.type
-    const properties = typedInput.event?.properties
-    const sessionID = resolveSessionID(properties)
+    const typedInput = input as EventInput;
+    const eventType = typedInput.event?.type;
+    const properties = typedInput.event?.properties;
+    const sessionID = resolveSessionID(properties);
 
     if (!sessionID) {
-      return
+      return;
     }
 
     if (eventType === "session.deleted") {
-      sessionSnapshots.delete(sessionID)
-      return
+      sessionSnapshots.delete(sessionID);
+      return;
     }
 
     if (eventType !== "session.compacted") {
-      return
+      return;
     }
 
-    const snapshot = buildCompactionSnapshot(workspaceDirectory)
+    const snapshot = buildCompactionSnapshot(workspaceDirectory);
     if (!snapshot) {
-      return
+      return;
     }
 
-    sessionSnapshots.set(sessionID, snapshot)
-  }
+    sessionSnapshots.set(sessionID, snapshot);
+  };
 }
 
-export function createCompactionContextSystemTransformHandler(sessionSnapshots: Map<string, string>) {
+export function createCompactionContextSystemTransformHandler(
+  sessionSnapshots: Map<string, string>,
+) {
   return async (input: unknown, output: unknown): Promise<void> => {
-    const typedInput = input as SessionLikeInput
-    const typedOutput = output as SystemTransformOutput
-    const sessionID = typedInput.sessionID ?? typedInput.session?.id
+    const typedInput = input as SessionLikeInput;
+    const typedOutput = output as SystemTransformOutput;
+    const sessionID = typedInput.sessionID ?? typedInput.session?.id;
 
     if (!sessionID) {
-      return
+      return;
     }
 
-    const snapshot = sessionSnapshots.get(sessionID)
+    const snapshot = sessionSnapshots.get(sessionID);
     if (!snapshot) {
-      return
+      return;
     }
 
     if (typeof typedOutput.system === "string") {
-      typedOutput.system += `\n\n${snapshot}`
-      sessionSnapshots.delete(sessionID)
-      return
+      typedOutput.system += `\n\n${snapshot}`;
+      sessionSnapshots.delete(sessionID);
+      return;
     }
 
     if (typeof typedOutput.prompt === "string") {
-      typedOutput.prompt += `\n\n${snapshot}`
-      sessionSnapshots.delete(sessionID)
-      return
+      typedOutput.prompt += `\n\n${snapshot}`;
+      sessionSnapshots.delete(sessionID);
+      return;
     }
 
     if (typeof typedOutput.text === "string") {
-      typedOutput.text += `\n\n${snapshot}`
-      sessionSnapshots.delete(sessionID)
-      return
+      typedOutput.text += `\n\n${snapshot}`;
+      sessionSnapshots.delete(sessionID);
+      return;
     }
 
     if (typeof typedOutput.content === "string") {
-      typedOutput.content += `\n\n${snapshot}`
-      sessionSnapshots.delete(sessionID)
+      typedOutput.content += `\n\n${snapshot}`;
+      sessionSnapshots.delete(sessionID);
     }
-  }
+  };
 }

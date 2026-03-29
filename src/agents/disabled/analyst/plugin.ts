@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  ANALYST_MODEL,
-  ANALYST_TEMPERATURE,
-  ANALYST_MODE,
-} from "./config"
-import { ANALYST_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { ANALYST_MODEL, ANALYST_TEMPERATURE, ANALYST_MODE } from "./config";
+import { ANALYST_PROMPT } from "./prompt";
 
 export const analystPlugin = definePlugin({
   name: "analyst",
@@ -17,4 +13,4 @@ export const analystPlugin = definePlugin({
       prompt: ANALYST_PROMPT,
     },
   },
-})
+});

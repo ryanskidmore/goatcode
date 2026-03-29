@@ -1,2 +1,2 @@
-export { inspectorPlugin } from "./plugin"
-export * from "./config"
+export { inspectorPlugin } from "./plugin";
+export * from "./config";

@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createJsonErrorHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createJsonErrorHandler } from "./handler";
 
-const toolExecuteAfterHook = safeCreateHook("json-error", createJsonErrorHandler)
+const toolExecuteAfterHook = safeCreateHook("json-error", createJsonErrorHandler);
 
 export const jsonErrorPlugin = definePlugin({
   name: "json-error",
@@ -12,4 +12,4 @@ export const jsonErrorPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});

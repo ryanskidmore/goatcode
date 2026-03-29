@@ -1,14 +1,14 @@
-import type { ToolDefinition } from "@opencode-ai/plugin"
+import type { ToolDefinition } from "@opencode-ai/plugin";
 
-import { log } from "../../../shared/logger"
-import { buildTool } from "../../tool-builder"
-import { callLspClient, formatLspResult, getClientFromToolContext } from "../client"
-import { lspPrepareRenameArgsSchema } from "./types"
+import { log } from "../../../shared/logger";
+import { buildTool } from "../../tool-builder";
+import { callLspClient, formatLspResult, getClientFromToolContext } from "../client";
+import { lspPrepareRenameArgsSchema } from "./types";
 
-const TOOL_NAME = "lsp_prepare_rename"
+const TOOL_NAME = "lsp_prepare_rename";
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  return error instanceof Error ? error.message : String(error);
 }
 
 export const lspPrepareRenameTool: ToolDefinition = buildTool({
@@ -16,19 +16,19 @@ export const lspPrepareRenameTool: ToolDefinition = buildTool({
   args: lspPrepareRenameArgsSchema.shape as unknown as ToolDefinition["args"],
   execute: async (args, ctx) => {
     try {
-      const parsedArgs = lspPrepareRenameArgsSchema.parse(args)
-      const client = getClientFromToolContext(ctx)
-      const result = await callLspClient(client, TOOL_NAME, "lspPrepareRename", parsedArgs)
+      const parsedArgs = lspPrepareRenameArgsSchema.parse(args);
+      const client = getClientFromToolContext(ctx);
+      const result = await callLspClient(client, TOOL_NAME, "lspPrepareRename", parsedArgs);
 
       if (result === null || result === undefined) {
-        return "Rename is not valid at this position"
+        return "Rename is not valid at this position";
       }
 
-      return formatLspResult(result)
+      return formatLspResult(result);
     } catch (error) {
-      const message = errorMessage(error)
-      log("[lsp_prepare_rename] execution failed", { error: message })
-      return `Error: ${message}`
+      const message = errorMessage(error);
+      log("[lsp_prepare_rename] execution failed", { error: message });
+      return `Error: ${message}`;
     }
   },
-})
+});

@@ -1,5 +1,5 @@
-import { z } from "zod"
-import { CONFIG_DEFAULTS } from "./defaults"
+import { z } from "zod";
+import { CONFIG_DEFAULTS } from "./defaults";
 
 export const AgentOverrideConfigSchema = z.object({
   model: z.string().optional(),
@@ -10,14 +10,14 @@ export const AgentOverrideConfigSchema = z.object({
   denied_tools: z.array(z.string()).optional(),
   disable: z.boolean().optional(),
   fallback_models: z.union([z.string(), z.array(z.string())]).optional(),
-})
+});
 
 export const CategoryConfigSchema = z.object({
   model: z.string().optional(),
   variant: z.string().optional(),
   description: z.string().optional(),
   prompt_append: z.string().optional(),
-})
+});
 
 export const AgentOverridesSchema = z.object({
   orchestrator: AgentOverrideConfigSchema.optional(),
@@ -27,7 +27,7 @@ export const AgentOverridesSchema = z.object({
   researcher: AgentOverrideConfigSchema.optional(),
   explorer: AgentOverrideConfigSchema.optional(),
   worker: AgentOverrideConfigSchema.optional(),
-})
+});
 
 export const CategoryOverridesSchema = z.object({
   "visual-engineering": CategoryConfigSchema.optional(),
@@ -38,7 +38,7 @@ export const CategoryOverridesSchema = z.object({
   "unspecified-low": CategoryConfigSchema.optional(),
   "unspecified-high": CategoryConfigSchema.optional(),
   writing: CategoryConfigSchema.optional(),
-})
+});
 
 export const GoatCodeConfigSchema = z.object({
   agents: AgentOverridesSchema.optional(),
@@ -49,6 +49,6 @@ export const GoatCodeConfigSchema = z.object({
   disabled_skills: z.array(z.string()).default(CONFIG_DEFAULTS.disabled_skills),
   auto_update: z.boolean().default(CONFIG_DEFAULTS.auto_update),
   plugins: z.array(z.string()).optional(),
-})
+});
 
-export type GoatCodeConfigInput = z.input<typeof GoatCodeConfigSchema>
+export type GoatCodeConfigInput = z.input<typeof GoatCodeConfigSchema>;

@@ -1,7 +1,7 @@
-import { tool } from "@opencode-ai/plugin"
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { executeSkill } from "./handler"
-import type { SkillArgs } from "./types"
+import { tool } from "@opencode-ai/plugin";
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { executeSkill } from "./handler";
+import type { SkillArgs } from "./types";
 
 const SKILL_DESCRIPTION =
   "Load a skill or execute a slash command to get detailed instructions for a specific task.\n\n" +
@@ -10,7 +10,7 @@ const SKILL_DESCRIPTION =
   "**How to use:**\n" +
   "- Call with a skill name: name='code-review'\n" +
   "- Call with a command name (without leading slash): name='publish'\n" +
-  "- The tool will return detailed instructions with your context applied."
+  "- The tool will return detailed instructions with your context applied.";
 
 const skillTool = tool({
   description: SKILL_DESCRIPTION,
@@ -28,9 +28,9 @@ const skillTool = tool({
       ),
   },
   async execute(args: SkillArgs) {
-    return executeSkill(args)
+    return executeSkill(args);
   },
-})
+});
 
 export const skillPlugin = definePlugin({
   name: "skill",
@@ -38,4 +38,4 @@ export const skillPlugin = definePlugin({
   tools: {
     skill: skillTool,
   },
-})
+});

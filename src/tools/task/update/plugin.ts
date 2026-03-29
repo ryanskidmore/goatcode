@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { taskUpdateTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { taskUpdateTool } from "./handler";
 
 export const taskUpdatePlugin = definePlugin({
   name: "task-update",
@@ -7,4 +7,4 @@ export const taskUpdatePlugin = definePlugin({
   tools: {
     task_update: taskUpdateTool,
   },
-})
+});

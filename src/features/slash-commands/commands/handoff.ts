@@ -1,4 +1,4 @@
-import type { SlashCommand } from "../types"
+import type { SlashCommand } from "../types";
 
 export const handoffCommand: SlashCommand = {
   name: "handoff",
@@ -56,4 +56,4 @@ Timestamp: $TIMESTAMP
 <user-request>
 $ARGUMENTS
 </user-request>`,
-}
+};

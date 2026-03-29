@@ -1,5 +1,5 @@
-import { definePlugin } from "../../plugin-api"
-import { createGrepTool } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { createGrepTool } from "./handler";
 
 export const grepPlugin = definePlugin({
   name: "grep",
@@ -7,4 +7,4 @@ export const grepPlugin = definePlugin({
   tools: {
     grep: createGrepTool(),
   },
-})
+});

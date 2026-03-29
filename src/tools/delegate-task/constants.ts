@@ -1,4 +1,4 @@
-import type { CategoryConfig } from "./types"
+import type { CategoryConfig } from "./types";
 
 export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
   "visual-engineering": {
@@ -38,6 +38,6 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
     model: "kimi-for-coding/k2p5",
     description: "Documentation, prose, technical writing",
   },
-}
+};
 
-export const CATEGORY_NAMES = Object.keys(DEFAULT_CATEGORIES)
+export const CATEGORY_NAMES = Object.keys(DEFAULT_CATEGORIES);

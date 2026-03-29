@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createSessionRecoveryHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createSessionRecoveryHandler } from "./handler";
 
-const eventHook = safeCreateHook("session-recovery", createSessionRecoveryHandler)
+const eventHook = safeCreateHook("session-recovery", createSessionRecoveryHandler);
 
 export const sessionRecoveryPlugin = definePlugin({
   name: "session-recovery",
@@ -12,4 +12,4 @@ export const sessionRecoveryPlugin = definePlugin({
         event: eventHook,
       }
     : {},
-})
+});

@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  EXECUTOR_MODEL,
-  EXECUTOR_TEMPERATURE,
-  EXECUTOR_MODE,
-} from "./config"
-import { EXECUTOR_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { EXECUTOR_MODEL, EXECUTOR_TEMPERATURE, EXECUTOR_MODE } from "./config";
+import { EXECUTOR_PROMPT } from "./prompt";
 
 export const executorPlugin = definePlugin({
   name: "executor",
@@ -17,4 +13,4 @@ export const executorPlugin = definePlugin({
       prompt: EXECUTOR_PROMPT,
     },
   },
-})
+});

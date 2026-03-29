@@ -1,11 +1,11 @@
-import { tool } from "@opencode-ai/plugin"
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { executeSkillMcp } from "./handler"
-import type { SkillMcpArgs } from "./types"
+import { tool } from "@opencode-ai/plugin";
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { executeSkillMcp } from "./handler";
+import type { SkillMcpArgs } from "./types";
 
 const SKILL_MCP_DESCRIPTION =
   "Invoke MCP server operations from skill-embedded MCPs. Requires mcp_name plus exactly one of: tool_name, resource_name, or prompt_name.\n\n" +
-  "Pass `session_id=<id>` to continue previous agent with full context. Nested subagent depth is tracked automatically and blocked past the configured limit. Prompts MUST be in English. Use `background_output` for async results."
+  "Pass `session_id=<id>` to continue previous agent with full context. Nested subagent depth is tracked automatically and blocked past the configured limit. Prompts MUST be in English. Use `background_output` for async results.";
 
 const skillMcpTool = tool({
   description: SKILL_MCP_DESCRIPTION,
@@ -24,9 +24,9 @@ const skillMcpTool = tool({
       .describe("Regex pattern to filter output lines (only matching lines returned)"),
   },
   async execute(args: SkillMcpArgs) {
-    return executeSkillMcp(args)
+    return executeSkillMcp(args);
   },
-})
+});
 
 export const skillMcpPlugin = definePlugin({
   name: "skill-mcp",
@@ -34,4 +34,4 @@ export const skillMcpPlugin = definePlugin({
   tools: {
     skill_mcp: skillMcpTool,
   },
-})
+});

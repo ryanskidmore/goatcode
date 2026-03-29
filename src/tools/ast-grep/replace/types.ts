@@ -1,5 +1,5 @@
-import { z } from "zod"
-import { AST_GREP_CLI_LANGUAGES } from "../search/types"
+import { z } from "zod";
+import { AST_GREP_CLI_LANGUAGES } from "../search/types";
 
 export const astGrepReplaceArgsSchema = {
   pattern: z.string().describe("AST pattern to match"),
@@ -8,7 +8,7 @@ export const astGrepReplaceArgsSchema = {
   paths: z.array(z.string()).optional().describe("Paths to search"),
   globs: z.array(z.string()).optional().describe("Include/exclude globs"),
   dryRun: z.boolean().optional().describe("Preview changes without applying (default: true)"),
-}
+};
 
-export type AstGrepReplaceArgs = z.infer<z.ZodObject<typeof astGrepReplaceArgsSchema>>
-export type AstGrepReplaceOutput = string
+export type AstGrepReplaceArgs = z.infer<z.ZodObject<typeof astGrepReplaceArgsSchema>>;
+export type AstGrepReplaceOutput = string;

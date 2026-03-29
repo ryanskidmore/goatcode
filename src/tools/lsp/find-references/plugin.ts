@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { lspFindReferencesTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { lspFindReferencesTool } from "./handler";
 
 export const lspFindReferencesPlugin = definePlugin({
   name: "lsp-find-references",
@@ -7,4 +7,4 @@ export const lspFindReferencesPlugin = definePlugin({
   tools: {
     lsp_find_references: lspFindReferencesTool,
   },
-})
+});

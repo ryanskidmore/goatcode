@@ -1,2 +1,2 @@
-export { toolOutputTruncatorPlugin } from "./plugin"
-export { createToolOutputTruncatorHandler } from "./handler"
+export { toolOutputTruncatorPlugin } from "./plugin";
+export { createToolOutputTruncatorHandler } from "./handler";

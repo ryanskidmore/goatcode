@@ -1,4 +1,4 @@
-export { checkForUpdate } from "./update-checker"
-export type { UpdateCheckResult } from "./update-checker"
+export { checkForUpdate } from "./update-checker";
+export type { UpdateCheckResult } from "./update-checker";
 
-export { createAutoUpdatePlugin } from "./plugin"
+export { createAutoUpdatePlugin } from "./plugin";

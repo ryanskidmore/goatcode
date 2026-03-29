@@ -1,4 +1,4 @@
-import type { SlashCommand } from "../types"
+import type { SlashCommand } from "../types";
 
 export const loopCommand: SlashCommand = {
   name: "loop",
@@ -36,4 +36,4 @@ Parse the arguments below and begin working on the task. The format is:
 <user-task>
 $ARGUMENTS
 </user-task>`,
-}
+};

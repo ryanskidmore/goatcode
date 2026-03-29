@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { createAstGrepReplaceTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { createAstGrepReplaceTool } from "./handler";
 
 export const astGrepReplacePlugin = definePlugin({
   name: "ast-grep-replace",
@@ -7,4 +7,4 @@ export const astGrepReplacePlugin = definePlugin({
   tools: {
     ast_grep_replace: createAstGrepReplaceTool(),
   },
-})
+});

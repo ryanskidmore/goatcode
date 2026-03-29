@@ -1,4 +1,4 @@
-export { definePlugin } from "./define-plugin"
+export { definePlugin } from "./define-plugin";
 export type {
   PluginDefinition,
   AggregatedPlugins,
@@ -22,5 +22,5 @@ export type {
   GoatCodeConfig,
   AgentOverrides,
   HookName,
-} from "./types"
-export { HOOK_EVENT_NAMES, HOOK_EVENT_NAMES as HOOK_NAMES } from "./types"
+} from "./types";
+export { HOOK_EVENT_NAMES, HOOK_EVENT_NAMES as HOOK_NAMES } from "./types";

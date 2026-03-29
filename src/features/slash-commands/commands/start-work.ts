@@ -1,4 +1,4 @@
-import type { SlashCommand } from "../types"
+import type { SlashCommand } from "../types";
 
 export const startWorkCommand: SlashCommand = {
   name: "start-work",
@@ -36,4 +36,4 @@ Timestamp: $TIMESTAMP
 <user-request>
 $ARGUMENTS
 </user-request>`,
-}
+};

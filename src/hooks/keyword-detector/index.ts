@@ -3,6 +3,6 @@ export {
   getSessionMode,
   setSessionMode,
   clearSessionMode,
-} from "./handler"
-export type { ActiveMode } from "./handler"
-export { keywordDetectorPlugin } from "./plugin"
+} from "./handler";
+export type { ActiveMode } from "./handler";
+export { keywordDetectorPlugin } from "./plugin";

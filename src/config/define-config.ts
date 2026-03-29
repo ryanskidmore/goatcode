@@ -1,4 +1,4 @@
-import type { GoatCodeConfig } from "../types/config"
+import type { GoatCodeConfig } from "../types/config";
 
 /**
  * Define your goatcode configuration.
@@ -14,7 +14,7 @@ import type { GoatCodeConfig } from "../types/config"
  * })
  */
 export function defineConfig(config: GoatCodeConfig): GoatCodeConfig {
-  return config
+  return config;
 }
 
 /**
@@ -28,11 +28,11 @@ export function defineConfig(config: GoatCodeConfig): GoatCodeConfig {
  * }))
  */
 export function defineConfigAsync(
-  config: () => Promise<GoatCodeConfig> | GoatCodeConfig
-): () => Promise<GoatCodeConfig> | GoatCodeConfig
-export function defineConfigAsync(config: GoatCodeConfig): GoatCodeConfig
+  config: () => Promise<GoatCodeConfig> | GoatCodeConfig,
+): () => Promise<GoatCodeConfig> | GoatCodeConfig;
+export function defineConfigAsync(config: GoatCodeConfig): GoatCodeConfig;
 export function defineConfigAsync(
   config: GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig),
 ): GoatCodeConfig | (() => Promise<GoatCodeConfig> | GoatCodeConfig) {
-  return config
+  return config;
 }

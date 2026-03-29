@@ -1,13 +1,14 @@
-import { resolve } from "node:path"
-import type { ToolDefinition } from "@opencode-ai/plugin"
-import { buildTool } from "../../tool-builder"
-import { log } from "../../../shared/logger"
-import type { CommandRunner } from "../search/handler"
-import { runCommand } from "../search/handler"
-import type { AstGrepReplaceArgs, AstGrepReplaceOutput } from "./types"
-import { astGrepReplaceArgsSchema } from "./types"
+import { resolve } from "node:path";
+import type { ToolDefinition } from "@opencode-ai/plugin";
+import { buildTool } from "../../tool-builder";
+import { log } from "../../../shared/logger";
+import type { CommandRunner } from "../search/handler";
+import { runCommand } from "../search/handler";
+import type { AstGrepReplaceArgs, AstGrepReplaceOutput } from "./types";
+import { astGrepReplaceArgsSchema } from "./types";
 
-const SG_NOT_FOUND_MESSAGE = "Error: ast-grep binary 'sg' not found on PATH. Install ast-grep and retry."
+const SG_NOT_FOUND_MESSAGE =
+  "Error: ast-grep binary 'sg' not found on PATH. Install ast-grep and retry.";
 
 function buildReplaceCommand(args: AstGrepReplaceArgs, workingDirectory: string): string[] {
   const command = [
@@ -19,22 +20,22 @@ function buildReplaceCommand(args: AstGrepReplaceArgs, workingDirectory: string)
     args.rewrite,
     "--lang",
     args.lang,
-  ]
+  ];
 
   for (const globPattern of args.globs ?? []) {
-    command.push("--glob", globPattern)
+    command.push("--glob", globPattern);
   }
 
   if (args.dryRun === false) {
-    command.push("--update-all")
+    command.push("--update-all");
   }
 
-  const targetPaths = args.paths?.length ? args.paths : ["."]
+  const targetPaths = args.paths?.length ? args.paths : ["."];
   for (const targetPath of targetPaths) {
-    command.push(resolve(workingDirectory, targetPath))
+    command.push(resolve(workingDirectory, targetPath));
   }
 
-  return command
+  return command;
 }
 
 export async function executeAstGrepReplace(
@@ -42,32 +43,36 @@ export async function executeAstGrepReplace(
   context: { directory: string },
   runner: CommandRunner = runCommand,
 ): Promise<AstGrepReplaceOutput> {
-  const command = buildReplaceCommand(args, context.directory)
-  log("ast_grep_replace executing", { command, directory: context.directory, dryRun: args.dryRun !== false })
+  const command = buildReplaceCommand(args, context.directory);
+  log("ast_grep_replace executing", {
+    command,
+    directory: context.directory,
+    dryRun: args.dryRun !== false,
+  });
 
   try {
-    const result = await runner(command, context.directory)
+    const result = await runner(command, context.directory);
     if (result.exitCode !== 0) {
-      const errorOutput = result.stderr.trim() || result.stdout.trim()
+      const errorOutput = result.stderr.trim() || result.stdout.trim();
       if (errorOutput.includes("ENOENT") || errorOutput.includes("not found")) {
-        return SG_NOT_FOUND_MESSAGE
+        return SG_NOT_FOUND_MESSAGE;
       }
-      return `Error: ${errorOutput || "ast-grep command failed"}`
+      return `Error: ${errorOutput || "ast-grep command failed"}`;
     }
 
-    const output = result.stdout.trim()
+    const output = result.stdout.trim();
     if (output.length > 0) {
-      return args.dryRun === false ? output : `[DRY RUN]\n${output}`
+      return args.dryRun === false ? output : `[DRY RUN]\n${output}`;
     }
 
-    return "No matches found to replace"
+    return "No matches found to replace";
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    log("ast_grep_replace failed", { message })
+    const message = error instanceof Error ? error.message : String(error);
+    log("ast_grep_replace failed", { message });
     if (message.includes("ENOENT") || message.includes("not found")) {
-      return SG_NOT_FOUND_MESSAGE
+      return SG_NOT_FOUND_MESSAGE;
     }
-    return `Error: ${message}`
+    return `Error: ${message}`;
   }
 }
 
@@ -80,5 +85,5 @@ export function createAstGrepReplaceTool(runner?: CommandRunner): ToolDefinition
     args: astGrepReplaceArgsSchema as unknown as ToolDefinition["args"],
     execute: async (toolArgs, toolContext) =>
       executeAstGrepReplace(toolArgs as AstGrepReplaceArgs, toolContext, runner),
-  })
+  });
 }

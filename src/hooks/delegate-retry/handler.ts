@@ -1,12 +1,12 @@
-import type { PluginHookContributions } from "../../types/hook"
-import { log } from "../../shared/logger"
+import type { PluginHookContributions } from "../../types/hook";
+import { log } from "../../shared/logger";
 
-type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>
+type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>;
 
 export interface DelegateTaskErrorPattern {
-  pattern: string
-  errorType: string
-  fixHint: string
+  pattern: string;
+  errorType: string;
+  fixHint: string;
 }
 
 export const DELEGATE_TASK_ERROR_PATTERNS: DelegateTaskErrorPattern[] = [
@@ -59,79 +59,79 @@ export const DELEGATE_TASK_ERROR_PATTERNS: DelegateTaskErrorPattern[] = [
     errorType: "unknown_skills",
     fixHint: "Use valid skill names from the Available list in the error message",
   },
-]
+];
 
 export interface DetectedError {
-  errorType: string
-  originalOutput: string
+  errorType: string;
+  originalOutput: string;
 }
 
 export function detectDelegateTaskError(output: string): DetectedError | null {
-  if (!output.includes("[ERROR]") && !output.includes("Invalid arguments")) return null
+  if (!output.includes("[ERROR]") && !output.includes("Invalid arguments")) return null;
 
   for (const errorPattern of DELEGATE_TASK_ERROR_PATTERNS) {
     if (output.includes(errorPattern.pattern)) {
       return {
         errorType: errorPattern.errorType,
         originalOutput: output,
-      }
+      };
     }
   }
 
-  return null
+  return null;
 }
 
 function extractAvailableList(output: string): string | null {
-  const availableMatch = output.match(/Available[^:]*:\s*(.+)$/m)
-  return availableMatch ? (availableMatch[1]?.trim() ?? null) : null
+  const availableMatch = output.match(/Available[^:]*:\s*(.+)$/m);
+  return availableMatch ? (availableMatch[1]?.trim() ?? null) : null;
 }
 
 export function buildRetryGuidance(errorInfo: DetectedError): string {
-  const pattern = DELEGATE_TASK_ERROR_PATTERNS.find((p) => p.errorType === errorInfo.errorType)
+  const pattern = DELEGATE_TASK_ERROR_PATTERNS.find((p) => p.errorType === errorInfo.errorType);
 
   if (!pattern) {
-    return `[task ERROR] Fix the error and retry with correct parameters.`
+    return `[task ERROR] Fix the error and retry with correct parameters.`;
   }
 
-  let guidance = `\n[task CALL FAILED - IMMEDIATE RETRY REQUIRED]\n\n**Error Type**: ${errorInfo.errorType}\n**Fix**: ${pattern.fixHint}\n`
+  let guidance = `\n[task CALL FAILED - IMMEDIATE RETRY REQUIRED]\n\n**Error Type**: ${errorInfo.errorType}\n**Fix**: ${pattern.fixHint}\n`;
 
-  const availableList = extractAvailableList(errorInfo.originalOutput)
+  const availableList = extractAvailableList(errorInfo.originalOutput);
   if (availableList) {
-    guidance += `\n**Available Options**: ${availableList}\n`
+    guidance += `\n**Available Options**: ${availableList}\n`;
   }
 
-  guidance += `\n**Action**: Retry task NOW with corrected parameters.\n`
+  guidance += `\n**Action**: Retry task NOW with corrected parameters.\n`;
 
-  return guidance
+  return guidance;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" && value !== null;
 }
 
 export function createDelegateRetryHandler(): PostToolUseHook {
   return async (input: unknown, output: unknown) => {
     if (!isRecord(input) || !isRecord(output)) {
-      return
+      return;
     }
 
-    const tool = input.tool
+    const tool = input.tool;
     if (typeof tool !== "string" || tool.toLowerCase() !== "task") {
-      return
+      return;
     }
 
-    const toolOutput = output.output
+    const toolOutput = output.output;
     if (typeof toolOutput !== "string") {
-      return
+      return;
     }
 
-    const errorInfo = detectDelegateTaskError(toolOutput)
+    const errorInfo = detectDelegateTaskError(toolOutput);
     if (!errorInfo) {
-      return
+      return;
     }
 
-    const guidance = buildRetryGuidance(errorInfo)
-    output.output = `${toolOutput}\n${guidance}`
-    log("[delegate-retry] injected retry guidance", { errorType: errorInfo.errorType })
-  }
+    const guidance = buildRetryGuidance(errorInfo);
+    output.output = `${toolOutput}\n${guidance}`;
+    log("[delegate-retry] injected retry guidance", { errorType: errorInfo.errorType });
+  };
 }

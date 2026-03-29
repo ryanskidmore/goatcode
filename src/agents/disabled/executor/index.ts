@@ -1,2 +1,2 @@
-export { executorPlugin } from "./plugin"
-export * from "./config"
+export { executorPlugin } from "./plugin";
+export * from "./config";

@@ -3,5 +3,5 @@ export function toSnakeCase(str: string): string {
     .replace(/([A-Z])/g, "_$1")
     .toLowerCase()
     .replace(/^_/, "")
-    .replace(/-/g, "_")
+    .replace(/-/g, "_");
 }

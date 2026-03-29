@@ -1,5 +1,5 @@
-import type { PluginHookContributions } from "../../types/hook"
-import { log } from "../../shared/logger"
+import type { PluginHookContributions } from "../../types/hook";
+import { log } from "../../shared/logger";
 
 export const JSON_ERROR_PATTERNS = [
   /json parse error/i,
@@ -8,75 +8,75 @@ export const JSON_ERROR_PATTERNS = [
   /malformed json/i,
   /unexpected end of json input/i,
   /syntaxerror:\s*unexpected token.*json/i,
-] as const
+] as const;
 
-const JSON_ERROR_RECOVERY_MARKER = "[JSON ERROR RECOVERY]"
+const JSON_ERROR_RECOVERY_MARKER = "[JSON ERROR RECOVERY]";
 
-export const JSON_ERROR_RECOVERY_MESSAGE = `${JSON_ERROR_RECOVERY_MARKER}\nTool output appears to be malformed JSON. Re-check the response shape, validate it as strict JSON, and retry with a corrected payload or parser expectation.`
+export const JSON_ERROR_RECOVERY_MESSAGE = `${JSON_ERROR_RECOVERY_MARKER}\nTool output appears to be malformed JSON. Re-check the response shape, validate it as strict JSON, and retry with a corrected payload or parser expectation.`;
 
-type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>
+type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" && value !== null;
 }
 
 function looksLikeJson(text: string): boolean {
-  const trimmed = text.trim()
-  return trimmed.startsWith("{") || trimmed.startsWith("[")
+  const trimmed = text.trim();
+  return trimmed.startsWith("{") || trimmed.startsWith("[");
 }
 
 function isValidJson(text: string): boolean {
   try {
-    JSON.parse(text)
-    return true
+    JSON.parse(text);
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
 function isJsonExpected(output: Record<string, unknown>): boolean {
-  const title = output.title
-  const metadata = output.metadata
+  const title = output.title;
+  const metadata = output.metadata;
 
   if (typeof title === "string" && /json/i.test(title)) {
-    return true
+    return true;
   }
 
   if (!isRecord(metadata)) {
-    return false
+    return false;
   }
 
   return (
     metadata.format === "json" ||
     metadata.expectedFormat === "json" ||
     metadata.expectsJson === true
-  )
+  );
 }
 
 export function createJsonErrorHandler(): PostToolUseHook {
   return async (_input: unknown, output: unknown) => {
     if (!isRecord(output)) {
-      return
+      return;
     }
 
-    const toolOutput = output.output
+    const toolOutput = output.output;
     if (typeof toolOutput !== "string") {
-      return
+      return;
     }
 
     if (toolOutput.includes(JSON_ERROR_RECOVERY_MARKER)) {
-      return
+      return;
     }
 
-    const hasJsonErrorPattern = JSON_ERROR_PATTERNS.some((pattern) => pattern.test(toolOutput))
-    const malformedJson = looksLikeJson(toolOutput) && !isValidJson(toolOutput)
-    const shouldRecover = hasJsonErrorPattern || (isJsonExpected(output) && malformedJson)
+    const hasJsonErrorPattern = JSON_ERROR_PATTERNS.some((pattern) => pattern.test(toolOutput));
+    const malformedJson = looksLikeJson(toolOutput) && !isValidJson(toolOutput);
+    const shouldRecover = hasJsonErrorPattern || (isJsonExpected(output) && malformedJson);
 
     if (!shouldRecover) {
-      return
+      return;
     }
 
-    output.output = `${toolOutput}\n${JSON_ERROR_RECOVERY_MESSAGE}`
-    log("[json-error] injected JSON recovery message")
-  }
+    output.output = `${toolOutput}\n${JSON_ERROR_RECOVERY_MESSAGE}`;
+    log("[json-error] injected JSON recovery message");
+  };
 }
