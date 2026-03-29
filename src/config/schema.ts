@@ -26,10 +26,6 @@ export const AgentOverridesSchema = z.object({
   advisor: AgentOverrideConfigSchema.optional(),
   researcher: AgentOverrideConfigSchema.optional(),
   explorer: AgentOverrideConfigSchema.optional(),
-  executor: AgentOverrideConfigSchema.optional(),
-  analyst: AgentOverrideConfigSchema.optional(),
-  reviewer: AgentOverrideConfigSchema.optional(),
-  inspector: AgentOverrideConfigSchema.optional(),
   worker: AgentOverrideConfigSchema.optional(),
 })
 

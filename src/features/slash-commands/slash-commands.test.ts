@@ -2,21 +2,18 @@ import { describe, expect, it } from "bun:test"
 import { getAllCommands, getCommand } from "./command-registry"
 
 const EXPECTED_COMMAND_NAMES = [
-  "ralph-loop",
-  "ulw-loop",
-  "cancel-ralph",
-  "cancel-ulw",
+  "loop",
+  "cancel-loop",
   "start-work",
   "stop-continuation",
   "handoff",
   "init-deep",
-  "refactor",
 ] as const
 
 describe("getAllCommands", () => {
   describe("#given the command registry is initialized", () => {
     describe("#when getAllCommands is called", () => {
-       it("#then returns all 9 commands", () => {
+       it("#then returns all 6 commands", () => {
          const commands = getAllCommands()
          expect(commands).toHaveLength(EXPECTED_COMMAND_NAMES.length)
        })
@@ -54,8 +51,8 @@ describe("getCommand", () => {
       })
     }
 
-    it("#then returns the refactor command with $ARGUMENTS in template", () => {
-      const command = getCommand("refactor")
+    it("#then returns the start-work command with $ARGUMENTS in template", () => {
+      const command = getCommand("start-work")
       expect(command?.template).toContain("$ARGUMENTS")
     })
   })

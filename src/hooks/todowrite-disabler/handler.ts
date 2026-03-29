@@ -12,7 +12,7 @@ export const SUBAGENT_TODOWRITE_BLOCK_MESSAGE =
   `If you need to track work, report your progress in your response text ` +
   `so the orchestrator can update todos accordingly.`
 
-const ORCHESTRATOR_AGENTS = ["orchestrator", "executor"]
+const ORCHESTRATOR_AGENTS = ["orchestrator"]
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null

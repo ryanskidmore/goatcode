@@ -1,5 +1,7 @@
 import { existsSync } from "node:fs"
 import { join } from "node:path"
+import { loadConfig } from "../../config/loader"
+import { resolveLegacyProjectConfigPath, resolveProjectConfigPath, resolveUserConfigDir } from "../../config/paths"
 import { log } from "../../shared/logger"
 
 export type CheckStatus = "pass" | "fail"
@@ -43,26 +45,49 @@ export async function checkBun(): Promise<CheckResult> {
   return { name: "Bun installed", status: "pass", detail: output }
 }
 
-export function checkConfigExists(cwd: string): CheckResult {
-  const configPath = join(cwd, "goatcode.config.ts")
-  if (!existsSync(configPath)) {
-    return { name: "goatcode.config.ts exists", status: "fail", detail: "goatcode.config.ts not found" }
+export function getConfigLocations(cwd: string): {
+  userConfigPath: string
+  projectConfigPath: string
+  legacyProjectConfigPath: string
+} {
+  return {
+    userConfigPath: join(resolveUserConfigDir(), "config.ts"),
+    projectConfigPath: resolveProjectConfigPath(cwd),
+    legacyProjectConfigPath: resolveLegacyProjectConfigPath(cwd),
   }
-  return { name: "goatcode.config.ts exists", status: "pass", detail: configPath }
+}
+
+export function checkConfigExists(cwd: string): CheckResult {
+  const { userConfigPath, projectConfigPath, legacyProjectConfigPath } = getConfigLocations(cwd)
+  const userExists = existsSync(userConfigPath)
+  const projectExists = existsSync(projectConfigPath)
+  const legacyProjectExists = existsSync(legacyProjectConfigPath)
+
+  const detail = `user=${userConfigPath} (${userExists ? "found" : "missing"}), project=${projectConfigPath} (${projectExists ? "found" : "missing"}), legacy=${legacyProjectConfigPath} (${legacyProjectExists ? "found" : "missing"})`
+  if (!userExists && !projectExists && !legacyProjectExists) {
+    return { name: "Config locations", status: "fail", detail }
+  }
+
+  return { name: "Config locations", status: "pass", detail }
 }
 
 export async function checkConfigValid(cwd: string): Promise<CheckResult> {
-  const configPath = join(cwd, "goatcode.config.ts")
-  if (!existsSync(configPath)) {
-    return { name: "Config is valid", status: "fail", detail: "goatcode.config.ts not found, cannot validate" }
+  const config = await loadConfig(cwd)
+  if (config === null) {
+    const { userConfigPath, projectConfigPath, legacyProjectConfigPath } = getConfigLocations(cwd)
+    const present: string[] = []
+    if (existsSync(userConfigPath)) present.push(`user (${userConfigPath})`)
+    if (existsSync(projectConfigPath)) present.push(`project (${projectConfigPath})`)
+    if (existsSync(legacyProjectConfigPath)) present.push(`legacy (${legacyProjectConfigPath})`)
+
+    const detail = present.length > 0
+      ? `Config files found but invalid: ${present.join(", ")}`
+      : "No valid user or project config found"
+
+    return { name: "Config is valid", status: "fail", detail }
   }
-  try {
-    await import(configPath)
-    return { name: "Config is valid", status: "pass", detail: "imported without errors" }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return { name: "Config is valid", status: "fail", detail: message }
-  }
+
+  return { name: "Config is valid", status: "pass", detail: "resolved and validated" }
 }
 
 export function formatCheckLine(result: CheckResult): string {

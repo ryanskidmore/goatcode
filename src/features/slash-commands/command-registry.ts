@@ -1,25 +1,19 @@
 import { log } from "../../shared/logger"
 import type { SlashCommand } from "./types"
-import { ralphLoopCommand } from "./commands/ralph-loop"
-import { ulwLoopCommand } from "./commands/ulw-loop"
-import { cancelRalphCommand } from "./commands/cancel-ralph"
-import { cancelUlwCommand } from "./commands/cancel-ulw"
+import { loopCommand } from "./commands/loop"
+import { cancelLoopCommand } from "./commands/cancel-loop"
 import { startWorkCommand } from "./commands/start-work"
 import { stopContinuationCommand } from "./commands/stop-continuation"
 import { handoffCommand } from "./commands/handoff"
 import { initDeepCommand } from "./commands/init-deep"
-import { refactorCommand } from "./commands/refactor"
 
 const COMMANDS: SlashCommand[] = [
-  ralphLoopCommand,
-  ulwLoopCommand,
-  cancelRalphCommand,
-  cancelUlwCommand,
+  loopCommand,
+  cancelLoopCommand,
   startWorkCommand,
   stopContinuationCommand,
   handoffCommand,
   initDeepCommand,
-  refactorCommand,
 ]
 
 const COMMAND_MAP: Map<string, SlashCommand> = new Map()

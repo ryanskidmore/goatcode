@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, isAbsolute, join, resolve } from "node:path"
-import { log } from "../../shared/logger"
+import { log } from "../../../shared/logger"
 
 type ToolExecuteAfterInput = {
   tool?: string

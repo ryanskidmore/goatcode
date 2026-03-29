@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
-import { createAgentsInjectorHandler } from "./agents-injector"
-import { createReadmeInjectorHandler } from "./readme-injector"
-import { createRulesInjectorHandler } from "./rules-injector"
+import {
+  createAgentsInjectorHandler,
+  createReadmeInjectorHandler,
+  createRulesInjectorHandler,
+} from "./context-injector"
 import {
   createCompactionContextEventHandler,
   createCompactionContextSystemTransformHandler,

@@ -53,7 +53,7 @@ function makeContextWithClient(client: ReturnType<typeof makeClient>): ToolConte
 
 describe("lookAtTool", () => {
   describe("#given a text file path and goal", () => {
-    describe("#when the file exists and Inspector agent responds", () => {
+    describe("#when the file exists and analysis agent responds", () => {
       it("#then it returns the assistant analysis result", async () => {
         const client = makeClient()
         const ctx = makeContextWithClient(client)
@@ -176,7 +176,7 @@ describe("lookAtTool", () => {
     })
   })
 
-  describe("#given the Inspector agent returns no assistant message", () => {
+  describe("#given the analysis agent returns no assistant message", () => {
     describe("#when execute is called", () => {
       it("#then it returns a no response error", async () => {
         const client = makeClient({
@@ -195,7 +195,7 @@ describe("lookAtTool", () => {
           ctx,
         )
 
-        expect(result).toContain("Error: No response from Inspector agent")
+        expect(result).toContain("Error: No response from analysis agent")
       })
     })
   })

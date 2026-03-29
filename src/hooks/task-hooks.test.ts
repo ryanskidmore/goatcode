@@ -291,12 +291,12 @@ describe("todowrite-disabler", () => {
 
   describe("#given an executor context (agent is 'executor')", () => {
     describe("#when TodoWrite is called", () => {
-      it("#then does not throw", async () => {
+      it("#then throws because executor is now a subagent", async () => {
         const handler = createTodowriteDisablerHandler("executor")
         const input = { tool: "TodoWrite", sessionID: "s1", callID: "c1" }
         const output = { args: {} }
 
-        await expect(handler(input, output)).resolves.toBeUndefined()
+        await expect(handler(input, output)).rejects.toThrow(SUBAGENT_TODOWRITE_BLOCK_MESSAGE)
       })
     })
   })

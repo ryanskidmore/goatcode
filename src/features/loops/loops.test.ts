@@ -1,175 +1,172 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { mkdtempSync, rmSync } from "node:fs"
-import { join } from "node:path"
 import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import {
-  clearRalphLoopStateForTests,
-  clearUlwLoopStateForTests,
-  configureUlwStateFilePathForTests,
-  createRalphLoopHandler,
-  createUlwLoopHandler,
-  getRalphLoopState,
-  getUlwLoopState,
-  isRalphLoopActive,
-  isUlwLoopActive,
-  loadPersistedUlwStateForTests,
-  startRalphLoop,
-  startUlwLoop,
+  FileLoopStore,
+  MemoryLoopStore,
+  createLoopHandler,
+  fileLoopStore,
+  memoryLoopStore,
+  startLoop,
+  stopLoop,
 } from "./index"
 
-describe("loops", () => {
-  const ulwSessionId = "ulw-session"
-  let ulwStatePath = ""
-  let tempDir = ""
+describe("unified loops", () => {
+  describe("MemoryLoopStore", () => {
+    let store: MemoryLoopStore
 
-  beforeEach(() => {
-    clearRalphLoopStateForTests()
-    tempDir = mkdtempSync(join(tmpdir(), "goatcode-loops-"))
-    ulwStatePath = join(tempDir, "ulw-state.json")
-    configureUlwStateFilePathForTests(ulwStatePath)
-    clearUlwLoopStateForTests(true)
+    beforeEach(() => {
+      store = new MemoryLoopStore()
+    })
+
+    it("starts active in memory and increments iterations", () => {
+      store.startLoop("memory-session", { maxIterations: 5 })
+      store.incrementIteration("memory-session")
+      store.incrementIteration("memory-session")
+
+      const state = store.getLoopState("memory-session")
+      expect(state?.persist).toBeFalse()
+      expect(state?.iteration).toBe(2)
+      expect(store.isActive("memory-session")).toBeTrue()
+    })
+
+    it("marks completion and deactivates the loop", () => {
+      store.startLoop("memory-complete")
+      store.markCompletionDetected("memory-complete")
+
+      const state = store.getLoopState("memory-complete")
+      expect(state?.active).toBeFalse()
+      expect(state?.completionDetected).toBeTrue()
+    })
   })
 
-  afterEach(() => {
-    clearRalphLoopStateForTests()
-    clearUlwLoopStateForTests(true)
-    if (tempDir) {
-      rmSync(tempDir, { recursive: true, force: true })
+  describe("FileLoopStore", () => {
+    let tempDir = ""
+    let stateFilePath = ""
+
+    beforeEach(() => {
+      tempDir = mkdtempSync(join(tmpdir(), "goatcode-loop-store-"))
+      stateFilePath = join(tempDir, "loop-state.json")
+    })
+
+    afterEach(() => {
+      if (tempDir) {
+        rmSync(tempDir, { recursive: true, force: true })
+      }
+    })
+
+    it("persists loop state to disk and reloads it", () => {
+      const initialStore = new FileLoopStore({ stateFilePath })
+      initialStore.startLoop("persisted-session", { persist: true, maxIterations: 9 })
+
+      const reloadedStore = new FileLoopStore({ stateFilePath })
+      expect(reloadedStore.isActive("persisted-session")).toBeTrue()
+      expect(reloadedStore.getLoopState("persisted-session")?.maxIterations).toBe(9)
+      expect(reloadedStore.getLoopState("persisted-session")?.persist).toBeTrue()
+    })
+
+    it("stops loop and clears persisted state for that session", () => {
+      const initialStore = new FileLoopStore({ stateFilePath })
+      initialStore.startLoop("persisted-session", { persist: true })
+      initialStore.stopLoop("persisted-session")
+
+      const reloadedStore = new FileLoopStore({ stateFilePath })
+      expect(reloadedStore.getLoopState("persisted-session")).toBeUndefined()
+      expect(reloadedStore.isActive("persisted-session")).toBeFalse()
+    })
+  })
+
+  describe("createLoopHandler", () => {
+    async function runIdle(handler: (input: unknown) => Promise<void>, sessionID: string): Promise<void> {
+      await handler({ event: { type: "session.idle", properties: { sessionID } } })
     }
-  })
 
-  describe("#given an active Ralph loop", () => {
-    describe("#when session.idle repeats without completion", () => {
-      it("#then loop continues for each iteration", async () => {
-        startRalphLoop("ralph-continue", { maxIterations: 5 })
-        const sentMessages: string[] = []
-        const handler = createRalphLoopHandler({
-          detectCompletion: () => false,
-          sendContinuationMessage: (_sessionId, message) => {
-            sentMessages.push(message)
-          },
-        })
-
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-continue" } } })
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-continue" } } })
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-continue" } } })
-
-        expect(sentMessages).toHaveLength(3)
-        expect(getRalphLoopState("ralph-continue")?.iteration).toBe(3)
-        expect(isRalphLoopActive("ralph-continue")).toBeTrue()
+    it("continues loop iterations until max is reached", async () => {
+      const store = new MemoryLoopStore()
+      const sentMessages: string[] = []
+      const handler = createLoopHandler(store, {
+        detectCompletion: () => false,
+        sendContinuationMessage: (_sessionId, message) => {
+          sentMessages.push(message)
+        },
       })
+
+      store.startLoop("handler-max", { maxIterations: 2 })
+      await runIdle(handler, "handler-max")
+      await runIdle(handler, "handler-max")
+      await runIdle(handler, "handler-max")
+
+      expect(sentMessages).toHaveLength(2)
+      expect(sentMessages[0]).toContain("[SYSTEM DIRECTIVE: LOOP CONTINUE]")
+      expect(store.isActive("handler-max")).toBeFalse()
     })
 
-    describe("#when completion is detected", () => {
-      it("#then loop stops immediately", async () => {
-        startRalphLoop("ralph-complete", { maxIterations: 5 })
-        const sentMessages: string[] = []
-        const handler = createRalphLoopHandler({
-          detectCompletion: () => true,
-          sendContinuationMessage: (_sessionId, message) => {
-            sentMessages.push(message)
-          },
-        })
+    it("marks completion when detector returns true", async () => {
+      const store = new MemoryLoopStore()
+      const handler = createLoopHandler(store, { detectCompletion: () => true })
 
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-complete" } } })
+      store.startLoop("handler-complete", { maxIterations: 5 })
+      await runIdle(handler, "handler-complete")
 
-        expect(sentMessages).toHaveLength(0)
-        expect(isRalphLoopActive("ralph-complete")).toBeFalse()
-        expect(getRalphLoopState("ralph-complete")?.completionDetected).toBeTrue()
-      })
+      expect(store.isActive("handler-complete")).toBeFalse()
+      expect(store.getLoopState("handler-complete")?.completionDetected).toBeTrue()
     })
 
-    describe("#when max iterations are reached", () => {
-      it("#then loop stops and does not inject further messages", async () => {
-        startRalphLoop("ralph-max", { maxIterations: 2 })
-        const sentMessages: string[] = []
-        const handler = createRalphLoopHandler({
-          detectCompletion: () => false,
-          sendContinuationMessage: (_sessionId, message) => {
-            sentMessages.push(message)
+    it("uses default completion detector for <promise>DONE</promise>", async () => {
+      const store = new MemoryLoopStore()
+      const handler = createLoopHandler(store)
+
+      store.startLoop("handler-default", { maxIterations: 5 })
+      await handler({
+        event: {
+          type: "session.idle",
+          properties: {
+            sessionID: "handler-default",
+            lastAssistantMessage: "all done <promise>DONE</promise>",
           },
-        })
-
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-max" } } })
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-max" } } })
-        await handler({ event: { type: "session.idle", properties: { sessionID: "ralph-max" } } })
-
-        expect(sentMessages).toHaveLength(2)
-        expect(isRalphLoopActive("ralph-max")).toBeFalse()
+        },
       })
+
+      expect(store.getLoopState("handler-default")?.completionDetected).toBeTrue()
     })
   })
 
-  describe("#given an active ULW loop", () => {
-    describe("#when session.idle repeats without completion", () => {
-      it("#then loop continues for each iteration", async () => {
-        startUlwLoop(ulwSessionId, { maxIterations: 4 })
-        const sentMessages: string[] = []
-        const handler = createUlwLoopHandler({
-          detectCompletion: () => false,
-          sendContinuationMessage: (_sessionId, message) => {
-            sentMessages.push(message)
-          },
-        })
+  describe("default routed store", () => {
+    let tempDir = ""
+    let stateFilePath = ""
 
-        await handler({ event: { type: "session.idle", properties: { sessionID: ulwSessionId } } })
-        await handler({ event: { type: "session.idle", properties: { sessionID: ulwSessionId } } })
-
-        expect(sentMessages).toHaveLength(2)
-        expect(getUlwLoopState(ulwSessionId)?.iteration).toBe(2)
-        expect(isUlwLoopActive(ulwSessionId)).toBeTrue()
-      })
+    beforeEach(() => {
+      tempDir = mkdtempSync(join(tmpdir(), "goatcode-loop-router-"))
+      stateFilePath = join(tempDir, "loop-state.json")
+      memoryLoopStore.clearAllForTests()
+      fileLoopStore.setStateFilePathForTests(stateFilePath)
+      fileLoopStore.clearAllForTests(true)
     })
 
-    describe("#when completion is detected", () => {
-      it("#then loop stops immediately", async () => {
-        startUlwLoop(ulwSessionId, { maxIterations: 4 })
-        const sentMessages: string[] = []
-        const handler = createUlwLoopHandler({
-          detectCompletion: () => true,
-          sendContinuationMessage: (_sessionId, message) => {
-            sentMessages.push(message)
-          },
-        })
-
-        await handler({ event: { type: "session.idle", properties: { sessionID: ulwSessionId } } })
-
-        expect(sentMessages).toHaveLength(0)
-        expect(isUlwLoopActive(ulwSessionId)).toBeFalse()
-        expect(getUlwLoopState(ulwSessionId)?.completionDetected).toBeTrue()
-      })
+    afterEach(() => {
+      memoryLoopStore.clearAllForTests()
+      fileLoopStore.clearAllForTests(true)
+      if (tempDir) {
+        rmSync(tempDir, { recursive: true, force: true })
+      }
     })
 
-    describe("#when max iterations are reached", () => {
-      it("#then loop stops and does not inject further messages", async () => {
-        startUlwLoop(ulwSessionId, { maxIterations: 1 })
-        const sentMessages: string[] = []
-        const handler = createUlwLoopHandler({
-          detectCompletion: () => false,
-          sendContinuationMessage: (_sessionId, message) => {
-            sentMessages.push(message)
-          },
-        })
+    it("routes persisted loops to file store", () => {
+      startLoop("persisted", { persist: true })
 
-        await handler({ event: { type: "session.idle", properties: { sessionID: ulwSessionId } } })
-        await handler({ event: { type: "session.idle", properties: { sessionID: ulwSessionId } } })
-
-        expect(sentMessages).toHaveLength(1)
-        expect(isUlwLoopActive(ulwSessionId)).toBeFalse()
-      })
+      expect(fileLoopStore.getLoopState("persisted")?.persist).toBeTrue()
+      expect(memoryLoopStore.getLoopState("persisted")).toBeUndefined()
+      stopLoop("persisted")
     })
 
-    describe("#when state is reloaded from disk", () => {
-      it("#then loop remains resumable across sessions", () => {
-        startUlwLoop(ulwSessionId, { maxIterations: 9 })
+    it("routes non-persisted loops to memory store", () => {
+      startLoop("in-memory")
 
-        clearUlwLoopStateForTests(false)
-        loadPersistedUlwStateForTests()
-
-        expect(isUlwLoopActive(ulwSessionId)).toBeTrue()
-        expect(getUlwLoopState(ulwSessionId)?.maxIterations).toBe(9)
-      })
+      expect(memoryLoopStore.getLoopState("in-memory")?.persist).toBeFalse()
+      expect(fileLoopStore.getLoopState("in-memory")).toBeUndefined()
+      stopLoop("in-memory")
     })
   })
 })

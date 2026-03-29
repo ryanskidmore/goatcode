@@ -27,8 +27,6 @@ const ALL_KNOWN_TOOLS = [
 
 export const AGENT_TOOL_RESTRICTIONS: Record<string, ToolRestriction> = {
   advisor: { denied: ["write", "edit", "bash", "interactive_bash", "delegate_task", "task_create", "task_update"] },
-  reviewer: { denied: ["write", "edit", "bash", "interactive_bash", "delegate_task", "task_create", "task_update"] },
-  inspector: { allowed: ["read", "look_at"] },
 }
 
 export function getToolRestrictions(agentName: string): ToolRestriction {

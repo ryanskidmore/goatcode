@@ -3,3 +3,4 @@ dist/
 .sisyphus/
 *.log
 .DS_Store
+deps/

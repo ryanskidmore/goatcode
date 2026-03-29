@@ -24,7 +24,7 @@ describe("#given generateConfig with default options", () => {
       expect(result).toContain("// agents: {")
     })
 
-    it("#then the output contains all built-in agent names in comments", () => {
+    it("#then the output contains all active agent names in comments", () => {
       const result = generateConfig()
       expect(result).toContain('"orchestrator"')
       expect(result).toContain('"deep-worker"')
@@ -32,11 +32,15 @@ describe("#given generateConfig with default options", () => {
       expect(result).toContain('"advisor"')
       expect(result).toContain('"researcher"')
       expect(result).toContain('"explorer"')
-      expect(result).toContain('"executor"')
-      expect(result).toContain('"analyst"')
-      expect(result).toContain('"reviewer"')
-      expect(result).toContain('"inspector"')
       expect(result).toContain('"worker"')
+    })
+
+    it("#then the output does not contain disabled agent names", () => {
+      const result = generateConfig()
+      expect(result).not.toContain('"executor"')
+      expect(result).not.toContain('"analyst"')
+      expect(result).not.toContain('"reviewer"')
+      expect(result).not.toContain('"inspector"')
     })
 
     it("#then the output contains category override comments", () => {
@@ -61,7 +65,7 @@ describe("#given generateConfig with default options", () => {
       expect(result).toContain("plugins: [")
     })
 
-    it("#then the output lists all built-in micro-plugins", () => {
+    it("#then the output lists all active micro-plugins", () => {
       const result = generateConfig()
       expect(result).toContain('"goatcode-sh/orchestrator"')
       expect(result).toContain('"goatcode-sh/deep-worker"')
@@ -69,11 +73,15 @@ describe("#given generateConfig with default options", () => {
       expect(result).toContain('"goatcode-sh/advisor"')
       expect(result).toContain('"goatcode-sh/researcher"')
       expect(result).toContain('"goatcode-sh/explorer"')
-      expect(result).toContain('"goatcode-sh/executor"')
-      expect(result).toContain('"goatcode-sh/analyst"')
-      expect(result).toContain('"goatcode-sh/reviewer"')
-      expect(result).toContain('"goatcode-sh/inspector"')
       expect(result).toContain('"goatcode-sh/worker"')
+    })
+
+    it("#then the output does not list disabled micro-plugins", () => {
+      const result = generateConfig()
+      expect(result).not.toContain('"goatcode-sh/executor"')
+      expect(result).not.toContain('"goatcode-sh/analyst"')
+      expect(result).not.toContain('"goatcode-sh/reviewer"')
+      expect(result).not.toContain('"goatcode-sh/inspector"')
     })
 
     it("#then the output ends with a newline", () => {

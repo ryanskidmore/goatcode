@@ -2,7 +2,7 @@ import { tool, type ToolDefinition } from "@opencode-ai/plugin"
 import { log } from "../../shared/logger"
 import { getClientFromToolContext } from "../lsp/client"
 import { pollUntilStable, type PollSnapshot } from "../../features/background-agent/poller"
-import { LOOK_AT_DESCRIPTION, INSPECTOR_AGENT_NAME } from "./types"
+import { LOOK_AT_DESCRIPTION, LOOK_AT_AGENT_NAME } from "./types"
 
 export type Poller = (fetchSnapshot: () => Promise<PollSnapshot>) => Promise<PollSnapshot>
 
@@ -120,11 +120,11 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
       if (filePart) parts.push(filePart)
 
       try {
-        await client.session.promptAsync({ path: { id: sessionId }, body: { agent: INSPECTOR_AGENT_NAME, parts } })
+        await client.session.promptAsync({ path: { id: sessionId }, body: { agent: LOOK_AT_AGENT_NAME, parts } })
       } catch (promptError) {
         log(`[look_at] Prompt error:`, promptError)
         const msg = promptError instanceof Error ? promptError.message : String(promptError)
-        return `Error: Failed to send prompt to Inspector agent: ${msg}`
+        return `Error: Failed to send prompt to analysis agent: ${msg}`
       }
 
       try {
@@ -139,7 +139,7 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
         })
       } catch (pollError) {
         log(`[look_at] Polling error:`, pollError)
-        return "Error: Timed out waiting for Inspector agent response"
+        return "Error: Timed out waiting for analysis agent response"
       }
 
       const messagesResult = await client.session.messages({ path: { id: sessionId } })
@@ -147,7 +147,7 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
 
       const messages = (messagesResult.data ?? []) as unknown[]
       const responseText = extractLatestAssistantText(messages)
-      if (!responseText) return "Error: No response from Inspector agent"
+      if (!responseText) return "Error: No response from analysis agent"
 
       log(`[look_at] Got response, length: ${responseText.length}`)
       return responseText
