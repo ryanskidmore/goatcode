@@ -1,0 +1,43 @@
+description: "GoatCode Ablation Study — Hook Group Impact Analysis"
+
+providers:
+  - id: file://providers/opencode-provider.ts
+    label: full
+    config:
+      enablePlugin: true
+      disabledHooks: []
+  - id: file://providers/opencode-provider.ts
+    label: no-recovery-hooks
+    config:
+      enablePlugin: true
+      disabledHooks: ["edit-error", "json-error", "session-recovery", "context-window-limit", "error-diagnostics"]
+  - id: file://providers/opencode-provider.ts
+    label: no-quality-hooks
+    config:
+      enablePlugin: true
+      disabledHooks: ["comment-checker", "write-file-guard", "thinking-block-validator"]
+  - id: file://providers/opencode-provider.ts
+    label: no-context-hooks
+    config:
+      enablePlugin: true
+      disabledHooks: ["context-injector", "compaction-context", "phase-reminder"]
+
+prompts:
+  - "{{task}}"
+
+tests:
+  - vars:
+      task: "Find and fix the JSON parse error in the response handler"
+    assert:
+      - type: javascript
+        value: "file://assertions/ablation-scorer.ts"
+  - vars:
+      task: "Analyse code quality: check for empty catch blocks and unread files"
+    assert:
+      - type: javascript
+        value: "file://assertions/hook-impact.ts"
+  - vars:
+      task: "Summarise the current project phase using system context"
+    assert:
+      - type: javascript
+        value: "file://assertions/ablation-scorer.ts"
