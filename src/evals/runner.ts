@@ -65,16 +65,7 @@ function buildAgentToolEvidence(agent: string, tool: string, output: string): As
   const normalizedTool = normalizeToolName(tool)
   const toolsMap = buildToolsMap(agent)
   const restrictions = getToolRestrictions(agent)
-
-  if (toolsMap && normalizedTool in toolsMap) {
-    return {
-      name: "shouldUseTool",
-      passed: toolsMap[normalizedTool] === true,
-      detail: toolsMap[normalizedTool] === true
-        ? `Tool explicitly allowed for ${agent}: ${normalizedTool}`
-        : `Tool explicitly disallowed for ${agent}: ${normalizedTool}`,
-    }
-  }
+  const mentionCheck = mentionsToolByAlias(output, normalizedTool)
 
   if (restrictions.denied?.includes(normalizedTool)) {
     return {
@@ -84,7 +75,19 @@ function buildAgentToolEvidence(agent: string, tool: string, output: string): As
     }
   }
 
-  const mentionCheck = mentionsToolByAlias(output, normalizedTool)
+  if (toolsMap && normalizedTool in toolsMap) {
+    const allowed = toolsMap[normalizedTool] === true
+    return {
+      name: "shouldUseTool",
+      passed: allowed && mentionCheck.passed,
+      detail: allowed
+        ? mentionCheck.passed
+          ? `Tool allowed and mentioned for ${agent}: ${normalizedTool}`
+          : `Tool allowed but not mentioned in prompt for ${agent}: ${normalizedTool}`
+        : `Tool explicitly disallowed for ${agent}: ${normalizedTool}`,
+    }
+  }
+
   return {
     name: "shouldUseTool",
     passed: mentionCheck.passed,
@@ -98,10 +101,11 @@ function buildAgentToolAbsenceEvidence(agent: string, tool: string, output: stri
   const restrictions = getToolRestrictions(agent)
 
   if (toolsMap && normalizedTool in toolsMap) {
+    const disallowed = toolsMap[normalizedTool] === false
     return {
       name: "shouldNotUseTool",
-      passed: toolsMap[normalizedTool] === false,
-      detail: toolsMap[normalizedTool] === false
+      passed: disallowed,
+      detail: disallowed
         ? `Tool explicitly disallowed for ${agent}: ${normalizedTool}`
         : `Tool explicitly allowed for ${agent}: ${normalizedTool}`,
     }
@@ -306,7 +310,23 @@ export class EvalRunner {
       }
 
       const passedAssertions = assertions.filter((a) => a.passed).length
-      const score = assertions.length === 0 ? 1 : passedAssertions / assertions.length
+      if (assertions.length === 0) {
+        return {
+          scenario,
+          passed: false,
+          score: 0,
+          duration: Date.now() - start,
+          assertions: [{
+            name: "scenario-config",
+            passed: false,
+            detail: "Scenario defines no assertions",
+          }],
+          output,
+          error: "Scenario defines no assertions",
+        }
+      }
+
+      const score = passedAssertions / assertions.length
       const passed = assertions.every((a) => a.passed)
 
       return {

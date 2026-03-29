@@ -90,7 +90,8 @@ describe("foreground-fallback", () => {
         await handler(first as unknown as Parameters<typeof handler>[0])
         await handler(second as unknown as Parameters<typeof handler>[0])
 
-        expect(onFallbackApplied).toHaveBeenCalledTimes(1)
+        // With composite dedup keys (session+model), different models are not deduped
+        expect(onFallbackApplied).toHaveBeenCalledTimes(2)
       })
     })
   })
