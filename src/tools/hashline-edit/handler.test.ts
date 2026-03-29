@@ -9,10 +9,11 @@ import type { HashlineEditToolArgs } from "./types";
 
 describe("executeHashlineEdit", () => {
   let tempDir: string;
-  const ctx = createMockToolContext();
+  let ctx: ReturnType<typeof createMockToolContext>;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "hashline-handler-test-"));
+    ctx = createMockToolContext();
   });
 
   afterEach(async () => {
@@ -44,7 +45,7 @@ describe("executeHashlineEdit", () => {
 
   describe("#given an edit that produces identical content", () => {
     describe("#when executeHashlineEdit is called", () => {
-      it("#then returns 'No changes applied' and does not write", async () => {
+      it("#then returns 'No changes applied' and leaves content unchanged", async () => {
         const filePath = join(tempDir, "test.txt");
         const content = "alpha\nbeta\ngamma";
         await writeFile(filePath, content, "utf8");
@@ -58,6 +59,8 @@ describe("executeHashlineEdit", () => {
         const result = await executeHashlineEdit(args, ctx);
 
         expect(result).toBe("No changes applied");
+        const after = await readFile(filePath, "utf8");
+        expect(after).toBe(content);
       });
     });
   });

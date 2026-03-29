@@ -57,10 +57,7 @@ describe("taskGetTool", () => {
   describe("#given a task does not exist", () => {
     describe("#when called with a non-existent id", () => {
       it("#then returns an error message", async () => {
-        const result = await taskGetTool.execute(
-          { id: "task-does-not-exist" },
-          mockContext,
-        );
+        const result = await taskGetTool.execute({ id: "task-does-not-exist" }, mockContext);
         expect(result).toContain("Error: task not found");
       });
     });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { executeSkillMcp, resolveOperation, parseArguments, applyGrepFilter } from "./handler";
+import { executeSkillMcp } from "./handler";
 
 describe("executeSkillMcp", () => {
   describe("#given args with exactly one tool_name", () => {
@@ -19,9 +19,7 @@ describe("executeSkillMcp", () => {
   describe("#given args with no operation specified", () => {
     describe("#when executeSkillMcp is called", () => {
       it("#then rejects with a missing operation error", async () => {
-        await expect(executeSkillMcp({ mcp_name: "sqlite" })).rejects.toThrow(
-          "Missing operation",
-        );
+        await expect(executeSkillMcp({ mcp_name: "sqlite" })).rejects.toThrow("Missing operation");
       });
     });
   });

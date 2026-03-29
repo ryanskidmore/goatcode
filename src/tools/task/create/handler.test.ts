@@ -45,10 +45,7 @@ describe("taskCreateTool", () => {
 
     describe("#when a task is created", () => {
       it("#then sets createdAt and updatedAt timestamps and stores the task", async () => {
-        const result = await taskCreateTool.execute(
-          { subject: "Timestamp test" },
-          mockContext,
-        );
+        const result = await taskCreateTool.execute({ subject: "Timestamp test" }, mockContext);
         expect(result).toContain("createdAt:");
         expect(result).toContain("updatedAt:");
         expect(taskStore.size).toBe(1);

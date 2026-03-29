@@ -92,10 +92,7 @@ describe("lookAtTool", () => {
         const ctx = makeContext(client);
         const tool = createLookAtTool(noopPoller);
 
-        const result = await tool.execute(
-          { file_path: "/tmp/some-file.txt" },
-          ctx,
-        );
+        const result = await tool.execute({ file_path: "/tmp/some-file.txt" }, ctx);
 
         expect(result).toContain("Error: Missing required parameter 'goal'");
         expect(client.session.create).not.toHaveBeenCalled();

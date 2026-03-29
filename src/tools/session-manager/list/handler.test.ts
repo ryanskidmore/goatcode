@@ -37,9 +37,7 @@ const mockMessages: Record<
         time: { created: EARLIER },
         agent: "orchestrator",
       },
-      parts: [
-        { id: "p_1", sessionID: "ses_aaa", messageID: "msg_1", type: "text", text: "Hello" },
-      ],
+      parts: [{ id: "p_1", sessionID: "ses_aaa", messageID: "msg_1", type: "text", text: "Hello" }],
     },
   ],
   ses_bbb: [
@@ -51,9 +49,7 @@ const mockMessages: Record<
         time: { created: NOW },
         agent: "worker",
       },
-      parts: [
-        { id: "p_2", sessionID: "ses_bbb", messageID: "msg_2", type: "text", text: "World" },
-      ],
+      parts: [{ id: "p_2", sessionID: "ses_bbb", messageID: "msg_2", type: "text", text: "World" }],
     },
   ],
 };
@@ -88,21 +84,20 @@ describe("handleSessionList", () => {
     describe("#when called with from_date set to NOW", () => {
       it("#then only returns sessions updated at or after NOW", async () => {
         const ctx = createCtx();
-        const result = await handleSessionList(
-          { from_date: new Date(NOW).toISOString() },
-          ctx,
-        );
+        const result = await handleSessionList({ from_date: new Date(NOW).toISOString() }, ctx);
         expect(result).toContain("ses_bbb");
         expect(result).not.toContain("ses_aaa");
       });
     });
 
     describe("#when called with limit=1", () => {
-      it("#then returns only one session row", async () => {
+      it("#then returns only one session row (the newest)", async () => {
         const ctx = createCtx();
         const result = await handleSessionList({ limit: 1 }, ctx);
         const dataLines = result.split("\n").filter((l) => l.startsWith("| ses_"));
         expect(dataLines.length).toBe(1);
+        expect(result).toContain("ses_bbb");
+        expect(result).not.toContain("ses_aaa");
       });
     });
   });

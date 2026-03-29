@@ -56,7 +56,9 @@ describe("globTool", () => {
 
         const result = await tool.execute({ pattern: "*.ts" }, ctx);
 
-        const lines = String(result).split("\n").filter((l) => l.length > 0);
+        const lines = String(result)
+          .split("\n")
+          .filter((l) => l.length > 0);
         expect(lines.length).toBe(100);
       });
     });

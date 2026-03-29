@@ -80,10 +80,7 @@ describe("interactiveBashTool", () => {
           throw new Error("spawn ENOENT");
         });
 
-        const result = await interactiveBashTool.execute(
-          { tmux_command: "list-sessions" },
-          ctx,
-        );
+        const result = await interactiveBashTool.execute({ tmux_command: "list-sessions" }, ctx);
 
         expect(result).toBe(
           "Error: tmux is not installed or not found in PATH. Install tmux to use this tool.",
@@ -98,10 +95,7 @@ describe("interactiveBashTool", () => {
           throw new Error("No such file or directory");
         });
 
-        const result = await interactiveBashTool.execute(
-          { tmux_command: "list-sessions" },
-          ctx,
-        );
+        const result = await interactiveBashTool.execute({ tmux_command: "list-sessions" }, ctx);
 
         expect(result).toBe(
           "Error: tmux is not installed or not found in PATH. Install tmux to use this tool.",
@@ -117,10 +111,7 @@ describe("interactiveBashTool", () => {
           makeProc("", "session not found: myapp", 1) as ReturnType<typeof Bun.spawn>,
         );
 
-        const result = await interactiveBashTool.execute(
-          { tmux_command: "attach -t myapp" },
-          ctx,
-        );
+        const result = await interactiveBashTool.execute({ tmux_command: "attach -t myapp" }, ctx);
 
         expect(result).toBe("Error: session not found: myapp");
       });
@@ -130,10 +121,7 @@ describe("interactiveBashTool", () => {
   describe("#given an empty tmux command", () => {
     describe("#when execute is called with whitespace only", () => {
       it("#then returns an empty command error without spawning", async () => {
-        const result = await interactiveBashTool.execute(
-          { tmux_command: "   " },
-          ctx,
-        );
+        const result = await interactiveBashTool.execute({ tmux_command: "   " }, ctx);
 
         expect(result).toBe("Error: Empty tmux command");
         expect(spawnSpy).not.toHaveBeenCalled();

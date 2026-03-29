@@ -44,10 +44,7 @@ describe("grepTool", () => {
         const tool = createGrepTool(runner);
         const ctx = createMockToolContext({ directory: "/repo" });
 
-        const result = await tool.execute(
-          { pattern: "nonExistentPattern123" },
-          ctx,
-        );
+        const result = await tool.execute({ pattern: "nonExistentPattern123" }, ctx);
 
         expect(result).toBe("No matches found");
       });
@@ -69,10 +66,7 @@ describe("grepTool", () => {
         const tool = createGrepTool(runner);
         const ctx = createMockToolContext({ directory: "/repo" });
 
-        const result = await tool.execute(
-          { pattern: "import", output_mode: "count" },
-          ctx,
-        );
+        const result = await tool.execute({ pattern: "import", output_mode: "count" }, ctx);
 
         expect(capturedCommand).toContain("-c");
         expect(capturedCommand).not.toContain("--line-number");

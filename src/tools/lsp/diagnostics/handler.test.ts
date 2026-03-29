@@ -38,10 +38,7 @@ describe("lspDiagnosticsTool", () => {
           },
         } as never);
 
-        const result = await lspDiagnosticsTool.execute(
-          { filePath: "/src/clean.ts" },
-          ctx,
-        );
+        const result = await lspDiagnosticsTool.execute({ filePath: "/src/clean.ts" }, ctx);
 
         expect(result).toBe("No diagnostics found");
       });
@@ -76,10 +73,7 @@ describe("lspDiagnosticsTool", () => {
           },
         } as never);
 
-        const result = await lspDiagnosticsTool.execute(
-          { filePath: "/src/index.ts" },
-          ctx,
-        );
+        const result = await lspDiagnosticsTool.execute({ filePath: "/src/index.ts" }, ctx);
 
         expect(result).toBe("Error: Language server crashed");
       });

@@ -71,10 +71,7 @@ describe("lspGotoDefinitionTool", () => {
       it("#then returns a validation error", async () => {
         const ctx = createMockToolContext();
 
-        const result = await lspGotoDefinitionTool.execute(
-          { line: 1, character: 0 },
-          ctx,
-        );
+        const result = await lspGotoDefinitionTool.execute({ line: 1, character: 0 }, ctx);
 
         expect(result).toMatch(/^Error:/);
       });

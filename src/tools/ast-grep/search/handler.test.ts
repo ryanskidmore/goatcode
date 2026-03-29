@@ -47,10 +47,7 @@ describe("astGrepSearchTool", () => {
         const tool = createAstGrepSearchTool(runner);
         const ctx = createMockToolContext({ directory: "/repo" });
 
-        const result = await tool.execute(
-          { pattern: "$VAR", lang: "javascript" },
-          ctx,
-        );
+        const result = await tool.execute({ pattern: "$VAR", lang: "javascript" }, ctx);
 
         expect(result).toContain("ast-grep binary 'sg' not found");
         expect(result).toContain("Install ast-grep");
@@ -67,10 +64,7 @@ describe("astGrepSearchTool", () => {
         const tool = createAstGrepSearchTool(runner);
         const ctx = createMockToolContext({ directory: "/repo" });
 
-        const result = await tool.execute(
-          { pattern: "$X", lang: "go" },
-          ctx,
-        );
+        const result = await tool.execute({ pattern: "$X", lang: "go" }, ctx);
 
         expect(result).toContain("ast-grep binary 'sg' not found");
       });

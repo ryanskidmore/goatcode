@@ -83,12 +83,13 @@ describe("handleSessionSearch", () => {
     describe("#when searching within a specific session", () => {
       it("#then only returns matches from that session", async () => {
         const ctx = createCtx();
+        // "production server" exists only in SESSION_B — scoping to SESSION_A must yield no results,
+        // proving the session_id filter is actually enforced (not just coincidentally correct).
         const result = await handleSessionSearch(
-          { query: "session manager", session_id: SESSION_A },
+          { query: "production server", session_id: SESSION_A },
           ctx,
         );
-        expect(result).toContain(SESSION_A);
-        expect(result).not.toContain(SESSION_B);
+        expect(result).toBe("No matches found.");
       });
     });
 
