@@ -19,10 +19,6 @@ const BUILTIN_AGENT_NAMES = [
   "advisor",
   "researcher",
   "explorer",
-  "executor",
-  "analyst",
-  "reviewer",
-  "inspector",
   "worker",
 ] as const satisfies BuiltinAgentName[]
 

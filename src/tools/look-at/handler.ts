@@ -2,7 +2,7 @@ import { tool, type ToolDefinition } from "@opencode-ai/plugin";
 import { log } from "../../shared/logger";
 import { getClientFromToolContext } from "../lsp/client";
 import { pollUntilStable, type PollSnapshot } from "../../runtime";
-import { LOOK_AT_DESCRIPTION, INSPECTOR_AGENT_NAME } from "./types";
+import { LOOK_AT_DESCRIPTION, LOOK_AT_AGENT_NAME } from "./types";
 
 export type Poller = (fetchSnapshot: () => Promise<PollSnapshot>) => Promise<PollSnapshot>;
 
@@ -188,7 +188,7 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
       try {
         await client.session.promptAsync({
           path: { id: sessionId },
-          body: { agent: INSPECTOR_AGENT_NAME, parts },
+          body: { agent: LOOK_AT_AGENT_NAME, parts },
         });
       } catch (promptError) {
         log(`[look_at] Prompt error:`, promptError);

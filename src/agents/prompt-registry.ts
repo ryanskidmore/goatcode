@@ -32,18 +32,6 @@ export const PROMPT_REGISTRY: Record<BuiltinAgentName, PromptMeta> = {
   researcher: RESEARCHER_PROMPT_META,
   explorer: EXPLORER_PROMPT_META,
   worker: WORKER_PROMPT_META,
-  executor: createInitialPromptMeta(
-    "Follows explicit execution plans with disciplined step tracking.",
-  ),
-  analyst: createInitialPromptMeta(
-    "Performs implementation gap analysis and risk identification.",
-  ),
-  reviewer: createInitialPromptMeta(
-    "Validates completed work against requirements and quality bars.",
-  ),
-  inspector: createInitialPromptMeta(
-    "Extracts structured insights from multimodal artifacts.",
-  ),
 }
 
 export function getPromptVersion(agentName: BuiltinAgentName): string {
