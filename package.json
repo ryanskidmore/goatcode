@@ -18,6 +18,11 @@
     "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "find src -name '*.test.ts' -print0 | xargs -0 bun test",
+    "test:integration": "find src -name '*.integration.test.ts' -print0 | xargs -0 bun test",
+    "test:coverage": "bun test --coverage src",
+    "lint": "oxlint src --deny-warnings",
+    "fmt": "oxfmt --write src/bootstrap.ts src/runtime/index.ts src/registry/hook-aggregator.ts src/registry/hook-aggregator.test.ts src/registry/plugin-lifecycle.integration.test.ts src/hooks/hook-ordering.ts src/hooks/todo-enforcer/handler.ts src/hooks/compaction-todo-preserver/handler.ts src/hooks/stop-guard/handler.ts src/tools/background-task/background-task.test.ts src/tools/background-task/cancel/handler.ts src/tools/background-task/cancel/plugin.ts src/tools/background-task/output/handler.ts src/tools/background-task/output/plugin.ts src/tools/delegate-task/category-resolver.ts src/tools/delegate-task/delegate-task.test.ts src/tools/delegate-task/executor.ts src/tools/delegate-task/handler.ts src/tools/delegate-task/plugin.ts src/tools/interactive-bash/handler.ts src/tools/look-at/handler.ts src/tools/look-at/look-at.test.ts src/tools/session-manager/session-formatter.ts src/tools/skill-mcp/handler.ts src/tools/skill-tools.test.ts src/tools/task/format-task.ts src/tools/task/format-task.test.ts src/tools/task/create/handler.ts src/tools/task/get/handler.ts src/tools/task/update/handler.ts",
+    "fmt:check": "oxfmt --check src/bootstrap.ts src/runtime/index.ts src/registry/hook-aggregator.ts src/registry/hook-aggregator.test.ts src/registry/plugin-lifecycle.integration.test.ts src/hooks/hook-ordering.ts src/hooks/todo-enforcer/handler.ts src/hooks/compaction-todo-preserver/handler.ts src/hooks/stop-guard/handler.ts src/tools/background-task/background-task.test.ts src/tools/background-task/cancel/handler.ts src/tools/background-task/cancel/plugin.ts src/tools/background-task/output/handler.ts src/tools/background-task/output/plugin.ts src/tools/delegate-task/category-resolver.ts src/tools/delegate-task/delegate-task.test.ts src/tools/delegate-task/executor.ts src/tools/delegate-task/handler.ts src/tools/delegate-task/plugin.ts src/tools/interactive-bash/handler.ts src/tools/look-at/handler.ts src/tools/look-at/look-at.test.ts src/tools/session-manager/session-formatter.ts src/tools/skill-mcp/handler.ts src/tools/skill-tools.test.ts src/tools/task/format-task.ts src/tools/task/format-task.test.ts src/tools/task/create/handler.ts src/tools/task/get/handler.ts src/tools/task/update/handler.ts",
     "clean": "rm -rf dist"
   },
   "engines": {
@@ -35,6 +40,8 @@
   },
   "devDependencies": {
     "bun-types": "latest",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
     "typescript": "^5.7.3"
   }
 }

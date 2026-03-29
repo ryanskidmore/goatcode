@@ -1,25 +1,21 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import {
-  getBackgroundAgent,
-  initBackgroundAgent,
-  resetBackgroundAgent,
-} from "../../features/background-agent/singleton"
-import { createTaskTool } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { getBackgroundAgent, initBackgroundAgent, resetBackgroundAgent } from "../../runtime";
+import { createTaskTool } from "./handler";
 
 function getManagerOrThrow() {
-  return getBackgroundAgent().manager
+  return getBackgroundAgent().manager;
 }
 
 export default definePlugin({
   name: "delegate-task",
   version: "1.0.0",
   setup() {
-    initBackgroundAgent()
+    initBackgroundAgent();
   },
   teardown() {
-    resetBackgroundAgent()
+    resetBackgroundAgent();
   },
   tools: {
     task: createTaskTool(getManagerOrThrow),
   },
-})
+});

@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test"
-import { writeFileSync, mkdtempSync, rmSync, readFileSync } from "node:fs"
-import { join, resolve } from "node:path"
+import { writeFileSync, mkdtempSync, rmSync } from "node:fs"
+import { join } from "node:path"
 import { spawnSync } from "node:child_process"
 import { tmpdir } from "node:os"
 import { generateConfig } from "./config-generator"
-
-const PROJECT_ROOT = resolve(__dirname, "../..")
 
 describe("#given generateConfig with default options", () => {
   describe("#when called with no arguments", () => {

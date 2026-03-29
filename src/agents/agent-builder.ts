@@ -70,7 +70,7 @@ export function buildAgent(
     }
 
     if (overrides.denied_tools?.length) {
-      const tools: Record<string, boolean> = { ...(base.tools ?? {}) }
+      const tools: Record<string, boolean> = { ...base.tools }
       for (const deniedTool of overrides.denied_tools) {
         tools[deniedTool] = false
       }
