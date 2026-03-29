@@ -1,2 +1,2 @@
-export { planBuilderPlugin } from "./plugin"
-export * from "./config"
+export { planBuilderPlugin } from "./plugin";
+export * from "./config";

@@ -1,4 +1,4 @@
-import type { SlashCommand } from "../types"
+import type { SlashCommand } from "../types";
 
 export const stopContinuationCommand: SlashCommand = {
   name: "stop-continuation",
@@ -18,4 +18,4 @@ After running this command:
 
 Use this when you need to pause automated continuation and take manual control.
 </command-instruction>`,
-}
+};

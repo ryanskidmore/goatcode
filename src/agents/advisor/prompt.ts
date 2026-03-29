@@ -90,4 +90,4 @@ At most 2 bullets, only if clearly useful.
 # Final Contract
 Deliver a recommendation the caller can execute immediately.
 If ambiguity blocks a safe recommendation, ask the smallest set of clarifying questions needed.
-`
+`;

@@ -1,8 +1,11 @@
-import { definePlugin } from "../../plugin-api"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createPostReadNudgeHandler } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createPostReadNudgeHandler } from "./handler";
 
-const postReadNudgeToolExecuteAfterHook = safeCreateHook("post-read-nudge", createPostReadNudgeHandler)
+const postReadNudgeToolExecuteAfterHook = safeCreateHook(
+  "post-read-nudge",
+  createPostReadNudgeHandler,
+);
 
 export const postReadNudgePlugin = definePlugin({
   name: "post-read-nudge",
@@ -12,4 +15,4 @@ export const postReadNudgePlugin = definePlugin({
         "tool.execute.after": postReadNudgeToolExecuteAfterHook,
       }
     : {},
-})
+});

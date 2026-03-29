@@ -1,2 +1,2 @@
-export { taskResumeInfoPlugin } from "./plugin"
-export { createTaskResumeInfoHandler } from "./handler"
+export { taskResumeInfoPlugin } from "./plugin";
+export { createTaskResumeInfoHandler } from "./handler";

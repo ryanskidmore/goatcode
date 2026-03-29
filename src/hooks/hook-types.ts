@@ -1,6 +1,6 @@
-import type { HookEventName } from "../types/hook"
+import type { HookEventName } from "../types/hook";
 
-export type HookTier = "message" | "tool" | "transform" | "event" | "config"
+export type HookTier = "message" | "tool" | "transform" | "event" | "config";
 
 export const HOOK_TIERS: Record<HookEventName, HookTier> = {
   tool: "tool",
@@ -19,4 +19,4 @@ export const HOOK_TIERS: Record<HookEventName, HookTier> = {
   "experimental.text.complete": "transform",
   event: "event",
   config: "config",
-}
+};

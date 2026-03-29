@@ -1,4 +1,4 @@
-import type { GoatCodeConfig } from "../types/config"
+import type { GoatCodeConfig } from "../types/config";
 
 export const CONFIG_DEFAULTS: Required<
   Pick<
@@ -11,4 +11,4 @@ export const CONFIG_DEFAULTS: Required<
   disabled_hooks: [],
   disabled_tools: [],
   disabled_skills: [],
-}
+};

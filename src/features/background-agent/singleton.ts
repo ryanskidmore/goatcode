@@ -1,26 +1,26 @@
-import { BackgroundAgentManager } from "./manager"
+import { BackgroundAgentManager } from "./manager";
 
 export type BackgroundAgentContext = {
-  manager: BackgroundAgentManager
-}
+  manager: BackgroundAgentManager;
+};
 
-let instance: BackgroundAgentContext | undefined
+let instance: BackgroundAgentContext | undefined;
 
 export function initBackgroundAgent(): BackgroundAgentContext {
   instance = {
     manager: new BackgroundAgentManager(),
-  }
-  return instance
+  };
+  return instance;
 }
 
 export function getBackgroundAgent(): BackgroundAgentContext {
   if (!instance) {
-    throw new Error("BackgroundAgent not initialized. Call initBackgroundAgent first.")
+    throw new Error("BackgroundAgent not initialized. Call initBackgroundAgent first.");
   }
-  return instance
+  return instance;
 }
 
 export function resetBackgroundAgent(): void {
-  instance?.manager.dispose()
-  instance = undefined
+  instance?.manager.dispose();
+  instance = undefined;
 }

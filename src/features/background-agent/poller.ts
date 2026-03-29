@@ -1,21 +1,21 @@
-import { log } from "../../shared/logger"
+import { log } from "../../shared/logger";
 
-export const POLLING_INTERVAL_MS = 3_000
-export const STABILITY_REQUIRED_POLLS = 2
+export const POLLING_INTERVAL_MS = 3_000;
+export const STABILITY_REQUIRED_POLLS = 2;
 
 export type PollState = {
-  lastMessageCount: number
-  stablePolls: number
-}
+  lastMessageCount: number;
+  stablePolls: number;
+};
 
 export type PollSnapshot = {
-  messageCount: number
-  isIdle: boolean
-  result?: string
-}
+  messageCount: number;
+  isIdle: boolean;
+  result?: string;
+};
 
 export function createPollState(): PollState {
-  return { lastMessageCount: -1, stablePolls: 0 }
+  return { lastMessageCount: -1, stablePolls: 0 };
 }
 
 export function checkStability(
@@ -27,21 +27,21 @@ export function checkStability(
     return {
       stable: false,
       nextState: { lastMessageCount: currentMessageCount, stablePolls: 0 },
-    }
+    };
   }
 
   if (currentMessageCount === state.lastMessageCount) {
-    const stablePolls = state.stablePolls + 1
+    const stablePolls = state.stablePolls + 1;
     return {
       stable: stablePolls >= STABILITY_REQUIRED_POLLS,
       nextState: { lastMessageCount: currentMessageCount, stablePolls },
-    }
+    };
   }
 
   return {
     stable: false,
     nextState: { lastMessageCount: currentMessageCount, stablePolls: 0 },
-  }
+  };
 }
 
 export async function pollUntilStable(
@@ -49,31 +49,27 @@ export async function pollUntilStable(
   maxPolls = 120,
   signal?: AbortSignal,
 ): Promise<PollSnapshot> {
-  let state = createPollState()
+  let state = createPollState();
 
   for (let attempt = 0; attempt < maxPolls; attempt += 1) {
     if (signal?.aborted) {
-      throw new Error("Polling cancelled")
+      throw new Error("Polling cancelled");
     }
 
-    const latest = await fetchSnapshot()
-    const { stable, nextState } = checkStability(
-      state,
-      latest.messageCount,
-      latest.isIdle,
-    )
-    state = nextState
+    const latest = await fetchSnapshot();
+    const { stable, nextState } = checkStability(state, latest.messageCount, latest.isIdle);
+    state = nextState;
 
     if (stable) {
       log("[poller] Session reached stable completion", {
         messageCount: latest.messageCount,
         stablePolls: state.stablePolls,
-      })
-      return latest
+      });
+      return latest;
     }
 
-    await new Promise<void>((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS))
+    await new Promise<void>((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS));
   }
 
-  throw new Error("Background polling timed out before reaching stable completion")
+  throw new Error("Background polling timed out before reaching stable completion");
 }

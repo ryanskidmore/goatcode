@@ -1,7 +1,7 @@
-import { definePlugin } from "../../plugin-api"
-import { INSPECTOR_MODEL, INSPECTOR_TEMPERATURE, INSPECTOR_MODE } from "./config"
-import { INSPECTOR_PROMPT } from "./prompt"
-import { buildToolsMap } from "../tool-restrictions"
+import { definePlugin } from "../../plugin-api";
+import { INSPECTOR_MODEL, INSPECTOR_TEMPERATURE, INSPECTOR_MODE } from "./config";
+import { INSPECTOR_PROMPT } from "./prompt";
+import { buildToolsMap } from "../tool-restrictions";
 
 export const inspectorPlugin = definePlugin({
   name: "inspector",
@@ -15,4 +15,4 @@ export const inspectorPlugin = definePlugin({
       tools: buildToolsMap("inspector"),
     },
   },
-})
+});

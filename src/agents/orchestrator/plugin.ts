@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  ORCHESTRATOR_MODEL,
-  ORCHESTRATOR_TEMPERATURE,
-  ORCHESTRATOR_MODE,
-} from "./config"
-import { ORCHESTRATOR_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { ORCHESTRATOR_MODEL, ORCHESTRATOR_TEMPERATURE, ORCHESTRATOR_MODE } from "./config";
+import { ORCHESTRATOR_PROMPT } from "./prompt";
 
 export const orchestratorPlugin = definePlugin({
   name: "orchestrator",
@@ -17,4 +13,4 @@ export const orchestratorPlugin = definePlugin({
       prompt: ORCHESTRATOR_PROMPT,
     },
   },
-})
+});

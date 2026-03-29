@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createCommentCheckerHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createCommentCheckerHandler } from "./handler";
 
-const preToolUseHook = safeCreateHook("comment-checker", createCommentCheckerHandler)
+const preToolUseHook = safeCreateHook("comment-checker", createCommentCheckerHandler);
 
 export const commentCheckerPlugin = definePlugin({
   name: "comment-checker",
@@ -12,4 +12,4 @@ export const commentCheckerPlugin = definePlugin({
         "tool.execute.before": preToolUseHook,
       }
     : {},
-})
+});

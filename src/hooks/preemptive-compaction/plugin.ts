@@ -1,10 +1,10 @@
-import { definePlugin } from "../../plugin-api"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createPreemptiveCompactionHandler } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createPreemptiveCompactionHandler } from "./handler";
 
 const preemptiveCompactionMessageHook = safeCreateHook("preemptive-compaction", () =>
   createPreemptiveCompactionHandler(),
-)
+);
 
 export const preemptiveCompactionPlugin = definePlugin({
   name: "preemptive-compaction",
@@ -12,4 +12,4 @@ export const preemptiveCompactionPlugin = definePlugin({
   hooks: preemptiveCompactionMessageHook
     ? { "chat.message": preemptiveCompactionMessageHook }
     : undefined,
-})
+});

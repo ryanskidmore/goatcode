@@ -1,5 +1,5 @@
-import { definePlugin } from "../../plugin-api"
-import { createEventErrorHandler, createToolErrorHandler } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { createEventErrorHandler, createToolErrorHandler } from "./handler";
 
 export const errorDiagnosticsPlugin = definePlugin({
   name: "error-diagnostics",
@@ -8,4 +8,4 @@ export const errorDiagnosticsPlugin = definePlugin({
     "tool.execute.after": createToolErrorHandler(),
     event: createEventErrorHandler(),
   },
-})
+});

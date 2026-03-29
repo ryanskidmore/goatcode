@@ -1,2 +1,2 @@
-export { createPreemptiveCompactionHandler } from "./handler"
-export { preemptiveCompactionPlugin } from "./plugin"
+export { createPreemptiveCompactionHandler } from "./handler";
+export { preemptiveCompactionPlugin } from "./plugin";

@@ -4,10 +4,14 @@ export {
   type LoopOptions,
   type LoopState,
   type LoopStore,
-} from "./state"
-export { MemoryLoopStore } from "./memory-store"
-export { FileLoopStore } from "./file-store"
-export { buildLoopContinuationMessage, createLoopHandler, type LoopHandlerOptions } from "./handler"
+} from "./state";
+export { MemoryLoopStore } from "./memory-store";
+export { FileLoopStore } from "./file-store";
+export {
+  buildLoopContinuationMessage,
+  createLoopHandler,
+  type LoopHandlerOptions,
+} from "./handler";
 export {
   clearLoopStateForTests,
   configureLoopStateFilePathForTests,
@@ -21,4 +25,4 @@ export {
   memoryLoopStore,
   startLoop,
   stopLoop,
-} from "./plugin"
+} from "./plugin";

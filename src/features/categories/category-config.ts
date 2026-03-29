@@ -1,12 +1,12 @@
-import type { BuiltinCategoryName, CategoryConfig } from "../../types/category"
-import { CATEGORY_PROMPT_APPENDS } from "./prompt-appends"
+import type { BuiltinCategoryName, CategoryConfig } from "../../types/category";
+import { CATEGORY_PROMPT_APPENDS } from "./prompt-appends";
 
-export type CategoryName = BuiltinCategoryName
+export type CategoryName = BuiltinCategoryName;
 
 export interface CategoryDefinition extends Required<Pick<CategoryConfig, "description">> {
-  model: string
-  variant?: string
-  promptAppend?: string
+  model: string;
+  variant?: string;
+  promptAppend?: string;
 }
 
 export const DEFAULT_CATEGORY_DEFINITIONS: Record<CategoryName, CategoryDefinition> = {
@@ -55,7 +55,7 @@ export const DEFAULT_CATEGORY_DEFINITIONS: Record<CategoryName, CategoryDefiniti
     description: "Documentation, prose, and technical writing",
     promptAppend: CATEGORY_PROMPT_APPENDS.writing,
   },
-}
+};
 
 export const DEFAULT_CATEGORIES: Record<CategoryName, CategoryConfig> = Object.fromEntries(
   Object.entries(DEFAULT_CATEGORY_DEFINITIONS).map(([name, definition]) => [
@@ -67,4 +67,4 @@ export const DEFAULT_CATEGORIES: Record<CategoryName, CategoryConfig> = Object.f
       prompt_append: definition.promptAppend,
     },
   ]),
-) as Record<CategoryName, CategoryConfig>
+) as Record<CategoryName, CategoryConfig>;

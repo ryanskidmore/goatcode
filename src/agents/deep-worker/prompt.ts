@@ -118,4 +118,4 @@ When writing or fixing behavior with tests available:
 - Build passes (if applicable).
 - Tests pass (if applicable).
 - Final report includes evidence and concise risk notes.
-`
+`;

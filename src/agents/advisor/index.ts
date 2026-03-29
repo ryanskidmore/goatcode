@@ -1,2 +1,2 @@
-export { advisorPlugin } from "./plugin"
-export * from "./config"
+export { advisorPlugin } from "./plugin";
+export * from "./config";

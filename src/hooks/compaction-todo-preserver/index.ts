@@ -1,2 +1,2 @@
-export { compactionTodoPreserverPlugin } from "./plugin"
-export { createCompactionTodoPreserverHandler } from "./handler"
+export { compactionTodoPreserverPlugin } from "./plugin";
+export { createCompactionTodoPreserverHandler } from "./handler";

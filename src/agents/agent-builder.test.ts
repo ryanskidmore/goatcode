@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test"
-import { buildAgent } from "./agent-builder"
-import type { AgentFactory } from "../types/agent"
+import { describe, it, expect } from "bun:test";
+import { buildAgent } from "./agent-builder";
+import type { AgentFactory } from "../types/agent";
 
 describe("buildAgent", () => {
   describe("#given a factory config with category defaults and user overrides", () => {
@@ -15,7 +15,7 @@ describe("buildAgent", () => {
             tools: { read: true, write: true },
           }),
           { mode: "all" as const },
-        ) satisfies AgentFactory
+        ) satisfies AgentFactory;
 
         const result = buildAgent(
           source,
@@ -31,20 +31,20 @@ describe("buildAgent", () => {
             prompt_append: "override append",
             denied_tools: ["write", "edit"],
           },
-        )
+        );
 
-        expect(result.model).toBe("openai/gpt-5.4")
-        expect(result.temperature).toBe(0.7)
-        expect(result.top_p).toBe(0.9)
-        expect(result.prompt).toBe("base prompt\n\ncategory append\n\noverride append")
+        expect(result.model).toBe("openai/gpt-5.4");
+        expect(result.temperature).toBe(0.7);
+        expect(result.top_p).toBe(0.9);
+        expect(result.prompt).toBe("base prompt\n\ncategory append\n\noverride append");
         expect(result.tools).toEqual({
           read: true,
           write: false,
           edit: false,
-        })
-      })
-    })
-  })
+        });
+      });
+    });
+  });
 
   describe("#given a base config without model and no overrides", () => {
     describe("#when buildAgent is called with category model", () => {
@@ -57,10 +57,10 @@ describe("buildAgent", () => {
           {
             model: "anthropic/claude-sonnet-4-6",
           },
-        )
+        );
 
-        expect(result.model).toBe("anthropic/claude-sonnet-4-6")
-      })
-    })
-  })
-})
+        expect(result.model).toBe("anthropic/claude-sonnet-4-6");
+      });
+    });
+  });
+});

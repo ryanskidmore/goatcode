@@ -1,8 +1,11 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createHashlineReadEnhancerHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createHashlineReadEnhancerHandler } from "./handler";
 
-const toolExecuteAfterHook = safeCreateHook("hashline-read-enhancer", createHashlineReadEnhancerHandler)
+const toolExecuteAfterHook = safeCreateHook(
+  "hashline-read-enhancer",
+  createHashlineReadEnhancerHandler,
+);
 
 export const hashlineReadEnhancerPlugin = definePlugin({
   name: "hashline-read-enhancer",
@@ -12,4 +15,4 @@ export const hashlineReadEnhancerPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});

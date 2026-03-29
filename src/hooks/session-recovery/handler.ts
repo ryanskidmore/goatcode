@@ -1,5 +1,5 @@
-import type { PluginHookContributions } from "../../types/hook"
-import { log } from "../../shared/logger"
+import type { PluginHookContributions } from "../../types/hook";
+import { log } from "../../shared/logger";
 
 export const SESSION_RECOVERY_PATTERNS = [
   /session.*crash/i,
@@ -7,81 +7,81 @@ export const SESSION_RECOVERY_PATTERNS = [
   /connection reset/i,
   /socket hang up/i,
   /network.*interrupted/i,
-] as const
+] as const;
 
-const SESSION_RECOVERY_MARKER = "[SESSION RECOVERY]"
+const SESSION_RECOVERY_MARKER = "[SESSION RECOVERY]";
 
-export const SESSION_RECOVERY_MESSAGE = `${SESSION_RECOVERY_MARKER}\nSession interruption detected. Reuse the latest confirmed state, avoid replaying completed tool calls, and continue from the last successful step.`
+export const SESSION_RECOVERY_MESSAGE = `${SESSION_RECOVERY_MARKER}\nSession interruption detected. Reuse the latest confirmed state, avoid replaying completed tool calls, and continue from the last successful step.`;
 
-type EventHook = NonNullable<PluginHookContributions["event"]>
+type EventHook = NonNullable<PluginHookContributions["event"]>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" && value !== null;
 }
 
 function extractErrorText(input: Record<string, unknown>): string {
-  const event = input.event
+  const event = input.event;
   if (!isRecord(event)) {
-    return ""
+    return "";
   }
 
-  const properties = event.properties
+  const properties = event.properties;
   if (!isRecord(properties)) {
-    return ""
+    return "";
   }
 
-  const rawError = properties.error
+  const rawError = properties.error;
   if (typeof rawError === "string") {
-    return rawError
+    return rawError;
   }
 
   if (isRecord(rawError) && typeof rawError.message === "string") {
-    return rawError.message
+    return rawError.message;
   }
 
-  return ""
+  return "";
 }
 
 function appendRecoveryContext(properties: Record<string, unknown>, message: string): void {
-  const existing = properties.recoveryContext
+  const existing = properties.recoveryContext;
   if (typeof existing === "string" && existing.includes(SESSION_RECOVERY_MARKER)) {
-    return
+    return;
   }
 
   if (typeof existing === "string" && existing.length > 0) {
-    properties.recoveryContext = `${existing}\n${message}`
-    return
+    properties.recoveryContext = `${existing}\n${message}`;
+    return;
   }
 
-  properties.recoveryContext = message
+  properties.recoveryContext = message;
 }
 
 export function createSessionRecoveryHandler(): EventHook {
   return async (input: unknown) => {
     if (!isRecord(input)) {
-      return
+      return;
     }
 
-    const event = input.event
+    const event = input.event;
     if (!isRecord(event) || event.type !== "session.error") {
-      return
+      return;
     }
 
-    const properties = event.properties
+    const properties = event.properties;
     if (!isRecord(properties)) {
-      return
+      return;
     }
 
-    const errorText = extractErrorText(input)
+    const errorText = extractErrorText(input);
     const isRecoverableSessionError = SESSION_RECOVERY_PATTERNS.some((pattern) =>
       pattern.test(errorText),
-    )
+    );
 
     if (!isRecoverableSessionError) {
-      return
+      return;
     }
 
-    appendRecoveryContext(properties, SESSION_RECOVERY_MESSAGE)
-    log("[session-recovery] injected session recovery context")
-  }
+    appendRecoveryContext(properties, SESSION_RECOVERY_MESSAGE);
+    log("[session-recovery] injected session recovery context");
+  };
 }

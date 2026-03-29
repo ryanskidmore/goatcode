@@ -1,2 +1,2 @@
-export { thinkingBlockValidatorPlugin } from "./plugin"
-export { createThinkingBlockValidatorHandler } from "./handler"
+export { thinkingBlockValidatorPlugin } from "./plugin";
+export { createThinkingBlockValidatorHandler } from "./handler";

@@ -1,5 +1,5 @@
-import { definePlugin } from "../../plugin-api"
-import { createGlobTool } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { createGlobTool } from "./handler";
 
 export const globPlugin = definePlugin({
   name: "glob",
@@ -7,4 +7,4 @@ export const globPlugin = definePlugin({
   tools: {
     glob: createGlobTool(),
   },
-})
+});

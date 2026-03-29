@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  WORKER_MODEL,
-  WORKER_TEMPERATURE,
-  WORKER_MODE,
-} from "./config"
-import { WORKER_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { WORKER_MODEL, WORKER_TEMPERATURE, WORKER_MODE } from "./config";
+import { WORKER_PROMPT } from "./prompt";
 
 export const workerPlugin = definePlugin({
   name: "worker",
@@ -17,4 +13,4 @@ export const workerPlugin = definePlugin({
       prompt: WORKER_PROMPT,
     },
   },
-})
+});

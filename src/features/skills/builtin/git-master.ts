@@ -1,4 +1,4 @@
-import type { Skill } from "../skill-loader"
+import type { Skill } from "../skill-loader";
 
 export const gitMasterSkill: Skill = {
   name: "git-master",
@@ -106,4 +106,4 @@ git log --oneline --decorate -20
 
 Apply this workflow for all git operations unless the user gives explicit alternative constraints.
 `,
-}
+};

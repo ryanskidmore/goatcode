@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { lspRenameTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { lspRenameTool } from "./handler";
 
 export const lspRenamePlugin = definePlugin({
   name: "lsp-rename",
@@ -7,4 +7,4 @@ export const lspRenamePlugin = definePlugin({
   tools: {
     lsp_rename: lspRenameTool,
   },
-})
+});

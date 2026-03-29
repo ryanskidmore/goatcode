@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  EXPLORER_MODEL,
-  EXPLORER_TEMPERATURE,
-  EXPLORER_MODE,
-} from "./config"
-import { EXPLORER_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { EXPLORER_MODEL, EXPLORER_TEMPERATURE, EXPLORER_MODE } from "./config";
+import { EXPLORER_PROMPT } from "./prompt";
 
 export const explorerPlugin = definePlugin({
   name: "explorer",
@@ -17,4 +13,4 @@ export const explorerPlugin = definePlugin({
       prompt: EXPLORER_PROMPT,
     },
   },
-})
+});

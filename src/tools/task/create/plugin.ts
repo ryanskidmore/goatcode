@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { taskCreateTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { taskCreateTool } from "./handler";
 
 export const taskCreatePlugin = definePlugin({
   name: "task-create",
@@ -7,4 +7,4 @@ export const taskCreatePlugin = definePlugin({
   tools: {
     task_create: taskCreateTool,
   },
-})
+});

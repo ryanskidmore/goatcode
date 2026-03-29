@@ -1,2 +1,2 @@
-export { grepPlugin } from "./plugin"
-export { createGrepTool, executeGrep } from "./handler"
+export { grepPlugin } from "./plugin";
+export { createGrepTool, executeGrep } from "./handler";

@@ -1,12 +1,10 @@
-import type { OpenCodeContext } from "../types/plugin"
+import type { OpenCodeContext } from "../types/plugin";
 
 /**
  * Create a minimal mock OpenCodeContext for unit testing.
  * Provides sensible no-op defaults for all required fields.
  */
-export function createMockPluginContext(
-  overrides: Partial<OpenCodeContext> = {},
-): OpenCodeContext {
+export function createMockPluginContext(overrides: Partial<OpenCodeContext> = {}): OpenCodeContext {
   const mock = {
     directory: "/tmp/test-project",
     client: {
@@ -18,6 +16,6 @@ export function createMockPluginContext(
       sendMessage: async () => ({}),
     },
     ...overrides,
-  } as OpenCodeContext
-  return mock
+  } as OpenCodeContext;
+  return mock;
 }

@@ -1,5 +1,5 @@
-import { definePlugin } from "../../plugin-api"
-import { interactiveBashTool } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { interactiveBashTool } from "./handler";
 
 export const interactiveBashPlugin = definePlugin({
   name: "interactive-bash",
@@ -7,4 +7,4 @@ export const interactiveBashPlugin = definePlugin({
   tools: {
     interactive_bash: interactiveBashTool,
   },
-})
+});

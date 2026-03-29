@@ -1,10 +1,6 @@
-import { definePlugin } from "../../plugin-api"
-import {
-  RESEARCHER_MODEL,
-  RESEARCHER_TEMPERATURE,
-  RESEARCHER_MODE,
-} from "./config"
-import { RESEARCHER_PROMPT } from "./prompt"
+import { definePlugin } from "../../plugin-api";
+import { RESEARCHER_MODEL, RESEARCHER_TEMPERATURE, RESEARCHER_MODE } from "./config";
+import { RESEARCHER_PROMPT } from "./prompt";
 
 export const researcherPlugin = definePlugin({
   name: "researcher",
@@ -17,4 +13,4 @@ export const researcherPlugin = definePlugin({
       prompt: RESEARCHER_PROMPT,
     },
   },
-})
+});

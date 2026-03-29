@@ -1,4 +1,4 @@
-import type { PluginDefinition } from "../types/plugin"
+import type { PluginDefinition } from "../types/plugin";
 
 /**
  * Define a GoatCode micro-plugin.
@@ -32,5 +32,5 @@ import type { PluginDefinition } from "../types/plugin"
  * @returns The definition unchanged (typed identity function for IDE autocomplete)
  */
 export function definePlugin(definition: PluginDefinition): PluginDefinition {
-  return definition
+  return definition;
 }

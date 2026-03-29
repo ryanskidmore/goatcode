@@ -1,2 +1,2 @@
-export { createPostReadNudgeHandler, POST_READ_NUDGE } from "./handler"
-export { postReadNudgePlugin } from "./plugin"
+export { createPostReadNudgeHandler, POST_READ_NUDGE } from "./handler";
+export { postReadNudgePlugin } from "./plugin";

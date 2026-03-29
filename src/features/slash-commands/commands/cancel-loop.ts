@@ -1,4 +1,4 @@
-import type { SlashCommand } from "../types"
+import type { SlashCommand } from "../types";
 
 export const cancelLoopCommand: SlashCommand = {
   name: "cancel-loop",
@@ -14,4 +14,4 @@ This will:
 
 Check if a loop is active, cancel it, and inform the user of the result.
 </command-instruction>`,
-}
+};

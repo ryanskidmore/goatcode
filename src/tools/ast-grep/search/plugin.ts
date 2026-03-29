@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { createAstGrepSearchTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { createAstGrepSearchTool } from "./handler";
 
 export const astGrepSearchPlugin = definePlugin({
   name: "ast-grep-search",
@@ -7,4 +7,4 @@ export const astGrepSearchPlugin = definePlugin({
   tools: {
     ast_grep_search: createAstGrepSearchTool(),
   },
-})
+});

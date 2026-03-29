@@ -93,4 +93,4 @@ Your response is successful only if:
 - Dense, concise, factual.
 - No fluff, no motivational language.
 - Focus on unblocking execution quickly.
-`
+`;

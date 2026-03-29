@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createContextWindowLimitHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createContextWindowLimitHandler } from "./handler";
 
-const eventHook = safeCreateHook("context-window-limit", createContextWindowLimitHandler)
+const eventHook = safeCreateHook("context-window-limit", createContextWindowLimitHandler);
 
 export const contextWindowLimitPlugin = definePlugin({
   name: "context-window-limit",
@@ -12,4 +12,4 @@ export const contextWindowLimitPlugin = definePlugin({
         event: eventHook,
       }
     : {},
-})
+});

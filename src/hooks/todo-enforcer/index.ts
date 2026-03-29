@@ -1,2 +1,2 @@
-export { todoEnforcerPlugin } from "./plugin"
-export { createTodoEnforcerHandler } from "./handler"
+export { todoEnforcerPlugin } from "./plugin";
+export { createTodoEnforcerHandler } from "./handler";

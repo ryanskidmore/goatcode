@@ -1,5 +1,5 @@
-import { definePlugin } from "../../../plugin-api"
-import { lspDiagnosticsTool } from "./handler"
+import { definePlugin } from "../../../plugin-api";
+import { lspDiagnosticsTool } from "./handler";
 
 export const lspDiagnosticsPlugin = definePlugin({
   name: "lsp-diagnostics",
@@ -7,4 +7,4 @@ export const lspDiagnosticsPlugin = definePlugin({
   tools: {
     lsp_diagnostics: lspDiagnosticsTool,
   },
-})
+});

@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createEditErrorHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createEditErrorHandler } from "./handler";
 
-const toolExecuteAfterHook = safeCreateHook("edit-error", createEditErrorHandler)
+const toolExecuteAfterHook = safeCreateHook("edit-error", createEditErrorHandler);
 
 export const editErrorPlugin = definePlugin({
   name: "edit-error",
@@ -12,4 +12,4 @@ export const editErrorPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});

@@ -1,2 +1,2 @@
-export { commentCheckerPlugin } from "./plugin"
-export { createCommentCheckerHandler } from "./handler"
+export { commentCheckerPlugin } from "./plugin";
+export { createCommentCheckerHandler } from "./handler";

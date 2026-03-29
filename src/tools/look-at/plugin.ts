@@ -1,5 +1,5 @@
-import { definePlugin } from "../../plugin-api"
-import { lookAtTool } from "./handler"
+import { definePlugin } from "../../plugin-api";
+import { lookAtTool } from "./handler";
 
 export const lookAtPlugin = definePlugin({
   name: "look-at",
@@ -7,4 +7,4 @@ export const lookAtPlugin = definePlugin({
   tools: {
     look_at: lookAtTool,
   },
-})
+});

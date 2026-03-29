@@ -1,4 +1,4 @@
-import type { SlashCommand } from "../types"
+import type { SlashCommand } from "../types";
 
 export const initDeepCommand: SlashCommand = {
   name: "init-deep",
@@ -37,4 +37,4 @@ Generate hierarchical AGENTS.md files. Root + complexity-scored subdirectories.
 <user-request>
 $ARGUMENTS
 </user-request>`,
-}
+};

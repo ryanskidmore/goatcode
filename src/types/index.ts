@@ -1,12 +1,12 @@
 /** Agent types and configurations. */
-export * from "./agent"
+export * from "./agent";
 /** Category types and configurations. */
-export * from "./category"
+export * from "./category";
 /** Configuration types for GoatCode. */
-export * from "./config"
+export * from "./config";
 /** Hook types and contributions. */
-export * from "./hook"
+export * from "./hook";
 /** Plugin types and registry interfaces. */
-export * from "./plugin"
+export * from "./plugin";
 /** Tool types and definitions. */
-export * from "./tool"
+export * from "./tool";

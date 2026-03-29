@@ -1,2 +1,2 @@
-export { stopGuardPlugin } from "./plugin"
-export { createStopGuardHandler } from "./handler"
+export { stopGuardPlugin } from "./plugin";
+export { createStopGuardHandler } from "./handler";

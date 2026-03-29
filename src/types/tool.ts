@@ -1,10 +1,10 @@
-import type { ToolDefinition } from "@opencode-ai/plugin"
+import type { ToolDefinition } from "@opencode-ai/plugin";
 
 /** Re-export for convenience. */
-export type { ToolDefinition }
+export type { ToolDefinition };
 
 /** A tool contribution from a micro-plugin. */
-export type PluginToolContribution = ToolDefinition
+export type PluginToolContribution = ToolDefinition;
 
 /** Record of tools keyed by name. */
-export type ToolsRecord = Record<string, ToolDefinition>
+export type ToolsRecord = Record<string, ToolDefinition>;

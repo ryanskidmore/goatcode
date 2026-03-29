@@ -1,11 +1,11 @@
-import type { PluginHookContributions } from "../../types/hook"
-import { log } from "../../shared/logger"
-import { writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import type { PluginHookContributions } from "../../types/hook";
+import { log } from "../../shared/logger";
+import { writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-const MAX_BYTES = 51_200
-const MAX_LINES = 2_000
+const MAX_BYTES = 51_200;
+const MAX_LINES = 2_000;
 
 const TRUNCATABLE_TOOLS = new Set([
   "grep",
@@ -23,60 +23,61 @@ const TRUNCATABLE_TOOLS = new Set([
   "WebFetch",
   "bash",
   "Bash",
-])
+]);
 
-type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>
+type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" && value !== null;
 }
 
 async function writeTruncatedOutput(content: string, tool: string): Promise<string> {
-  const filename = `goatcode-truncated-${tool}-${Date.now()}.txt`
-  const filePath = join(tmpdir(), filename)
+  const filename = `goatcode-truncated-${tool}-${Date.now()}.txt`;
+  const filePath = join(tmpdir(), filename);
   try {
-    await writeFile(filePath, content)
-    return filePath
+    await writeFile(filePath, content);
+    return filePath;
   } catch {
-    log("[tool-output-truncator] failed to write truncated output file", { filePath })
-    return filePath
+    log("[tool-output-truncator] failed to write truncated output file", { filePath });
+    return filePath;
   }
 }
 
 async function truncateOutput(output: string, tool: string): Promise<string> {
-  const lines = output.split("\n")
-  const byteLength = Buffer.byteLength(output, "utf8")
+  const lines = output.split("\n");
+  const byteLength = Buffer.byteLength(output, "utf8");
 
   if (byteLength <= MAX_BYTES && lines.length <= MAX_LINES) {
-    return output
+    return output;
   }
 
-  const filePath = await writeTruncatedOutput(output, tool)
+  const filePath = await writeTruncatedOutput(output, tool);
 
-  const kept = lines.slice(0, MAX_LINES)
-  const truncatedBytes = Buffer.byteLength(kept.join("\n"), "utf8")
-  const finalLines = truncatedBytes > MAX_BYTES
-    ? lines.slice(0, Math.floor(MAX_LINES * (MAX_BYTES / truncatedBytes)))
-    : kept
+  const kept = lines.slice(0, MAX_LINES);
+  const truncatedBytes = Buffer.byteLength(kept.join("\n"), "utf8");
+  const finalLines =
+    truncatedBytes > MAX_BYTES
+      ? lines.slice(0, Math.floor(MAX_LINES * (MAX_BYTES / truncatedBytes)))
+      : kept;
 
-  const notice = `\n[Output truncated: ${lines.length} lines / ${byteLength} bytes exceeded limit. Full output written to ${filePath}. Use Read with offset/limit to access specific sections.]`
-  return finalLines.join("\n") + notice
+  const notice = `\n[Output truncated: ${lines.length} lines / ${byteLength} bytes exceeded limit. Full output written to ${filePath}. Use Read with offset/limit to access specific sections.]`;
+  return finalLines.join("\n") + notice;
 }
 
 export function createToolOutputTruncatorHandler(): PostToolUseHook {
   return async (input: unknown, output: unknown) => {
-    if (!isRecord(input) || !isRecord(output)) return
+    if (!isRecord(input) || !isRecord(output)) return;
 
-    const tool = input.tool
-    const toolOutput = output.output
+    const tool = input.tool;
+    const toolOutput = output.output;
 
-    if (typeof tool !== "string" || !TRUNCATABLE_TOOLS.has(tool)) return
-    if (typeof toolOutput !== "string") return
+    if (typeof tool !== "string" || !TRUNCATABLE_TOOLS.has(tool)) return;
+    if (typeof toolOutput !== "string") return;
 
-    const truncated = await truncateOutput(toolOutput, tool)
+    const truncated = await truncateOutput(toolOutput, tool);
     if (truncated !== toolOutput) {
-      output.output = truncated
-      log("[tool-output-truncator] truncated output", { tool, originalLength: toolOutput.length })
+      output.output = truncated;
+      log("[tool-output-truncator] truncated output", { tool, originalLength: toolOutput.length });
     }
-  }
+  };
 }

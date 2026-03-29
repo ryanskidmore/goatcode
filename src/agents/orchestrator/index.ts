@@ -1,2 +1,2 @@
-export { orchestratorPlugin } from "./plugin"
-export * from "./config"
+export { orchestratorPlugin } from "./plugin";
+export * from "./config";

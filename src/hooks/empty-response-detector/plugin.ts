@@ -1,11 +1,11 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createEmptyResponseDetectorHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createEmptyResponseDetectorHandler } from "./handler";
 
 const toolExecuteAfterHook = safeCreateHook(
   "empty-response-detector",
   createEmptyResponseDetectorHandler,
-)
+);
 
 export const emptyResponseDetectorPlugin = definePlugin({
   name: "empty-response-detector",
@@ -15,4 +15,4 @@ export const emptyResponseDetectorPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});

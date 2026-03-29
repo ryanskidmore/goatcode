@@ -1,6 +1,6 @@
-export { hashlineDiffEnhancerPlugin } from "./plugin"
+export { hashlineDiffEnhancerPlugin } from "./plugin";
 export {
   createHashlineDiffEnhancerBeforeHandler,
   createHashlineDiffEnhancerAfterHandler,
   createHashlineDiffEnhancerHandlers,
-} from "./handler"
+} from "./handler";

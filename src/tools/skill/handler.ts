@@ -1,21 +1,21 @@
-import { log } from "../../shared/logger"
-import type { SkillArgs, SkillLoader } from "./types"
+import { log } from "../../shared/logger";
+import type { SkillArgs, SkillLoader } from "./types";
 
-let registeredLoader: SkillLoader | null = null
+let registeredLoader: SkillLoader | null = null;
 
 export function registerSkillLoader(loader: SkillLoader): void {
-  registeredLoader = loader
+  registeredLoader = loader;
 }
 
 export function executeSkill(args: SkillArgs): string {
-  log("skill.execute", { name: args.name })
+  log("skill.execute", { name: args.name });
 
   if (registeredLoader) {
-    const content = registeredLoader.load(args.name, args.user_message)
+    const content = registeredLoader.load(args.name, args.user_message);
     if (content !== undefined) {
-      return content
+      return content;
     }
   }
 
-  return `Skill '${args.name}' not found. Available skills can be loaded from builtin skills (e.g. 'git-master') or project skills in .opencode/skills/.`
+  return `Skill '${args.name}' not found. Available skills can be loaded from builtin skills (e.g. 'git-master') or project skills in .opencode/skills/.`;
 }

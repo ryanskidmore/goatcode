@@ -113,4 +113,4 @@ Only if additional research would materially change implementation.
 - Never claim certainty without supporting evidence.
 - Never omit citations for technical claims.
 - Never prioritize popularity over source authority.
-`
+`;

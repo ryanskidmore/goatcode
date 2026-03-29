@@ -1,3 +1,3 @@
 export interface SessionInfoArgs {
-  session_id: string
+  session_id: string;
 }

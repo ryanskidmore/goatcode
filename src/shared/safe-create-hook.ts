@@ -1,15 +1,15 @@
-import { log } from "./logger"
+import { log } from "./logger";
 
 export function safeCreateHook<T>(
   name: string,
   factory: () => T,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ): T | null {
-  if (options?.enabled === false) return null
+  if (options?.enabled === false) return null;
   try {
-    return factory() ?? null
+    return factory() ?? null;
   } catch (error) {
-    log(`[safe-create-hook] Hook creation failed: ${name}`, { error })
-    return null
+    log(`[safe-create-hook] Hook creation failed: ${name}`, { error });
+    return null;
   }
 }

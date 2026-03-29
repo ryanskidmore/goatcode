@@ -1,2 +1,2 @@
-export { createThinkModeHandler } from "./handler"
-export { thinkModePlugin } from "./plugin"
+export { createThinkModeHandler } from "./handler";
+export { thinkModePlugin } from "./plugin";

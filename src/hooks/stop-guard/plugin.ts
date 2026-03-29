@@ -1,8 +1,8 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createStopGuardHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createStopGuardHandler } from "./handler";
 
-const stopGuardHook = safeCreateHook("stop-guard", createStopGuardHandler)
+const stopGuardHook = safeCreateHook("stop-guard", createStopGuardHandler);
 
 export const stopGuardPlugin = definePlugin({
   name: "stop-guard",
@@ -12,4 +12,4 @@ export const stopGuardPlugin = definePlugin({
         "chat.message": stopGuardHook,
       }
     : {},
-})
+});

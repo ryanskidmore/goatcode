@@ -1,4 +1,4 @@
-import type { DiagnosticPattern, DiagnosticResult } from "./types"
+import type { DiagnosticPattern, DiagnosticResult } from "./types";
 
 export const DIAGNOSTIC_PATTERNS: DiagnosticPattern[] = [
   {
@@ -37,9 +37,16 @@ export const DIAGNOSTIC_PATTERNS: DiagnosticPattern[] = [
   },
   {
     category: "network",
-    patterns: [/ECONNREFUSED/i, /ENOTFOUND/i, /network.*error/i, /fetch failed/i, /socket hang up/i],
+    patterns: [
+      /ECONNREFUSED/i,
+      /ENOTFOUND/i,
+      /network.*error/i,
+      /fetch failed/i,
+      /socket hang up/i,
+    ],
     severity: "error",
-    suggestion: "Network error. Check internet connectivity and that the target service is running.",
+    suggestion:
+      "Network error. Check internet connectivity and that the target service is running.",
   },
   {
     category: "memory",
@@ -62,14 +69,14 @@ export const DIAGNOSTIC_PATTERNS: DiagnosticPattern[] = [
     suggestion:
       "Type error. Check that the variable exists and is the expected type before accessing properties.",
   },
-]
+];
 
 export function matchDiagnostic(text: string): DiagnosticResult | null {
   for (const diagnosticPattern of DIAGNOSTIC_PATTERNS) {
     for (const pattern of diagnosticPattern.patterns) {
-      const match = text.match(pattern)
+      const match = text.match(pattern);
       if (!match) {
-        continue
+        continue;
       }
 
       return {
@@ -78,9 +85,9 @@ export function matchDiagnostic(text: string): DiagnosticResult | null {
         matched: match[0],
         suggestion: diagnosticPattern.suggestion,
         timestamp: new Date().toISOString(),
-      }
+      };
     }
   }
 
-  return null
+  return null;
 }

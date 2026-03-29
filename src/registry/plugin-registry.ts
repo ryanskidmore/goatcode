@@ -1,32 +1,32 @@
-import { log } from "../shared/logger"
-import type { AggregatedPlugins, OpenCodeContext, PluginDefinition } from "../types/plugin"
+import { log } from "../shared/logger";
+import type { AggregatedPlugins, OpenCodeContext, PluginDefinition } from "../types/plugin";
 
-import { aggregateAgents } from "./agent-aggregator"
-import { resolvePluginOrder } from "./dependency-resolver"
-import { aggregateHooks } from "./hook-aggregator"
-import { aggregateTools } from "./tool-aggregator"
+import { aggregateAgents } from "./agent-aggregator";
+import { resolvePluginOrder } from "./dependency-resolver";
+import { aggregateHooks } from "./hook-aggregator";
+import { aggregateTools } from "./tool-aggregator";
 
 export interface AggregateOptions {
-  disabledAgents?: string[]
-  disabledHooks?: string[]
-  disabledTools?: string[]
+  disabledAgents?: string[];
+  disabledHooks?: string[];
+  disabledTools?: string[];
 }
 
 export class PluginRegistry {
-  private readonly plugins = new Map<string, PluginDefinition>()
+  private readonly plugins = new Map<string, PluginDefinition>();
 
   register(plugin: PluginDefinition): void {
     if (this.plugins.has(plugin.name)) {
-      throw new Error(`Plugin "${plugin.name}" is already registered`)
+      throw new Error(`Plugin "${plugin.name}" is already registered`);
     }
-    this.plugins.set(plugin.name, plugin)
-    log(`[PluginRegistry] Registered plugin: ${plugin.name}`)
+    this.plugins.set(plugin.name, plugin);
+    log(`[PluginRegistry] Registered plugin: ${plugin.name}`);
   }
 
   resolve(): PluginDefinition[] {
-    const result = resolvePluginOrder([...this.plugins.values()])
-    log(`[PluginRegistry] Resolved ${result.order.length} plugins`)
-    return result.order
+    const result = resolvePluginOrder([...this.plugins.values()]);
+    log(`[PluginRegistry] Resolved ${result.order.length} plugins`);
+    return result.order;
   }
 
   aggregate(resolvedOrder: PluginDefinition[], options?: AggregateOptions): AggregatedPlugins {
@@ -34,46 +34,49 @@ export class PluginRegistry {
       hooks: aggregateHooks(resolvedOrder, options?.disabledHooks),
       tools: aggregateTools(resolvedOrder, options?.disabledTools),
       agents: aggregateAgents(resolvedOrder, options?.disabledAgents),
-    }
+    };
   }
 
-  async setup(resolvedOrder: PluginDefinition[], ctx: OpenCodeContext): Promise<PluginDefinition[]> {
-    const successful: PluginDefinition[] = []
+  async setup(
+    resolvedOrder: PluginDefinition[],
+    ctx: OpenCodeContext,
+  ): Promise<PluginDefinition[]> {
+    const successful: PluginDefinition[] = [];
     for (const plugin of resolvedOrder) {
       if (!plugin.setup) {
-        successful.push(plugin)
-        continue
+        successful.push(plugin);
+        continue;
       }
 
       try {
-        await plugin.setup(ctx)
-        successful.push(plugin)
+        await plugin.setup(ctx);
+        successful.push(plugin);
       } catch (error) {
-        log(`[PluginRegistry] Setup failed for plugin: ${plugin.name}`, { error })
+        log(`[PluginRegistry] Setup failed for plugin: ${plugin.name}`, { error });
       }
     }
-    return successful
+    return successful;
   }
 
   async teardown(resolvedOrder: PluginDefinition[]): Promise<void> {
     for (const plugin of [...resolvedOrder].reverse()) {
       if (!plugin.teardown) {
-        continue
+        continue;
       }
 
       try {
-        await plugin.teardown()
+        await plugin.teardown();
       } catch (error) {
-        log(`[PluginRegistry] Teardown failed for plugin: ${plugin.name}`, { error })
+        log(`[PluginRegistry] Teardown failed for plugin: ${plugin.name}`, { error });
       }
     }
   }
 
   get registeredNames(): string[] {
-    return [...this.plugins.keys()]
+    return [...this.plugins.keys()];
   }
 
   get size(): number {
-    return this.plugins.size
+    return this.plugins.size;
   }
 }

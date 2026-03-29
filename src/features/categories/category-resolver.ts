@@ -1,21 +1,21 @@
-import type { BuiltinCategoryName, CategoryConfig } from "../../types/category"
-import { log } from "../../shared/logger"
-import { DEFAULT_CATEGORIES } from "./category-config"
+import type { BuiltinCategoryName, CategoryConfig } from "../../types/category";
+import { log } from "../../shared/logger";
+import { DEFAULT_CATEGORIES } from "./category-config";
 
-export type CategoryOverrides = Partial<Record<BuiltinCategoryName, CategoryConfig>>
+export type CategoryOverrides = Partial<Record<BuiltinCategoryName, CategoryConfig>>;
 
 export class CategoryResolver {
   resolve(name: string, configOverrides?: CategoryOverrides): CategoryConfig | undefined {
-    const categoryName = name as BuiltinCategoryName
-    const baseConfig = DEFAULT_CATEGORIES[categoryName]
+    const categoryName = name as BuiltinCategoryName;
+    const baseConfig = DEFAULT_CATEGORIES[categoryName];
     if (!baseConfig) {
-      log(`[category-resolver] Unknown category: ${name}`)
-      return undefined
+      log(`[category-resolver] Unknown category: ${name}`);
+      return undefined;
     }
 
-    const override = configOverrides?.[categoryName]
+    const override = configOverrides?.[categoryName];
     if (!override) {
-      return { ...baseConfig }
+      return { ...baseConfig };
     }
 
     return {
@@ -23,7 +23,7 @@ export class CategoryResolver {
       variant: override.variant ?? baseConfig.variant,
       description: override.description ?? baseConfig.description,
       prompt_append: override.prompt_append ?? baseConfig.prompt_append,
-    }
+    };
   }
 }
 
@@ -31,6 +31,6 @@ export function resolveCategory(
   name: string,
   configOverrides?: CategoryOverrides,
 ): CategoryConfig | undefined {
-  const resolver = new CategoryResolver()
-  return resolver.resolve(name, configOverrides)
+  const resolver = new CategoryResolver();
+  return resolver.resolve(name, configOverrides);
 }

@@ -1,8 +1,8 @@
-import { tool } from "@opencode-ai/plugin"
-import { definePlugin } from "../../../plugin-api/define-plugin"
-import { getSessionManagerContext } from "../client-context"
-import { handleSessionInfo } from "./handler"
-import type { SessionInfoArgs } from "./types"
+import { tool } from "@opencode-ai/plugin";
+import { definePlugin } from "../../../plugin-api/define-plugin";
+import { getSessionManagerContext } from "../client-context";
+import { handleSessionInfo } from "./handler";
+import type { SessionInfoArgs } from "./types";
 
 const SESSION_INFO_DESCRIPTION = `Get metadata and statistics about an OpenCode session.
 
@@ -18,7 +18,7 @@ Date Range: 2025-12-20 to 2025-12-24
 Duration: 4 days, 5 hours
 Agents Used: build, oracle
 Has Todos: Yes (12 items, 8 completed)
-Has Transcript: Yes`
+Has Transcript: Yes`;
 
 const sessionInfoTool = tool({
   description: SESSION_INFO_DESCRIPTION,
@@ -26,10 +26,10 @@ const sessionInfoTool = tool({
     session_id: tool.schema.string().describe("Session ID to inspect"),
   },
   async execute(args: SessionInfoArgs) {
-    const ctx = getSessionManagerContext()
-    return handleSessionInfo(args, ctx)
+    const ctx = getSessionManagerContext();
+    return handleSessionInfo(args, ctx);
   },
-})
+});
 
 export const sessionInfoPlugin = definePlugin({
   name: "session-info",
@@ -37,4 +37,4 @@ export const sessionInfoPlugin = definePlugin({
   tools: {
     session_info: sessionInfoTool,
   },
-})
+});

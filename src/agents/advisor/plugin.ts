@@ -1,7 +1,7 @@
-import { definePlugin } from "../../plugin-api"
-import { ADVISOR_MODEL, ADVISOR_TEMPERATURE, ADVISOR_MODE } from "./config"
-import { ADVISOR_PROMPT } from "./prompt"
-import { buildToolsMap } from "../tool-restrictions"
+import { definePlugin } from "../../plugin-api";
+import { ADVISOR_MODEL, ADVISOR_TEMPERATURE, ADVISOR_MODE } from "./config";
+import { ADVISOR_PROMPT } from "./prompt";
+import { buildToolsMap } from "../tool-restrictions";
 
 export const advisorPlugin = definePlugin({
   name: "advisor",
@@ -15,4 +15,4 @@ export const advisorPlugin = definePlugin({
       tools: buildToolsMap("advisor"),
     },
   },
-})
+});

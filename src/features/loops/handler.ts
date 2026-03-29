@@ -1,89 +1,89 @@
-import { log } from "../../shared/logger"
+import { log } from "../../shared/logger";
 import {
   type HookEvent,
   asEvent,
   defaultCompletionDetector,
   getSessionId,
-} from "./shared/event-utils"
-import { type LoopState, type LoopStore } from "./state"
+} from "./shared/event-utils";
+import { type LoopState, type LoopStore } from "./state";
 
 export interface LoopHandlerOptions {
-  completionPromise?: string
-  detectCompletion?: (event: HookEvent, state: LoopState) => boolean
-  sendContinuationMessage?: (sessionId: string, message: string) => Promise<void> | void
+  completionPromise?: string;
+  detectCompletion?: (event: HookEvent, state: LoopState) => boolean;
+  sendContinuationMessage?: (sessionId: string, message: string) => Promise<void> | void;
 }
 
 export function buildLoopContinuationMessage(state: LoopState, completionPromise: string): string {
   const maxIterations =
-    state.maxIterations === Number.MAX_SAFE_INTEGER ? "unbounded" : String(state.maxIterations)
+    state.maxIterations === Number.MAX_SAFE_INTEGER ? "unbounded" : String(state.maxIterations);
 
   return [
     "[SYSTEM DIRECTIVE: LOOP CONTINUE]",
     `Iteration ${state.iteration}/${maxIterations}`,
     "Continue the task from your previous work.",
     `When fully complete, output <promise>${completionPromise}</promise>.`,
-  ].join("\n")
+  ].join("\n");
 }
 
 export function createLoopHandler(store: LoopStore, options?: LoopHandlerOptions) {
-  const completionPromise = options?.completionPromise ?? "DONE"
+  const completionPromise = options?.completionPromise ?? "DONE";
 
   return async (input: unknown): Promise<void> => {
-    const event = asEvent(input)
+    const event = asEvent(input);
     if (!event || event.type !== "session.idle") {
-      return
+      return;
     }
 
-    const sessionId = getSessionId(event.properties)
+    const sessionId = getSessionId(event.properties);
     if (!sessionId) {
-      return
+      return;
     }
 
-    const state = store.getLoopState(sessionId)
+    const state = store.getLoopState(sessionId);
     if (!state) {
-      return
+      return;
     }
 
     if (state.completionDetected) {
-      store.stopLoop(sessionId)
-      return
+      store.stopLoop(sessionId);
+      return;
     }
 
     if (!store.isActive(sessionId)) {
-      return
+      return;
     }
 
     const completionDetected = options?.detectCompletion
       ? options.detectCompletion(event, state)
-      : defaultCompletionDetector(event, completionPromise)
+      : defaultCompletionDetector(event, completionPromise);
 
     if (completionDetected) {
-      store.markCompletionDetected(sessionId)
-      log("[loop] completion detected", { sessionId, iteration: state.iteration })
-      return
+      store.markCompletionDetected(sessionId);
+      log("[loop] completion detected", { sessionId, iteration: state.iteration });
+      return;
     }
 
     if (state.iteration >= state.maxIterations) {
-      store.stopLoop(sessionId)
+      store.stopLoop(sessionId);
       log("[loop] max iterations reached", {
         sessionId,
         iteration: state.iteration,
         maxIterations: state.maxIterations,
-      })
-      return
+      });
+      return;
     }
 
-    store.incrementIteration(sessionId)
-    const updatedState = store.getLoopState(sessionId)
+    store.incrementIteration(sessionId);
+    const updatedState = store.getLoopState(sessionId);
     if (!updatedState) {
-      return
+      return;
     }
 
-    const continuationMessage = buildLoopContinuationMessage(updatedState, completionPromise)
+    const continuationMessage = buildLoopContinuationMessage(updatedState, completionPromise);
     try {
-      await options?.sendContinuationMessage?.(sessionId, continuationMessage)
+      await options?.sendContinuationMessage?.(sessionId, continuationMessage);
     } catch (error) {
-      log("[loop] continuation injection failed", { sessionId, error: String(error) })
+      log("[loop] continuation injection failed", { sessionId, error: String(error) });
     }
-  }
+  };
 }

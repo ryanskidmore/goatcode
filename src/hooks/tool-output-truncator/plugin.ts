@@ -1,8 +1,11 @@
-import { definePlugin } from "../../plugin-api/define-plugin"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createToolOutputTruncatorHandler } from "./handler"
+import { definePlugin } from "../../plugin-api/define-plugin";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createToolOutputTruncatorHandler } from "./handler";
 
-const toolExecuteAfterHook = safeCreateHook("tool-output-truncator", createToolOutputTruncatorHandler)
+const toolExecuteAfterHook = safeCreateHook(
+  "tool-output-truncator",
+  createToolOutputTruncatorHandler,
+);
 
 export const toolOutputTruncatorPlugin = definePlugin({
   name: "tool-output-truncator",
@@ -12,4 +15,4 @@ export const toolOutputTruncatorPlugin = definePlugin({
         "tool.execute.after": toolExecuteAfterHook,
       }
     : {},
-})
+});
