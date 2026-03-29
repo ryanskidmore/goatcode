@@ -43,9 +43,11 @@ export async function loadConfig(projectDir: string): Promise<GoatCodeConfig | n
   const projectConfigPath = resolveProjectConfigPath(projectDir)
   const hasProjectConfig = existsSync(projectConfigPath)
   let projectConfig: GoatCodeConfig | null = null
+  let projectConfigInvalid = false
 
   if (hasProjectConfig) {
     projectConfig = await loadValidatedConfigFile(projectConfigPath)
+    projectConfigInvalid = projectConfig === null
   }
 
   if (!hasProjectConfig) {
@@ -58,7 +60,12 @@ export async function loadConfig(projectDir: string): Promise<GoatCodeConfig | n
         `[goatcode] DEPRECATION: ochead.config.ts is deprecated. Please rename it to goatcode.config.ts\n`
       )
       projectConfig = await loadValidatedConfigFile(legacyConfigPath)
+      projectConfigInvalid = projectConfig === null
     }
+  }
+
+  if (projectConfigInvalid) {
+    return null
   }
 
   if (userConfig && projectConfig) {

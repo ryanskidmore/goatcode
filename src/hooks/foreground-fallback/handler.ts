@@ -133,8 +133,12 @@ function getCurrentModelFromProperties(properties: Record<string, unknown>): str
 
 function getConfiguredFallbacks(properties: Record<string, unknown>): string | string[] | undefined {
   const fallbackChain = properties.fallbackChain
-  if (typeof fallbackChain === "string" || Array.isArray(fallbackChain)) {
+  if (typeof fallbackChain === "string") {
     return fallbackChain
+  }
+  if (Array.isArray(fallbackChain)) {
+    const strings = fallbackChain.filter((item): item is string => typeof item === "string")
+    return strings.length > 0 ? strings : undefined
   }
 
   return undefined

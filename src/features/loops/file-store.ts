@@ -99,8 +99,8 @@ export class FileLoopStore implements LoopStore {
   clearAllForTests(clearPersistedFile = false): void {
     this.loopStates.clear()
     this.loadedFromDisk = false
-    if (clearPersistedFile && existsSync(this.stateFilePath)) {
-      rmSync(this.stateFilePath)
+    if (clearPersistedFile) {
+      rmSync(this.stateFilePath, { force: true })
     }
   }
 
