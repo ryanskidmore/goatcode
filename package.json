@@ -23,6 +23,8 @@
     "lint": "oxlint src --deny-warnings",
     "fmt": "oxfmt --write 'src/**/*.ts'",
     "fmt:check": "oxfmt --check 'src/**/*.ts'",
+    "test:eval": "npx promptfoo eval -c eval/spike/config.yaml",
+    "test:ablation": "npx promptfoo eval -c eval/spike/config.yaml",
     "clean": "rm -rf dist"
   },
   "engines": {
@@ -42,6 +44,7 @@
     "bun-types": "latest",
     "oxfmt": "^0.42.0",
     "oxlint": "^1.57.0",
+    "promptfoo": "^0.121.3",
     "typescript": "^5.7.3"
   }
 }
