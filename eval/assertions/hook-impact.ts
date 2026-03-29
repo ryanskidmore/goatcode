@@ -124,11 +124,14 @@ function scoreAblatedProvider(
   const disabledGroupPresence = matchedGroupSignals.length / group.keywords.length;
 
   const impactScore = Number((1.0 - disabledGroupPresence).toFixed(2));
+  const pass = impactScore >= 0.5;
 
   return {
-    pass: true,
+    pass,
     score: impactScore,
-    reason: `Ablated [${label}]: ${matchedGroupSignals.length}/${group.keywords.length} ${group.description} present. Impact score: ${impactScore} (higher = hooks had more impact)`,
+    reason: pass
+      ? `Ablated [${label}] shows measurable hook impact (score: ${impactScore}). ${matchedGroupSignals.length}/${group.keywords.length} ${group.description} present.`
+      : `Ablated [${label}] shows weak hook impact (score: ${impactScore}). ${matchedGroupSignals.length}/${group.keywords.length} ${group.description} present.`,
     namedScores: { hook_impact: impactScore },
   };
 }

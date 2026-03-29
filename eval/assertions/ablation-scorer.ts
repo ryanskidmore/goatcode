@@ -49,13 +49,12 @@ export default function assertAblationScore(
     lowerOutput.includes(word),
   );
 
-  const hasContent = output.trim().length > 50 ? 0.25 : 0.1;
   const lengthScore = Math.min(output.length / 800, 1.0) * 0.25;
   const indicatorScore =
     Math.min(matchedIndicators.length / 5, 1.0) * 0.5;
 
   const score = Number(
-    (hasContent + lengthScore + indicatorScore).toFixed(2),
+    (lengthScore + indicatorScore).toFixed(2),
   );
 
   if (providerLabel === "full") {
@@ -70,7 +69,7 @@ export default function assertAblationScore(
     };
   }
 
-  const pass = score >= 0.1 || matchedIndicators.length >= 1;
+  const pass = matchedIndicators.length >= 1;
   return {
     pass,
     score,

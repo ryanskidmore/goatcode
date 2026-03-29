@@ -136,7 +136,7 @@ Available hooks are documented in the main [README.md](../README.md#hooks).
 
 ## File Structure
 
-```
+```text
 eval/
 ├── promptfooconfig.yaml      — A/B evaluation config (with-goatcode vs baseline)
 ├── ablation-config.yaml      — Ablation study config (hook group impact)

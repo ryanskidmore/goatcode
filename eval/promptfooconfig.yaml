@@ -37,5 +37,6 @@ tests:
   - vars:
       task: "Create a plan for refactoring the hooks module"
     assert:
-      - type: contains
-        value: "plan"
+      - type: javascript
+        value: "file://assertions/task-completion.ts"
+        threshold: 0.5

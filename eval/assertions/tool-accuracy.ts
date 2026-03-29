@@ -39,7 +39,7 @@ export default function assertToolAccuracy(
 
   const lowerOutput = output.toLowerCase();
   const matchedTools = TOOL_KEYWORDS.filter((kw) =>
-    lowerOutput.includes(kw.toLowerCase()),
+    lowerOutput.includes(kw),
   );
 
   const score = Math.min(matchedTools.length / 3, 1.0);

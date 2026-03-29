@@ -31,11 +31,11 @@ export default function assertTaskCompletion(
     return { pass: false, score: 0, reason: "Output is empty", namedScores: { completion: 0 } };
   }
 
-  if (output.startsWith("[MOCK]") || output.startsWith("[BASELINE]")) {
+  if (output.startsWith("[MOCK]")) {
     return {
       pass: true,
       score: 0,
-      reason: `Mock/baseline response — assertion skipped. Output: ${output.slice(0, 100)}`,
+      reason: `Mock response — assertion skipped. Output: ${output.slice(0, 100)}`,
       namedScores: { completion: 0 },
     };
   }
