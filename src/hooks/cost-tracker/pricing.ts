@@ -41,11 +41,7 @@ export function lookupPricing(modelId: string): ModelPricing | null {
 
   for (const [key, pricing] of Object.entries(MODEL_PRICING)) {
     for (const candidate of candidates) {
-      if (
-        candidate === key ||
-        candidate.startsWith(key + "-") ||
-        key.startsWith(candidate + "-")
-      ) {
+      if (candidate === key || candidate.startsWith(key + "-")) {
         return pricing
       }
     }

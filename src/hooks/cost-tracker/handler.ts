@@ -14,7 +14,6 @@ type ModelContext = {
 
 const modelContextBySession = new Map<string, ModelContext>()
 const MAX_SESSION_CONTEXTS = 5000
-let latestModelContext: ModelContext | null = null
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -130,7 +129,6 @@ function recordUsage(modelContext: ModelContext, inputTokens: number, outputToke
 
 export function resetCostTrackerState(): void {
   modelContextBySession.clear()
-  latestModelContext = null
 }
 
 export function createChatParamsHandler(): ChatParamsHook {
@@ -149,8 +147,6 @@ export function createChatParamsHandler(): ChatParamsHook {
         model: model.modelID,
         provider: model.providerID,
       }
-
-      latestModelContext = modelContext
 
       const sessionID = getSessionID(input)
       if (sessionID) {
