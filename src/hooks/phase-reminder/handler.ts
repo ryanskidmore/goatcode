@@ -2,11 +2,6 @@ import type { PluginHookContributions } from "../../types/hook"
 
 type MessagesTransformHook = NonNullable<PluginHookContributions["experimental.chat.messages.transform"]>
 
-type MessagePart = {
-  type?: unknown
-  text?: unknown
-}
-
 export const PHASE_REMINDER = `<reminder>Recall Workflow Rules:
 Understand → choose best path (delegate by rules and parallelize independent work) → execute → verify.
 If mentioning a specialist, launch it in the same turn.</reminder>`
