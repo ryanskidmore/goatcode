@@ -59,7 +59,10 @@ export function getDefaultPreferredProvider(): string | undefined {
   return defaultPreferredProvider;
 }
 
-export function registerProviderModelMap(providerId: string, modelMap: Record<string, string>): void {
+export function registerProviderModelMap(
+  providerId: string,
+  modelMap: Record<string, string>,
+): void {
   const providerKey = normalizeIdentifier(providerId);
   if (!providerKey) return;
 
@@ -80,7 +83,14 @@ export function unregisterProviderModelMap(providerId: string): boolean {
 }
 
 export function isQualifiedModel(model: string): boolean {
-  return model.includes("/");
+  const slashIdx = model.indexOf("/");
+  return slashIdx > 0 && slashIdx < model.length - 1;
+}
+
+export function resetProviderRegistry(): void {
+  providerPriority = [...DEFAULT_PROVIDER_PRIORITY];
+  defaultPreferredProvider = undefined;
+  customModelMaps.clear();
 }
 
 export function findProvidersForModel(bareModel: string): ProviderModelEntry[] {
@@ -91,7 +101,9 @@ export function findProvidersForModel(bareModel: string): ProviderModelEntry[] {
   if (!discovery) return [];
 
   const entries = discovery.modelIndex.get(normalizedModel) ?? [];
-  const connectedEntries = entries.filter((entry) => discovery.connectedProviders.has(entry.providerId));
+  const connectedEntries = entries.filter((entry) =>
+    discovery.connectedProviders.has(entry.providerId),
+  );
 
   return sortByPriority(connectedEntries);
 }
@@ -112,11 +124,22 @@ export function resolveProvider(
   }
 
   const candidates = findProvidersForModel(trimmed);
-  if (candidates.length === 0) return undefined;
-
   const preferred = normalizeIdentifier(preferredProvider ?? defaultPreferredProvider ?? "");
+
+  if (candidates.length === 0) {
+    // No discovery data or model not found — synthesize using preferred provider
+    if (preferred) {
+      const providerModelId = getProviderSpecificModelId(preferred, trimmed);
+      return {
+        qualifiedModel: `${preferred}/${providerModelId}`,
+        providerId: preferred,
+      };
+    }
+    return undefined;
+  }
+
   const selected = preferred
-    ? candidates.find((candidate) => candidate.providerId === preferred) ?? candidates[0]
+    ? (candidates.find((candidate) => candidate.providerId === preferred) ?? candidates[0])
     : candidates[0];
 
   if (!selected) return undefined;

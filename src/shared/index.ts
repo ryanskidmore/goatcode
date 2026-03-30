@@ -31,6 +31,7 @@ export {
   getDefaultPreferredProvider,
   registerProviderModelMap,
   unregisterProviderModelMap,
+  resetProviderRegistry,
 } from "./provider-registry";
 export type { ProviderResolutionResult } from "./provider-registry";
 export {

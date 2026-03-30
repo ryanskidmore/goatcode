@@ -11,7 +11,9 @@ import {
   isQualifiedModel,
   qualifyModel,
   registerProviderModelMap,
+  resetProviderRegistry,
   resolveProvider,
+  setDefaultPreferredProvider,
   setProviderPriority,
   unregisterProviderModelMap,
 } from "./provider-registry";
@@ -67,9 +69,8 @@ function createProviderListResponse(connected: string[]): ProviderListResponse {
 
 describe("provider-registry (discovery-based)", () => {
   beforeEach(() => {
+    resetProviderRegistry();
     resetDiscovery();
-    setProviderPriority(["anthropic", "openai", "google", "opencode"]);
-    unregisterProviderModelMap("opencode");
   });
 
   describe("isQualifiedModel", () => {
@@ -77,11 +78,19 @@ describe("provider-registry (discovery-based)", () => {
       expect(isQualifiedModel("anthropic/claude-opus-4-6")).toBe(true);
       expect(isQualifiedModel("claude-opus-4-6")).toBe(false);
     });
+
+    it("rejects malformed qualified models", () => {
+      expect(isQualifiedModel("/gpt-5.4")).toBe(false);
+      expect(isQualifiedModel("openai/")).toBe(false);
+      expect(isQualifiedModel("/")).toBe(false);
+    });
   });
 
   describe("resolveProvider", () => {
     it("resolves connected providers by priority", () => {
-      initializeDiscovery(buildDiscoveryIndex(createProviderListResponse(["anthropic", "opencode"])));
+      initializeDiscovery(
+        buildDiscoveryIndex(createProviderListResponse(["anthropic", "opencode"])),
+      );
 
       const result = resolveProvider("claude-opus-4-6");
       expect(result).toEqual({
@@ -91,7 +100,9 @@ describe("provider-registry (discovery-based)", () => {
     });
 
     it("uses preferred provider override when available", () => {
-      initializeDiscovery(buildDiscoveryIndex(createProviderListResponse(["anthropic", "opencode"])));
+      initializeDiscovery(
+        buildDiscoveryIndex(createProviderListResponse(["anthropic", "opencode"])),
+      );
 
       const result = resolveProvider("claude-opus-4-6", "opencode");
       expect(result).toEqual({
@@ -118,8 +129,30 @@ describe("provider-registry (discovery-based)", () => {
       });
     });
 
-    it("returns undefined for bare models when discovery is unavailable", () => {
+    it("returns undefined for bare models when discovery is unavailable and no preferred provider", () => {
       expect(resolveProvider("claude-opus-4-6")).toBeUndefined();
+    });
+
+    it("synthesizes qualification using default preferred provider when discovery is unavailable", () => {
+      setDefaultPreferredProvider("opencode");
+      const result = resolveProvider("claude-opus-4-6");
+      expect(result).toEqual({
+        qualifiedModel: "opencode/claude-opus-4-6",
+        providerId: "opencode",
+      });
+    });
+
+    it("synthesizes qualification using explicit preferred provider when discovery is unavailable", () => {
+      const result = resolveProvider("claude-opus-4-6", "anthropic");
+      expect(result).toEqual({
+        qualifiedModel: "anthropic/claude-opus-4-6",
+        providerId: "anthropic",
+      });
+    });
+
+    it("rejects malformed qualified models like /gpt-5.4", () => {
+      const result = resolveProvider("/gpt-5.4");
+      expect(result).toBeUndefined();
     });
   });
 

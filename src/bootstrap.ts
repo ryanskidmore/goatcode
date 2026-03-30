@@ -18,7 +18,11 @@ import {
   resetDiscovery,
   type ProviderListResponse,
 } from "./shared/provider-discovery";
-import { setDefaultPreferredProvider, setProviderPriority } from "./shared/provider-registry";
+import {
+  resetProviderRegistry,
+  setDefaultPreferredProvider,
+  setProviderPriority,
+} from "./shared/provider-registry";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -84,11 +88,21 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     config = fallback.config;
   }
 
+  resetProviderRegistry();
+  resetDiscovery();
   setProviderPriority(config.provider_priority ?? []);
   setDefaultPreferredProvider(config.default_provider);
-  resetDiscovery();
   try {
-    const providerResponse = await ctx.client.provider.list();
+    const DISCOVERY_TIMEOUT_MS = 5_000;
+    const providerResponse = (await Promise.race([
+      ctx.client.provider.list(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`provider.list timeout after ${DISCOVERY_TIMEOUT_MS}ms`)),
+          DISCOVERY_TIMEOUT_MS,
+        ),
+      ),
+    ])) as Awaited<ReturnType<typeof ctx.client.provider.list>>;
     const providerData = providerResponse?.data as ProviderListResponse | undefined;
     if (providerData?.all && providerData?.connected) {
       const discovery = buildDiscoveryIndex(providerData);
