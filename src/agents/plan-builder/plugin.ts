@@ -6,7 +6,7 @@ export const planBuilderPlugin = definePlugin({
   name: "planner",
   version: "0.1.0",
   agents: {
-    "planner": {
+    planner: {
       temperature: PLAN_BUILDER_TEMPERATURE,
       mode: PLAN_BUILDER_MODE,
       prompt: PLAN_BUILDER_PROMPT,
