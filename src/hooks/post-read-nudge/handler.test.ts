@@ -1,10 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import {
-  createPostReadNudgeHandler,
-  POST_READ_NUDGE,
-  DELEGATION_ESCALATION_NUDGE,
-} from "./handler";
+import { createPostReadNudgeHandler, POST_READ_NUDGE } from "./handler";
 
 describe("createPostReadNudgeHandler", () => {
   describe("#given a Read tool call", () => {
