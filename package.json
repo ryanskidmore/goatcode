@@ -41,7 +41,7 @@
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
-    "bun-types": "latest",
+    "@types/bun": "latest",
     "oxfmt": "^0.42.0",
     "oxlint": "^1.57.0",
     "promptfoo": "^0.121.3",
