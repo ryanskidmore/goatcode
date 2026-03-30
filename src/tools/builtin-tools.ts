@@ -2,7 +2,6 @@ import type { PluginDefinition } from "../types/plugin";
 import { grepPlugin } from "./grep";
 import { globPlugin } from "./glob";
 import { hashlineEditPlugin } from "./hashline-edit";
-import { interactiveBashPlugin } from "./interactive-bash";
 import { lookAtPlugin } from "./look-at";
 import { skillPlugin } from "./skill";
 // skill_mcp is intentionally excluded — it requires ctx.client MCP integration
@@ -31,7 +30,6 @@ export const BUILTIN_TOOL_PLUGINS: PluginDefinition[] = [
   grepPlugin,
   globPlugin,
   hashlineEditPlugin,
-  interactiveBashPlugin,
   lookAtPlugin,
   skillPlugin,
   delegateTaskPlugin,

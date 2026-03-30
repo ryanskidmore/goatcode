@@ -8,8 +8,14 @@ export type Skill = {
   template: string;
 };
 
+export type SkillInfo = {
+  name: string;
+  description: string;
+};
+
 export type SkillLoader = {
   load(name: string): string | undefined;
+  list(): SkillInfo[];
 };
 
 type ParsedSkillFrontmatter = {
@@ -97,11 +103,15 @@ export function loadProjectSkills(directory: string): Skill[] {
 }
 
 export function createProjectSkillLoader(directory: string): SkillLoader {
-  const byName = new Map(loadProjectSkills(directory).map((skill) => [skill.name, skill.template]));
+  const skills = loadProjectSkills(directory);
+  const byName = new Map(skills.map((skill) => [skill.name, skill.template]));
 
   return {
     load(name: string): string | undefined {
       return byName.get(name);
+    },
+    list(): SkillInfo[] {
+      return skills.map((s) => ({ name: s.name, description: s.description }));
     },
   };
 }

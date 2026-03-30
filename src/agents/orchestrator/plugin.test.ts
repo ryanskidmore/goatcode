@@ -10,15 +10,13 @@ describe("orchestratorPlugin", () => {
     });
 
     describe("#when inspecting the agent config", () => {
-      it("#then mode is 'primary'", () => {
+      it("#then mode is 'all'", () => {
         const agent = orchestratorPlugin.agents!.orchestrator;
-        expect(agent.mode).toBe("primary");
+        expect(agent.mode).toBe("all");
       });
 
-      it("#then has a model, temperature, and non-empty prompt", () => {
+      it("#then has a temperature and non-empty prompt", () => {
         const agent = orchestratorPlugin.agents!.orchestrator;
-        expect(typeof agent.model).toBe("string");
-        expect(agent.model!.length).toBeGreaterThan(0);
         expect(typeof agent.temperature).toBe("number");
         expect(typeof agent.prompt).toBe("string");
         expect(agent.prompt!.length).toBeGreaterThan(0);

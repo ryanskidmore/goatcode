@@ -2,6 +2,7 @@ import type { Hooks } from "@opencode-ai/plugin";
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
 import { HOOK_EVENT_NAMES } from "../types/hook";
+import { getBuiltinSkillsDir } from "../features/skills";
 
 const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
   (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
@@ -31,13 +32,16 @@ function buildSlotHandler(handlers: PluginHookHandler[]): PluginHookHandler {
 export function compose(aggregated: AggregatedPlugins): Hooks {
   const hooks: Hooks = {};
 
-  hooks.tool = structuredClone(aggregated.tools);
+  // Shallow-copy the tools record. structuredClone cannot clone the execute
+  // functions inside each ToolDefinition and would throw at runtime.
+  hooks.tool = { ...aggregated.tools };
 
   const configHandlers = aggregated.hooks.get("config") ?? [];
   hooks.config = async (input) => {
     if (!input.agent) {
       input.agent = {};
     }
+
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
         input.agent[name] = {
@@ -46,6 +50,27 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
         };
       }
     }
+
+    if (input.agent.build === undefined) {
+      input.agent.build = { disable: true };
+    }
+    if (input.agent.plan === undefined) {
+      input.agent.plan = { disable: true };
+    }
+
+    const configRecord = input as Record<string, unknown>;
+    if (!configRecord["default_agent"]) {
+      configRecord["default_agent"] = "orchestrator";
+    }
+
+    const skills = (configRecord["skills"] ?? {}) as Record<string, unknown>;
+    const existingPaths = (skills["paths"] ?? []) as string[];
+    const builtinDir = getBuiltinSkillsDir();
+    if (builtinDir && !existingPaths.includes(builtinDir)) {
+      skills["paths"] = [...existingPaths, builtinDir];
+      configRecord["skills"] = skills;
+    }
+
     for (const handler of configHandlers) {
       await handler(input);
     }

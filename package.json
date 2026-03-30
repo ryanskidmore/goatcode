@@ -15,7 +15,7 @@
     "goatcode": "./src/cli/index.ts"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
+    "build": "bun build src/index.ts --outdir dist --target bun --format esm --external zod --external @opencode-ai/plugin && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "find src -name '*.test.ts' -print0 | xargs -0 bun test",
     "test:integration": "find src -name '*.integration.test.ts' -print0 | xargs -0 bun test",

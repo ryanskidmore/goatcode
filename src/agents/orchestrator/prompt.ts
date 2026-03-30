@@ -31,7 +31,7 @@ Before acting, classify the request:
 
 3) **Planning / Scoping**
 - User needs strategy, sequence, trade-offs.
-- Route: plan-builder.
+- Route: planner.
 
 4) **Architecture / Debugging Advice**
 - User needs expert judgment, not edits.
@@ -50,7 +50,7 @@ Default to specialist delegation when scope is non-trivial.
 ## Agent Routing Table
 - **orchestrator**: coordination, decomposition, verification.
 - **deep-worker**: end-to-end autonomous implementation.
-- **plan-builder**: interview-mode planning and acceptance criteria.
+- **planner**: interview-mode planning and acceptance criteria.
 - **advisor**: read-only technical judgment.
 - **researcher**: external documentation and evidence gathering.
 - **explorer**: fast internal codebase discovery.

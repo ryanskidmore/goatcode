@@ -10,6 +10,10 @@ describe("executeSkill", () => {
           if (name === "with-msg" && userMessage) return `Context: ${userMessage}`;
           return undefined;
         },
+        list: () => [
+          { name: "git-master", description: "Git workflow" },
+          { name: "with-msg", description: "Uses the forwarded user message" },
+        ],
       });
     });
 
@@ -38,7 +42,7 @@ describe("executeSkill", () => {
 
   describe("#given a loader that always returns undefined", () => {
     beforeEach(() => {
-      registerSkillLoader({ load: () => undefined });
+      registerSkillLoader({ load: () => undefined, list: () => [] });
     });
 
     describe("#when executeSkill is called", () => {
@@ -46,7 +50,7 @@ describe("executeSkill", () => {
         const result = executeSkill({ name: "missing" });
         expect(result).toContain("missing");
         expect(result).toContain("not found");
-        expect(result).toContain("builtin skills");
+        expect(result).toContain(".opencode/skills");
       });
     });
   });

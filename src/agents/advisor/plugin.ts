@@ -1,5 +1,5 @@
 import { definePlugin } from "../../plugin-api";
-import { ADVISOR_MODEL, ADVISOR_TEMPERATURE, ADVISOR_MODE } from "./config";
+import { ADVISOR_TEMPERATURE, ADVISOR_MODE } from "./config";
 import { ADVISOR_PROMPT } from "./prompt";
 import { buildToolsMap } from "../tool-restrictions";
 
@@ -8,7 +8,6 @@ export const advisorPlugin = definePlugin({
   version: "0.1.0",
   agents: {
     advisor: {
-      model: ADVISOR_MODEL,
       temperature: ADVISOR_TEMPERATURE,
       mode: ADVISOR_MODE,
       prompt: ADVISOR_PROMPT,

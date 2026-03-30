@@ -5,7 +5,7 @@ import { resolveOperation, parseArguments, applyGrepFilter } from "./skill-mcp/h
 describe("skill tool", () => {
   describe("#given no skill loader is registered", () => {
     beforeEach(() => {
-      registerSkillLoader({ load: () => undefined });
+      registerSkillLoader({ load: () => undefined, list: () => [] });
     });
 
     describe("#when executeSkill is called with an unknown skill name", () => {
@@ -24,6 +24,7 @@ describe("skill tool", () => {
           if (name === "code-review") return "Code review instructions here.";
           return undefined;
         },
+        list: () => [{ name: "code-review", description: "Code review skill" }],
       });
     });
 

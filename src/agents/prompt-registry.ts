@@ -10,7 +10,7 @@ import { WORKER_PROMPT_META } from "./worker/prompt-meta";
 export const PROMPT_REGISTRY: Record<BuiltinAgentName, PromptMeta> = {
   orchestrator: ORCHESTRATOR_PROMPT_META,
   "deep-worker": DEEP_WORKER_PROMPT_META,
-  "plan-builder": PLAN_BUILDER_PROMPT_META,
+  planner: PLAN_BUILDER_PROMPT_META,
   advisor: ADVISOR_PROMPT_META,
   researcher: RESEARCHER_PROMPT_META,
   explorer: EXPLORER_PROMPT_META,

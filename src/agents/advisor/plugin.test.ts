@@ -16,10 +16,8 @@ describe("advisorPlugin", () => {
         expect(agent.mode).toBe("subagent");
       });
 
-      it("#then has a model, temperature, and non-empty prompt", () => {
+      it("#then has a temperature and non-empty prompt", () => {
         const agent = advisorPlugin.agents!.advisor;
-        expect(typeof agent.model).toBe("string");
-        expect(agent.model!.length).toBeGreaterThan(0);
         expect(typeof agent.temperature).toBe("number");
         expect(typeof agent.prompt).toBe("string");
         expect(agent.prompt!.length).toBeGreaterThan(0);

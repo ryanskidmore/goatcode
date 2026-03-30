@@ -1,10 +1,14 @@
 import { log } from "../../shared/logger";
-import type { SkillArgs, SkillLoader } from "./types";
+import type { SkillArgs, SkillInfo, SkillLoader } from "./types";
 
 let registeredLoader: SkillLoader | null = null;
 
 export function registerSkillLoader(loader: SkillLoader): void {
   registeredLoader = loader;
+}
+
+export function getAvailableSkills(): SkillInfo[] {
+  return typeof registeredLoader?.list === "function" ? registeredLoader.list() : [];
 }
 
 export function executeSkill(args: SkillArgs): string {
@@ -17,5 +21,7 @@ export function executeSkill(args: SkillArgs): string {
     }
   }
 
-  return `Skill '${args.name}' not found. Available skills can be loaded from builtin skills (e.g. 'git-master') or project skills in .opencode/skills/.`;
+  const available = getAvailableSkills();
+  const names = available.map((s) => s.name).join(", ");
+  return `Skill '${args.name}' not found. Available: ${names || "none"}. Add project skills in .opencode/skills/.`;
 }
