@@ -1,6 +1,6 @@
 {
   "name": "goatcode-sh",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Enterprise-grade OpenCode plugin with micro-plugin architecture, multi-agent orchestration, and professional naming",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
