@@ -8,7 +8,7 @@ export function registerSkillLoader(loader: SkillLoader): void {
 }
 
 export function getAvailableSkills(): SkillInfo[] {
-  return registeredLoader?.list() ?? [];
+  return typeof registeredLoader?.list === "function" ? registeredLoader.list() : [];
 }
 
 export function executeSkill(args: SkillArgs): string {

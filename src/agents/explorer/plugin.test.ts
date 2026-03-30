@@ -20,10 +20,8 @@ describe("explorerPlugin", () => {
         expect(agent.temperature).toBe(0);
       });
 
-      it("#then has a model and non-empty prompt", () => {
+      it("#then has a non-empty prompt", () => {
         const agent = explorerPlugin.agents!.explorer;
-        expect(typeof agent.model).toBe("string");
-        expect(agent.model!.length).toBeGreaterThan(0);
         expect(typeof agent.prompt).toBe("string");
         expect(agent.prompt!.length).toBeGreaterThan(0);
       });

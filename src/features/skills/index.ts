@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../../shared/logger";
 import { getDataDir } from "../../shared/data-path";
@@ -25,12 +25,19 @@ function skillToMarkdown(skill: Skill): string {
   return `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.template.trim()}\n`;
 }
 
-export function getBuiltinSkillsDir(): string {
-  return join(getDataDir(), "goatcode-sh", "skills");
+export function getBuiltinSkillsDir(): string | null {
+  try {
+    return join(getDataDir(), "goatcode-sh", "skills");
+  } catch (err) {
+    log("[skills] Failed to resolve built-in skills directory", { err });
+    return null;
+  }
 }
 
-export function syncBuiltinSkillFiles(): string {
+export function syncBuiltinSkillFiles(): string | null {
   const skillsDir = getBuiltinSkillsDir();
+  if (!skillsDir) return null;
+
   for (const skill of getBuiltinSkills()) {
     const skillDir = join(skillsDir, skill.name);
     const skillFile = join(skillDir, "SKILL.md");

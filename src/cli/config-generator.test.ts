@@ -26,7 +26,7 @@ describe("#given generateConfig with default options", () => {
       const result = generateConfig();
       expect(result).toContain('"orchestrator"');
       expect(result).toContain('"deep-worker"');
-      expect(result).toContain('"plan-builder"');
+      expect(result).toContain('"planner"');
       expect(result).toContain('"advisor"');
       expect(result).toContain('"researcher"');
       expect(result).toContain('"explorer"');
@@ -67,7 +67,7 @@ describe("#given generateConfig with default options", () => {
       const result = generateConfig();
       expect(result).toContain('"goatcode-sh/orchestrator"');
       expect(result).toContain('"goatcode-sh/deep-worker"');
-      expect(result).toContain('"goatcode-sh/plan-builder"');
+      expect(result).toContain('"goatcode-sh/planner"');
       expect(result).toContain('"goatcode-sh/advisor"');
       expect(result).toContain('"goatcode-sh/researcher"');
       expect(result).toContain('"goatcode-sh/explorer"');

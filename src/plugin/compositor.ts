@@ -51,8 +51,12 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       }
     }
 
-    input.agent.build = { ...(input.agent.build ?? {}), disable: true };
-    input.agent.plan = { ...(input.agent.plan ?? {}), disable: true };
+    if (input.agent.build === undefined) {
+      input.agent.build = { disable: true };
+    }
+    if (input.agent.plan === undefined) {
+      input.agent.plan = { disable: true };
+    }
 
     const configRecord = input as Record<string, unknown>;
     if (!configRecord["default_agent"]) {
@@ -62,7 +66,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     const skills = (configRecord["skills"] ?? {}) as Record<string, unknown>;
     const existingPaths = (skills["paths"] ?? []) as string[];
     const builtinDir = getBuiltinSkillsDir();
-    if (!existingPaths.includes(builtinDir)) {
+    if (builtinDir && !existingPaths.includes(builtinDir)) {
       skills["paths"] = [...existingPaths, builtinDir];
       configRecord["skills"] = skills;
     }

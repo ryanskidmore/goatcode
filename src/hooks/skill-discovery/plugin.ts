@@ -5,9 +5,7 @@ function buildSkillsSystemBlock(): string | null {
   const skills = getAvailableSkills();
   if (skills.length === 0) return null;
 
-  const lines = skills.map(
-    (s) => `- **${s.name}**${s.description ? ` — ${s.description}` : ""}`,
-  );
+  const lines = skills.map((s) => `- **${s.name}**`);
 
   return [
     "## Available Skills",
@@ -39,9 +37,7 @@ export const skillDiscoveryPlugin = definePlugin({
       const skills = getAvailableSkills();
       if (skills.length === 0) return;
 
-      const listing = skills
-        .map((s) => `  - ${s.name}${s.description ? `: ${s.description}` : ""}`)
-        .join("\n");
+      const listing = skills.map((s) => `  - ${s.name}`).join("\n");
 
       output.description += `\n\nAvailable skills:\n${listing}`;
     },

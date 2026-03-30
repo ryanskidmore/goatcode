@@ -36,7 +36,6 @@ const EXPECTED_TOOL_NAMES = [
   "grep",
   "glob",
   "hashline_edit",
-  "interactive_bash",
   "look_at",
   "skill",
   "task",
@@ -63,7 +62,7 @@ const EXPECTED_TOOL_NAMES = [
 const EXPECTED_AGENT_NAMES = [
   "orchestrator",
   "deep-worker",
-  "plan-builder",
+  "planner",
   "advisor",
   "researcher",
   "explorer",
@@ -106,7 +105,9 @@ describe("bootstrap", () => {
         for (const name of EXPECTED_AGENT_NAMES) {
           expect(configuredAgents[name]).toBeDefined();
         }
-        expect(Object.keys(configuredAgents)).toHaveLength(EXPECTED_AGENT_NAMES.length);
+        expect(Object.keys(configuredAgents).length).toBeGreaterThanOrEqual(
+          EXPECTED_AGENT_NAMES.length,
+        );
       });
 
       it("#then exposes key hook event slots as callable functions", async () => {

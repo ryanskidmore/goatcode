@@ -41,11 +41,10 @@ describe("agent plugins", () => {
         }
       });
 
-      it("#then each agent has a model string", () => {
+      it("#then each agent inherits model from user config (no hardcoded model)", () => {
         for (const plugin of ALL_PLUGINS) {
           const agent = Object.values(plugin.agents!)[0];
-          expect(typeof agent.model).toBe("string");
-          expect(agent.model!.length).toBeGreaterThan(0);
+          expect(agent.model).toBeUndefined();
         }
       });
 

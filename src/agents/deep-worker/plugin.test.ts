@@ -15,10 +15,8 @@ describe("deepWorkerPlugin", () => {
         expect(agent.mode).toBe("all");
       });
 
-      it("#then has a model, temperature, and non-empty prompt", () => {
+      it("#then has a temperature and non-empty prompt", () => {
         const agent = deepWorkerPlugin.agents!["deep-worker"];
-        expect(typeof agent.model).toBe("string");
-        expect(agent.model!.length).toBeGreaterThan(0);
         expect(typeof agent.temperature).toBe("number");
         expect(typeof agent.prompt).toBe("string");
         expect(agent.prompt!.length).toBeGreaterThan(0);
