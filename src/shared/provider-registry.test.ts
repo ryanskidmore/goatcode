@@ -15,7 +15,6 @@ import {
   resolveProvider,
   setDefaultPreferredProvider,
   setProviderPriority,
-  unregisterProviderModelMap,
 } from "./provider-registry";
 
 function createProviderListResponse(connected: string[]): ProviderListResponse {
