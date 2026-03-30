@@ -35,7 +35,7 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
     description: "High effort tasks that don't fit other categories",
   },
   writing: {
-    model: "kimi-for-coding/k2p5",
+    model: "gemini-3.1-flash-lite",
     description: "Documentation, prose, technical writing",
   },
 };

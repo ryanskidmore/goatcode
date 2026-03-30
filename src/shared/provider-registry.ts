@@ -1,91 +1,97 @@
-export interface ProviderDefinition {
-  readonly id: string;
-  readonly patterns: readonly RegExp[];
-  /** Lower = higher priority. Direct providers: 0, aggregators: 10. */
-  readonly priority: number;
-}
+import { getDiscovery, type ProviderModelEntry } from "./provider-discovery";
 
 export interface ProviderResolutionResult {
   readonly qualifiedModel: string;
   readonly providerId: string;
 }
 
-const ANTHROPIC_PATTERNS: readonly RegExp[] = [/^claude-/];
+const DEFAULT_PROVIDER_PRIORITY = ["anthropic", "openai", "google", "opencode"] as const;
 
-const OPENAI_PATTERNS: readonly RegExp[] = [
-  /^gpt-/,
-  /^o[1-4](-|$)/,
-  /^codex-/,
-  /^text-embedding-/,
-  /^dall-e-/,
-  /^whisper-/,
-  /^tts-/,
-];
+let providerPriority: string[] = [...DEFAULT_PROVIDER_PRIORITY];
+const customModelMaps = new Map<string, Map<string, string>>();
 
-const GOOGLE_PATTERNS: readonly RegExp[] = [/^gemini-/, /^gemma-/];
-
-const OPENCODE_PATTERNS: readonly RegExp[] = [
-  /^claude-/,
-  /^gpt-/,
-  /^o[1-4](-|$)/,
-  /^codex-/,
-  /^gemini-/,
-  /^gemma-/,
-  /^glm-/,
-  /^minimax-/,
-  /^qwen/,
-  /^kimi-/,
-  /^deepseek-/,
-];
-
-const BUILTIN_PROVIDERS: ProviderDefinition[] = [
-  { id: "anthropic", patterns: ANTHROPIC_PATTERNS, priority: 0 },
-  { id: "openai", patterns: OPENAI_PATTERNS, priority: 0 },
-  { id: "google", patterns: GOOGLE_PATTERNS, priority: 0 },
-  { id: "opencode", patterns: OPENCODE_PATTERNS, priority: 10 },
-];
-
-let providers: ProviderDefinition[] = [...BUILTIN_PROVIDERS];
-
-export function registerProvider(definition: ProviderDefinition): void {
-  providers = providers.filter((p) => p.id !== definition.id);
-  providers.push(definition);
+function normalizeIdentifier(value: string): string {
+  return value.trim().toLowerCase();
 }
 
-export function unregisterProvider(id: string): boolean {
-  const before = providers.length;
-  providers = providers.filter((p) => p.id !== id);
-  return providers.length < before;
+function normalizePriorityList(priority: readonly string[]): string[] {
+  const deduped = new Set<string>();
+  for (const providerId of priority) {
+    const normalized = normalizeIdentifier(providerId);
+    if (normalized) deduped.add(normalized);
+  }
+  return deduped.size > 0 ? [...deduped] : [...DEFAULT_PROVIDER_PRIORITY];
 }
 
-export function getRegisteredProviders(): readonly ProviderDefinition[] {
-  return [...providers].sort((a, b) => a.priority - b.priority);
+function providerRank(providerId: string): number {
+  const idx = providerPriority.indexOf(providerId);
+  return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
 }
 
-export function resetProviders(): void {
-  providers = [...BUILTIN_PROVIDERS];
+function sortByPriority(entries: ProviderModelEntry[]): ProviderModelEntry[] {
+  return [...entries].sort((a, b) => {
+    const byRank = providerRank(a.providerId) - providerRank(b.providerId);
+    if (byRank !== 0) return byRank;
+    return a.providerId.localeCompare(b.providerId);
+  });
+}
+
+function getProviderSpecificModelId(providerId: string, modelId: string): string {
+  const modelMap = customModelMaps.get(providerId);
+  if (!modelMap) return modelId;
+  return modelMap.get(modelId) ?? modelId;
+}
+
+export function setProviderPriority(priority: string[]): void {
+  providerPriority = normalizePriorityList(priority);
+}
+
+export function getProviderPriority(): readonly string[] {
+  return [...providerPriority];
+}
+
+export function registerProviderModelMap(providerId: string, modelMap: Record<string, string>): void {
+  const providerKey = normalizeIdentifier(providerId);
+  if (!providerKey) return;
+
+  const normalizedMap = new Map<string, string>();
+  for (const [canonicalModelId, providerModelId] of Object.entries(modelMap)) {
+    const canonical = normalizeIdentifier(canonicalModelId);
+    const providerSpecific = normalizeIdentifier(providerModelId);
+    if (canonical && providerSpecific) {
+      normalizedMap.set(canonical, providerSpecific);
+    }
+  }
+
+  customModelMaps.set(providerKey, normalizedMap);
+}
+
+export function unregisterProviderModelMap(providerId: string): boolean {
+  return customModelMaps.delete(normalizeIdentifier(providerId));
 }
 
 export function isQualifiedModel(model: string): boolean {
   return model.includes("/");
 }
 
-export function findMatchingProviders(bareModel: string): ProviderDefinition[] {
-  const normalized = bareModel.toLowerCase().trim();
-  return providers
-    .filter((p) => p.patterns.some((re) => re.test(normalized)))
-    .sort((a, b) => a.priority - b.priority);
+export function findProvidersForModel(bareModel: string): ProviderModelEntry[] {
+  const normalizedModel = normalizeIdentifier(bareModel);
+  if (!normalizedModel) return [];
+
+  const discovery = getDiscovery();
+  if (!discovery) return [];
+
+  const entries = discovery.modelIndex.get(normalizedModel) ?? [];
+  const connectedEntries = entries.filter((entry) => discovery.connectedProviders.has(entry.providerId));
+
+  return sortByPriority(connectedEntries);
 }
 
-/**
- * Resolve a bare model name to "provider/model". Already-qualified models
- * pass through. Uses `preferredProvider` when set, otherwise highest-priority match.
- */
 export function resolveProvider(
   model: string,
   preferredProvider?: string,
 ): ProviderResolutionResult | undefined {
-  const trimmed = model.trim().toLowerCase();
+  const trimmed = normalizeIdentifier(model);
   if (!trimmed) return undefined;
 
   if (isQualifiedModel(trimmed)) {
@@ -96,23 +102,20 @@ export function resolveProvider(
     };
   }
 
-  const matches = findMatchingProviders(trimmed);
-  if (matches.length === 0) return undefined;
+  const candidates = findProvidersForModel(trimmed);
+  if (candidates.length === 0) return undefined;
 
-  if (preferredProvider) {
-    const preferred = matches.find((p) => p.id === preferredProvider);
-    if (preferred) {
-      return {
-        qualifiedModel: `${preferred.id}/${trimmed}`,
-        providerId: preferred.id,
-      };
-    }
-  }
+  const preferred = normalizeIdentifier(preferredProvider ?? "");
+  const selected = preferred
+    ? candidates.find((candidate) => candidate.providerId === preferred) ?? candidates[0]
+    : candidates[0];
 
-  const best = matches[0]!;
+  if (!selected) return undefined;
+
+  const providerModelId = getProviderSpecificModelId(selected.providerId, selected.modelId);
   return {
-    qualifiedModel: `${best.id}/${trimmed}`,
-    providerId: best.id,
+    qualifiedModel: `${selected.providerId}/${providerModelId}`,
+    providerId: selected.providerId,
   };
 }
 

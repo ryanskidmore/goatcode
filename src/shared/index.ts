@@ -24,16 +24,20 @@ export {
   resolveProvider,
   qualifyModel,
   isQualifiedModel,
-  findMatchingProviders,
-  registerProvider,
-  unregisterProvider,
-  getRegisteredProviders,
-  resetProviders,
+  findProvidersForModel,
+  setProviderPriority,
+  getProviderPriority,
+  registerProviderModelMap,
+  unregisterProviderModelMap,
 } from "./provider-registry";
-export type {
-  ProviderDefinition,
-  ProviderResolutionResult,
-} from "./provider-registry";
+export type { ProviderResolutionResult } from "./provider-registry";
+export {
+  buildDiscoveryIndex,
+  initializeDiscovery,
+  getDiscovery,
+  resetDiscovery,
+} from "./provider-discovery";
+export type { ProviderListResponse, ProviderModelEntry, DiscoveryResult } from "./provider-discovery";
 export {
   buildModelsDevIndex,
   fetchModelsDevData,

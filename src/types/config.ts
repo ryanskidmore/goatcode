@@ -16,6 +16,7 @@ export interface GoatCodeConfig {
   categories?: CategoryOverrides;
   default_temperature?: number;
   default_provider?: string;
+  provider_priority?: string[];
   disabled_agents?: string[];
   disabled_hooks?: string[];
   disabled_tools?: string[];

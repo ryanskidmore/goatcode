@@ -51,8 +51,8 @@ export const DEFAULT_CATEGORY_DEFINITIONS: Record<CategoryName, CategoryDefiniti
     promptAppend: CATEGORY_PROMPT_APPENDS["unspecified-high"],
   },
   writing: {
-    model: "kimi-for-coding/k2p5",
-    description: "Documentation, prose, and technical writing",
+    model: "gemini-3.1-flash-lite",
+    description: "Documentation, prose, technical writing",
     promptAppend: CATEGORY_PROMPT_APPENDS.writing,
   },
 };

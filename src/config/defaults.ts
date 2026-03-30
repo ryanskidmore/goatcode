@@ -7,6 +7,7 @@ export const CONFIG_DEFAULTS: Required<
     GoatCodeConfig,
     | "auto_update"
     | "default_temperature"
+    | "provider_priority"
     | "disabled_agents"
     | "disabled_hooks"
     | "disabled_tools"
@@ -15,6 +16,7 @@ export const CONFIG_DEFAULTS: Required<
 > = {
   auto_update: true,
   default_temperature: DEFAULT_TEMPERATURE,
+  provider_priority: ["anthropic", "openai", "google", "opencode"],
   disabled_agents: [],
   disabled_hooks: [],
   disabled_tools: [],
