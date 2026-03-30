@@ -25,7 +25,10 @@
     "fmt:check": "oxfmt --check 'src/**/*.ts'",
     "test:eval": "cd eval && npx promptfoo eval -c promptfooconfig.yaml",
     "test:ablation": "cd eval && npx promptfoo eval -c ablation-config.yaml",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "release:patch": "npm version patch && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags",
+    "release:major": "npm version major && git push --follow-tags"
   },
   "engines": {
     "bun": ">=1.0.0"
