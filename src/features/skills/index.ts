@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../../shared/logger";
 import { getDataDir } from "../../shared/data-path";
@@ -38,7 +38,23 @@ export function syncBuiltinSkillFiles(): string | null {
   const skillsDir = getBuiltinSkillsDir();
   if (!skillsDir) return null;
 
-  for (const skill of getBuiltinSkills()) {
+  const builtinSkills = getBuiltinSkills();
+  const expected = new Set(builtinSkills.map((skill) => skill.name));
+  let syncFailed = false;
+
+  try {
+    mkdirSync(skillsDir, { recursive: true });
+    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+      if (entry.isDirectory() && !expected.has(entry.name)) {
+        rmSync(join(skillsDir, entry.name), { recursive: true, force: true });
+      }
+    }
+  } catch (err) {
+    syncFailed = true;
+    log("[skills] Failed to reconcile built-in skills directory", { err });
+  }
+
+  for (const skill of builtinSkills) {
     const skillDir = join(skillsDir, skill.name);
     const skillFile = join(skillDir, "SKILL.md");
 
@@ -46,10 +62,11 @@ export function syncBuiltinSkillFiles(): string | null {
       mkdirSync(skillDir, { recursive: true });
       writeFileSync(skillFile, skillToMarkdown(skill), "utf8");
     } catch (err) {
+      syncFailed = true;
       log(`[skills] Failed to write skill file: ${skillFile}`, { err });
     }
   }
-  return skillsDir;
+  return syncFailed ? null : skillsDir;
 }
 
 export function createMergedSkillLoader(directory: string): SkillLoader {

@@ -105,9 +105,15 @@ describe("bootstrap", () => {
         for (const name of EXPECTED_AGENT_NAMES) {
           expect(configuredAgents[name]).toBeDefined();
         }
-        expect(Object.keys(configuredAgents).length).toBeGreaterThanOrEqual(
-          EXPECTED_AGENT_NAMES.length,
+        const configuredAgentNames = Object.keys(configuredAgents);
+        const allowedExtraAgents = new Set(["build", "plan"]);
+        const unexpectedAgents = configuredAgentNames.filter(
+          (name) =>
+            !EXPECTED_AGENT_NAMES.includes(name as (typeof EXPECTED_AGENT_NAMES)[number]) &&
+            !allowedExtraAgents.has(name),
         );
+        expect(unexpectedAgents).toEqual([]);
+        expect(configuredAgentNames.length).toBeGreaterThanOrEqual(EXPECTED_AGENT_NAMES.length);
       });
 
       it("#then exposes key hook event slots as callable functions", async () => {

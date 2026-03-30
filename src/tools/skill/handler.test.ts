@@ -10,7 +10,10 @@ describe("executeSkill", () => {
           if (name === "with-msg" && userMessage) return `Context: ${userMessage}`;
           return undefined;
         },
-        list: () => [{ name: "git-master", description: "Git workflow" }],
+        list: () => [
+          { name: "git-master", description: "Git workflow" },
+          { name: "with-msg", description: "Uses the forwarded user message" },
+        ],
       });
     });
 
