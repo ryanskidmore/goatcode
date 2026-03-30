@@ -23,7 +23,7 @@ export type AgentFactory = ((model: string) => AgentConfig) & {
 export type BuiltinAgentName =
   | "orchestrator"
   | "deep-worker"
-  | "plan-builder"
+  | "planner"
   | "advisor"
   | "researcher"
   | "explorer"

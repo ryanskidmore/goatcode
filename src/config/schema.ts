@@ -22,7 +22,7 @@ export const CategoryConfigSchema = z.object({
 export const AgentOverridesSchema = z.object({
   orchestrator: AgentOverrideConfigSchema.optional(),
   "deep-worker": AgentOverrideConfigSchema.optional(),
-  "plan-builder": AgentOverrideConfigSchema.optional(),
+  "planner": AgentOverrideConfigSchema.optional(),
   advisor: AgentOverrideConfigSchema.optional(),
   researcher: AgentOverrideConfigSchema.optional(),
   explorer: AgentOverrideConfigSchema.optional(),

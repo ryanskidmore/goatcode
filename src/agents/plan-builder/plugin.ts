@@ -1,16 +1,16 @@
 import { definePlugin } from "../../plugin-api";
-import { PLAN_BUILDER_MODEL, PLAN_BUILDER_TEMPERATURE, PLAN_BUILDER_MODE } from "./config";
+import { PLAN_BUILDER_TEMPERATURE, PLAN_BUILDER_MODE } from "./config";
 import { PLAN_BUILDER_PROMPT } from "./prompt";
 
 export const planBuilderPlugin = definePlugin({
-  name: "plan-builder",
+  name: "planner",
   version: "0.1.0",
   agents: {
-    "plan-builder": {
-      model: PLAN_BUILDER_MODEL,
+    "planner": {
       temperature: PLAN_BUILDER_TEMPERATURE,
       mode: PLAN_BUILDER_MODE,
       prompt: PLAN_BUILDER_PROMPT,
+      color: "#047857",
     },
   },
 });
