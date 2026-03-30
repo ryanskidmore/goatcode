@@ -11,7 +11,7 @@ export * from "./fallback-chains";
 export * from "./builtin-agents";
 export * from "./orchestrator";
 export * from "./deep-worker";
-export * from "./plan-builder";
+export * from "./planner";
 export * from "./advisor";
 export * from "./researcher";
 export * from "./explorer";

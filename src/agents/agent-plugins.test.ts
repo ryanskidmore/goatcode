@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { orchestratorPlugin } from "./orchestrator/plugin";
 import { deepWorkerPlugin } from "./deep-worker/plugin";
-import { planBuilderPlugin } from "./plan-builder/plugin";
+import { plannerPlugin } from "./planner/plugin";
 import { advisorPlugin } from "./advisor/plugin";
 import { researcherPlugin } from "./researcher/plugin";
 import { explorerPlugin } from "./explorer/plugin";
@@ -11,7 +11,7 @@ import { BUILTIN_AGENT_PLUGINS } from "./builtin-agents";
 const ALL_PLUGINS = [
   orchestratorPlugin,
   deepWorkerPlugin,
-  planBuilderPlugin,
+  plannerPlugin,
   advisorPlugin,
   researcherPlugin,
   explorerPlugin,

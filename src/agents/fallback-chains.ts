@@ -1,11 +1,11 @@
 export const AGENT_FALLBACK_CHAINS: Record<string, string[]> = {
-  orchestrator: ["claude-sonnet-4-6"],
+  orchestrator: ["gpt-5.4", "gemini-3.1-pro-preview", "claude-sonnet-4-6"],
   "deep-worker": ["claude-opus-4-6"],
-  planner: ["claude-sonnet-4-6"],
+  planner: ["gpt-5.4", "gemini-3.1-pro-preview", "claude-sonnet-4-6"],
   advisor: ["claude-opus-4-6"],
-  researcher: ["claude-sonnet-4-6"],
-  explorer: ["claude-sonnet-4-6"],
-  worker: ["claude-haiku-4-6"],
+  researcher: ["gpt-5.3-codex"],
+  explorer: ["gpt-5.4-mini", "gemini-3.1-flash-lite-preview"],
+  worker: ["gpt-5.3-codex"],
 };
 
 export function getFallbackChain(agentName: string): string[] {
