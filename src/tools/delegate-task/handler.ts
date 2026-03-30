@@ -1,5 +1,6 @@
 import type { ToolDefinition } from "@opencode-ai/plugin";
 import type { BackgroundAgentManager } from "../../runtime";
+import type { OpenCodeContext } from "../../types/plugin";
 import type { TaskInput, CategoryConfig } from "./types";
 import type { ExecutorDeps } from "./executor";
 import { z } from "zod";
@@ -24,7 +25,39 @@ const taskArgsSchema = z.object({
   session_id: z.string().optional().describe("Resume an existing session"),
 });
 
-export function createTaskTool(getManager: () => BackgroundAgentManager): ToolDefinition {
+/**
+ * Resolve the OpenCode client, trying the tool context first then
+ * falling back to the stored plugin-level context.
+ *
+ * OpenCode's plugin runtime does not always expose `client` on the
+ * tool execution context. The plugin-level context (captured at setup)
+ * is a reliable fallback.
+ */
+function resolveClient(
+  toolContext: Parameters<ToolDefinition["execute"]>[1],
+  getStoredContext: () => OpenCodeContext | undefined,
+): OpenCodeContext["client"] {
+  // Try tool context first (works if OpenCode exposes client there)
+  try {
+    return getClientFromToolContext(toolContext);
+  } catch {
+    // Fall back to stored plugin-level context
+    const stored = getStoredContext();
+    if (stored?.client) {
+      return stored.client;
+    }
+    throw new Error(
+      "OpenCode client unavailable. Neither the tool context nor the plugin context expose it.",
+    );
+  }
+}
+
+export function createTaskTool(
+  getManager: () => BackgroundAgentManager,
+  getStoredContext?: () => OpenCodeContext | undefined,
+): ToolDefinition {
+  const contextGetter = getStoredContext ?? (() => undefined);
+
   return buildTool({
     description: [
       "Delegate a task to a category-based agent.",
@@ -50,7 +83,7 @@ export function createTaskTool(getManager: () => BackgroundAgentManager): ToolDe
         return `Unknown category: "${input.category}". Available: ${available}`;
       }
 
-      const client = getClientFromToolContext(toolContext);
+      const client = resolveClient(toolContext, contextGetter);
       const manager = getManager();
       const deps: ExecutorDeps = {
         manager,
