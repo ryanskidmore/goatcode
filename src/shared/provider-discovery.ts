@@ -27,7 +27,9 @@ function normalizeIdentifier(value: string): string {
 }
 
 export function buildDiscoveryIndex(response: ProviderListResponse): DiscoveryResult {
-  const connectedProviders = new Set(response.connected.map((providerId) => normalizeIdentifier(providerId)));
+  const connectedProviders = new Set(
+    response.connected.map((providerId) => normalizeIdentifier(providerId)),
+  );
   const modelIndex = new Map<string, ProviderModelEntry[]>();
   const providerModels = new Map<string, ReadonlySet<string>>();
 

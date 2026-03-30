@@ -18,7 +18,10 @@ export type ModelResolutionResult = {
   source: ModelResolutionSource;
 };
 
-function normalizeAndQualify(model: string | undefined, preferredProvider?: string): string | undefined {
+function normalizeAndQualify(
+  model: string | undefined,
+  preferredProvider?: string,
+): string | undefined {
   const normalized = normalizeModel(model);
   if (!normalized) return undefined;
   return qualifyModel(normalized, preferredProvider);

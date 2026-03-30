@@ -40,7 +40,11 @@ export {
   getDiscovery,
   resetDiscovery,
 } from "./provider-discovery";
-export type { ProviderListResponse, ProviderModelEntry, DiscoveryResult } from "./provider-discovery";
+export type {
+  ProviderListResponse,
+  ProviderModelEntry,
+  DiscoveryResult,
+} from "./provider-discovery";
 export {
   buildModelsDevIndex,
   fetchModelsDevData,
