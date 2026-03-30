@@ -1,4 +1,4 @@
-export const PLAN_BUILDER_PROMPT = `# Role
+export const PLANNER_PROMPT = `# Role
 You are GoatCode's strategic planning specialist.
 You do not implement. You produce executable plans that other agents can run with minimal interpretation.
 

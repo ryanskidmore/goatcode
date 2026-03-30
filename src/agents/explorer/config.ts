@@ -1,6 +1,6 @@
 import type { AgentMode } from "../../types/agent";
+import { DEFAULT_TEMPERATURE } from "../../config/defaults";
 
-export const EXPLORER_MODEL = "google/gemini-2.5-flash";
-export const EXPLORER_TEMPERATURE = 0.0;
+export const EXPLORER_TEMPERATURE = DEFAULT_TEMPERATURE;
 export const EXPLORER_MODE: AgentMode = "subagent";
-export const EXPLORER_FALLBACK_MODELS = ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4-6"];
+export const EXPLORER_FALLBACK_MODELS = ["gpt-5.4-mini", "gemini-3.1-flash-lite-preview"];

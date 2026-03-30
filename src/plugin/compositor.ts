@@ -1,6 +1,7 @@
 import type { Hooks } from "@opencode-ai/plugin";
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
+import { qualifyModel } from "../shared/provider-registry";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
 
@@ -48,6 +49,12 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
           ...agentConfig,
           ...(agentConfig.tools ? { tools: { ...agentConfig.tools } } : {}),
         };
+      }
+    }
+
+    for (const agentConfig of Object.values(input.agent)) {
+      if (agentConfig?.model && !agentConfig.model.includes("/")) {
+        agentConfig.model = qualifyModel(agentConfig.model);
       }
     }
 

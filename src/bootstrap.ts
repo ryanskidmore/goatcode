@@ -12,6 +12,17 @@ import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks";
 import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools";
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features";
 import { registerProjectSkillLoader } from "./features/skills";
+import {
+  buildDiscoveryIndex,
+  initializeDiscovery,
+  resetDiscovery,
+  type ProviderListResponse,
+} from "./shared/provider-discovery";
+import {
+  resetProviderRegistry,
+  setDefaultPreferredProvider,
+  setProviderPriority,
+} from "./shared/provider-registry";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -75,6 +86,36 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       throw new Error("[bootstrap] Default config validation failed");
     }
     config = fallback.config;
+  }
+
+  resetProviderRegistry();
+  resetDiscovery();
+  setProviderPriority(config.provider_priority ?? []);
+  setDefaultPreferredProvider(config.default_provider);
+  try {
+    const DISCOVERY_TIMEOUT_MS = 5_000;
+    const providerResponse = (await Promise.race([
+      ctx.client.provider.list(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`provider.list timeout after ${DISCOVERY_TIMEOUT_MS}ms`)),
+          DISCOVERY_TIMEOUT_MS,
+        ),
+      ),
+    ])) as Awaited<ReturnType<typeof ctx.client.provider.list>>;
+    const providerData = providerResponse?.data as ProviderListResponse | undefined;
+    if (providerData?.all && providerData?.connected) {
+      const discovery = buildDiscoveryIndex(providerData);
+      initializeDiscovery(discovery);
+    } else {
+      log("[bootstrap] Provider discovery response missing required fields");
+    }
+  } catch (error) {
+    log("[bootstrap] Provider discovery failed; using pass-through model resolution", { error });
+    const msg = error instanceof Error ? error.message : String(error);
+    process.stderr.write(
+      `[goatcode] WARNING: Provider discovery failed (${msg}) — model provider resolution will use pass-through fallback.\n`,
+    );
   }
 
   const registry = new PluginRegistry();

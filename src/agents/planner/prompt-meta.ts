@@ -1,6 +1,6 @@
 import type { PromptMeta } from "../prompt-meta";
 
-export const PLAN_BUILDER_PROMPT_META: PromptMeta = {
+export const PLANNER_PROMPT_META: PromptMeta = {
   version: "1.0.0",
   date: "2025-03-28",
   summary: "Builds actionable implementation plans from clarified requirements.",
