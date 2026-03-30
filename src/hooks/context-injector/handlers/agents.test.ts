@@ -87,4 +87,32 @@ describe("createAgentsInjectorHandler", () => {
       });
     });
   });
+
+  describe("#given repeated reads from the same AGENTS.md scope", () => {
+    describe("#when the same AGENTS.md would be injected twice", () => {
+      it("#then injects full content once and a back-reference on subsequent reads", async () => {
+        const workspace = createWorkspace();
+        const subDir = join(workspace, "src");
+        mkdirSync(subDir, { recursive: true });
+        writeFileSync(join(workspace, "AGENTS.md"), "root-agent-rules");
+        writeFileSync(join(subDir, "file1.ts"), "export {}");
+        writeFileSync(join(subDir, "file2.ts"), "export {}");
+
+        const handler = createAgentsInjectorHandler(workspace);
+
+        // First read — full content injected
+        const output1 = { title: join(subDir, "file1.ts"), output: "content1" };
+        await handler({ tool: "read" }, output1);
+        expect(output1.output).toContain("root-agent-rules");
+        expect(output1.output).not.toContain("see full AGENTS.md injected above");
+
+        // Second read — back-reference only, no full content duplication
+        const output2 = { title: join(subDir, "file2.ts"), output: "content2" };
+        await handler({ tool: "read" }, output2);
+        expect(output2.output).toContain("see full AGENTS.md injected above");
+        // Should NOT contain the full content again
+        expect(output2.output).not.toContain("root-agent-rules");
+      });
+    });
+  });
 });
