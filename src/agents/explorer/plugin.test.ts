@@ -1,4 +1,5 @@
 import { describe, it, expect } from "bun:test";
+import { DEFAULT_TEMPERATURE } from "../../config/defaults";
 import { explorerPlugin } from "./plugin";
 
 describe("explorerPlugin", () => {
@@ -17,7 +18,7 @@ describe("explorerPlugin", () => {
 
       it("#then temperature is 0.1", () => {
         const agent = explorerPlugin.agents!.explorer;
-        expect(agent.temperature).toBe(0.1);
+        expect(agent.temperature).toBe(DEFAULT_TEMPERATURE);
       });
 
       it("#then has a non-empty prompt", () => {

@@ -2,6 +2,7 @@ import type { OpenCodeContext } from "../../types/plugin";
 
 import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
+import { qualifyModel } from "../../shared/provider-registry";
 
 import type { LaunchInput } from "./types";
 
@@ -33,7 +34,7 @@ export async function spawnBackgroundSession(
 
   const sessionId = createResult.data.id;
 
-  const parsed = parseModelId(input.model);
+  const parsed = parseModelId(qualifyModel(input.model));
   const promptResult = await ctx.client.session.promptAsync({
     path: { id: sessionId },
     body: {

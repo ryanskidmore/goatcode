@@ -3,6 +3,7 @@ import type { BackgroundAgentManager } from "../../runtime";
 import type { TaskInput, CategoryConfig } from "./types";
 import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
+import { qualifyModel } from "../../shared/provider-registry";
 
 export interface ExecutorDeps {
   manager: BackgroundAgentManager;
@@ -82,7 +83,7 @@ export async function executeSync(
 
     sessionId = createResult.data.id;
   }
-  const parsed = parseModelId(config.model);
+  const parsed = parseModelId(qualifyModel(config.model));
 
   const promptResult = await client.session.promptAsync({
     path: { id: sessionId },

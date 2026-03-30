@@ -8,6 +8,7 @@ export interface ProviderResolutionResult {
 const DEFAULT_PROVIDER_PRIORITY = ["anthropic", "openai", "google", "opencode"] as const;
 
 let providerPriority: string[] = [...DEFAULT_PROVIDER_PRIORITY];
+let defaultPreferredProvider: string | undefined;
 const customModelMaps = new Map<string, Map<string, string>>();
 
 function normalizeIdentifier(value: string): string {
@@ -48,6 +49,14 @@ export function setProviderPriority(priority: string[]): void {
 
 export function getProviderPriority(): readonly string[] {
   return [...providerPriority];
+}
+
+export function setDefaultPreferredProvider(provider: string | undefined): void {
+  defaultPreferredProvider = provider ? normalizeIdentifier(provider) : undefined;
+}
+
+export function getDefaultPreferredProvider(): string | undefined {
+  return defaultPreferredProvider;
 }
 
 export function registerProviderModelMap(providerId: string, modelMap: Record<string, string>): void {
@@ -105,7 +114,7 @@ export function resolveProvider(
   const candidates = findProvidersForModel(trimmed);
   if (candidates.length === 0) return undefined;
 
-  const preferred = normalizeIdentifier(preferredProvider ?? "");
+  const preferred = normalizeIdentifier(preferredProvider ?? defaultPreferredProvider ?? "");
   const selected = preferred
     ? candidates.find((candidate) => candidate.providerId === preferred) ?? candidates[0]
     : candidates[0];

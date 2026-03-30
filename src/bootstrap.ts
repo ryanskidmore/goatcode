@@ -18,7 +18,7 @@ import {
   resetDiscovery,
   type ProviderListResponse,
 } from "./shared/provider-discovery";
-import { setProviderPriority } from "./shared/provider-registry";
+import { setDefaultPreferredProvider, setProviderPriority } from "./shared/provider-registry";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -85,6 +85,7 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   }
 
   setProviderPriority(config.provider_priority ?? []);
+  setDefaultPreferredProvider(config.default_provider);
   resetDiscovery();
   try {
     const providerResponse = await ctx.client.provider.list();

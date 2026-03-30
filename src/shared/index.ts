@@ -27,6 +27,8 @@ export {
   findProvidersForModel,
   setProviderPriority,
   getProviderPriority,
+  setDefaultPreferredProvider,
+  getDefaultPreferredProvider,
   registerProviderModelMap,
   unregisterProviderModelMap,
 } from "./provider-registry";
