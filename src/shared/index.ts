@@ -4,7 +4,7 @@ export { toSnakeCase } from "./snake-case";
 export { truncateDescription } from "./truncate-description";
 export { getDataDir, getCacheDir, getOpenCodeStorageDir, getGoatCodeCacheDir } from "./data-path";
 export { safeCreateHook } from "./safe-create-hook";
-export { normalizeModel, parseModelId } from "./model-normalization";
+export { normalizeModel, parseModelId, normalizeAndQualifyModel } from "./model-normalization";
 export { isModelAvailable } from "./model-availability";
 export { buildFallbackChain } from "./fallback-chain";
 export { resolveModel } from "./model-resolution-pipeline";
@@ -20,6 +20,20 @@ export {
   getKnownPlatforms,
 } from "./model-prefix-map";
 export type { PlatformId, BuiltinPlatformId } from "./model-prefix-map";
+export {
+  resolveProvider,
+  qualifyModel,
+  isQualifiedModel,
+  findMatchingProviders,
+  registerProvider,
+  unregisterProvider,
+  getRegisteredProviders,
+  resetProviders,
+} from "./provider-registry";
+export type {
+  ProviderDefinition,
+  ProviderResolutionResult,
+} from "./provider-registry";
 export {
   buildModelsDevIndex,
   fetchModelsDevData,

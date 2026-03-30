@@ -12,20 +12,14 @@ export type CategoryOverrides = Partial<Record<BuiltinCategoryName, CategoryConf
  * Runtime validation and defaults are handled by the config schema layer.
  */
 export interface GoatCodeConfig {
-  /** Agent model and behavior overrides. */
   agents?: AgentOverrides;
-  /** Category model and behavior overrides. */
   categories?: CategoryOverrides;
-  /** Agent names to disable. */
+  default_temperature?: number;
+  default_provider?: string;
   disabled_agents?: string[];
-  /** Hook names to disable. */
   disabled_hooks?: string[];
-  /** Tool names to disable. */
   disabled_tools?: string[];
-  /** Skill names to disable. */
   disabled_skills?: string[];
-  /** Whether auto-update checks are enabled. */
   auto_update?: boolean;
-  /** External micro-plugin package names to load. */
   plugins?: string[];
 }

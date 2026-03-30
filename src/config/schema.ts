@@ -43,6 +43,8 @@ export const CategoryOverridesSchema = z.object({
 export const GoatCodeConfigSchema = z.object({
   agents: AgentOverridesSchema.optional(),
   categories: CategoryOverridesSchema.optional(),
+  default_temperature: z.number().min(0).max(2).default(CONFIG_DEFAULTS.default_temperature),
+  default_provider: z.string().optional(),
   disabled_agents: z.array(z.string()).default(CONFIG_DEFAULTS.disabled_agents),
   disabled_hooks: z.array(z.string()).default(CONFIG_DEFAULTS.disabled_hooks),
   disabled_tools: z.array(z.string()).default(CONFIG_DEFAULTS.disabled_tools),

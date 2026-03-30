@@ -1,9 +1,10 @@
 import type { AgentMode } from "../../types/agent";
+import { DEFAULT_TEMPERATURE } from "../../config/defaults";
 
-export const ORCHESTRATOR_MODEL = "anthropic/claude-opus-4-6";
-export const ORCHESTRATOR_TEMPERATURE = 0.1;
+export const ORCHESTRATOR_MODEL = "claude-opus-4-6";
+export const ORCHESTRATOR_TEMPERATURE = DEFAULT_TEMPERATURE;
 export const ORCHESTRATOR_MODE: AgentMode = "all";
 export const ORCHESTRATOR_FALLBACK_MODELS = [
-  "anthropic/claude-opus-4-6",
-  "anthropic/claude-sonnet-4-6",
+  "claude-opus-4-6",
+  "claude-sonnet-4-6",
 ];

@@ -1,9 +1,10 @@
 import type { AgentMode } from "../../types/agent";
+import { DEFAULT_TEMPERATURE } from "../../config/defaults";
 
-export const PLAN_BUILDER_MODEL = "anthropic/claude-opus-4-6";
-export const PLAN_BUILDER_TEMPERATURE = 0.2;
+export const PLAN_BUILDER_MODEL = "claude-opus-4-6";
+export const PLAN_BUILDER_TEMPERATURE = DEFAULT_TEMPERATURE;
 export const PLAN_BUILDER_MODE: AgentMode = "all";
 export const PLAN_BUILDER_FALLBACK_MODELS = [
-  "anthropic/claude-opus-4-6",
-  "anthropic/claude-sonnet-4-6",
+  "claude-opus-4-6",
+  "claude-sonnet-4-6",
 ];

@@ -2,35 +2,35 @@ import type { CategoryConfig } from "./types";
 
 export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
   "visual-engineering": {
-    model: "google/gemini-3.1-pro",
+    model: "gemini-3.1-pro",
     variant: "high",
     description: "Frontend, UI/UX, design, styling, animation",
   },
   ultrabrain: {
-    model: "openai/gpt-5.4",
+    model: "gpt-5.4",
     variant: "xhigh",
     description: "Hard logic, architecture decisions, complex reasoning",
   },
   deep: {
-    model: "openai/gpt-5.3-codex",
+    model: "gpt-5.3-codex",
     variant: "medium",
     description: "Goal-oriented autonomous problem-solving, deep research",
   },
   artistry: {
-    model: "google/gemini-3.1-pro",
+    model: "gemini-3.1-pro",
     variant: "high",
     description: "Creative approaches, unconventional solutions",
   },
   quick: {
-    model: "openai/gpt-5.4-mini",
+    model: "gpt-5.4-mini",
     description: "Trivial tasks, single file changes, typo fixes",
   },
   "unspecified-low": {
-    model: "anthropic/claude-sonnet-4-6",
+    model: "claude-sonnet-4-6",
     description: "Moderate effort tasks that don't fit other categories",
   },
   "unspecified-high": {
-    model: "anthropic/claude-opus-4-6",
+    model: "claude-opus-4-6",
     variant: "max",
     description: "High effort tasks that don't fit other categories",
   },

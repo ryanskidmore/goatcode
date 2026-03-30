@@ -15,9 +15,9 @@ describe("explorerPlugin", () => {
         expect(agent.mode).toBe("subagent");
       });
 
-      it("#then temperature is 0", () => {
+      it("#then temperature is 0.1", () => {
         const agent = explorerPlugin.agents!.explorer;
-        expect(agent.temperature).toBe(0);
+        expect(agent.temperature).toBe(0.1);
       });
 
       it("#then has a non-empty prompt", () => {
