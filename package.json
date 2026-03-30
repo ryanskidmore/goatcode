@@ -1,6 +1,6 @@
 {
   "name": "goatcode-sh",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Enterprise-grade OpenCode plugin with micro-plugin architecture, multi-agent orchestration, and professional naming",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,7 +33,13 @@
   "engines": {
     "bun": ">=1.0.0"
   },
-  "keywords": ["opencode", "plugin", "agents", "orchestration", "ai"],
+  "keywords": [
+    "opencode",
+    "plugin",
+    "agents",
+    "orchestration",
+    "ai"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
