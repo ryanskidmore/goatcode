@@ -28,6 +28,7 @@ import { foregroundFallbackPlugin } from "./foreground-fallback";
 import { phaseReminderPlugin } from "./phase-reminder";
 import { postReadNudgePlugin } from "./post-read-nudge";
 import { errorDiagnosticsPlugin } from "./error-diagnostics/plugin";
+import { skillDiscoveryPlugin } from "./skill-discovery/plugin";
 
 export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   thinkingBlockValidatorPlugin,
@@ -59,4 +60,5 @@ export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   phaseReminderPlugin,
   postReadNudgePlugin,
   errorDiagnosticsPlugin,
+  skillDiscoveryPlugin,
 ];
