@@ -56,15 +56,16 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       }
     }
 
-    // Inject default models only when provider discovery has completed and
-    // qualifyModel can resolve the bare name to provider/model format.
-    // The config hook re-runs on every session/message, so models are set
-    // once discovery finishes (~150ms after bootstrap).
+    // Set agent models from our config when we can fully qualify them.
+    // Only override when the existing model isn't already qualified —
+    // OpenCode may set its own default (bare name); we replace it once
+    // discovery provides the correct provider/model format.
     for (const [name, agentDef] of Object.entries(aggregated.agents)) {
       const agentConfig = input.agent[name];
-      if (!agentConfig || agentConfig.model) continue;
+      if (!agentConfig) continue;
       const desiredModel = agentDef.model;
       if (!desiredModel) continue;
+      if (agentConfig.model?.includes("/")) continue;
       const qualified = qualifyModel(desiredModel);
       if (qualified.includes("/")) {
         agentConfig.model = qualified;
