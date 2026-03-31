@@ -87,7 +87,11 @@ export class BackgroundAgentManager {
 
           const messages = (messagesResult.data ?? []) as SessionMessage[];
           const statusType = statusResult.data?.[sessionId]?.type;
-          const isIdle = statusType === "idle";
+          // Background sessions may not appear in the status map
+          // (statusType === undefined). Fall back to message-based
+          // completion detection — message-count stability prevents
+          // false positives during brief thinking pauses.
+          const isIdle = statusType === "idle" || statusType === undefined;
           const lastAssistantMessage = [...messages]
             .reverse()
             .find((message) => message.role === "assistant");

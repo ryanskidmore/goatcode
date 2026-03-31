@@ -1,8 +1,11 @@
 import { tool } from "@opencode-ai/plugin";
 import { getBackgroundAgent } from "../../../runtime";
+import type { OpenCodeContext } from "../../../types/plugin";
 import { definePlugin } from "../../../plugin-api/define-plugin";
 import { handleBackgroundOutput } from "./handler";
 import type { BackgroundOutputArgs } from "./types";
+
+let storedContext: OpenCodeContext | undefined;
 
 const backgroundOutputTool = tool({
   description:
@@ -13,12 +16,12 @@ const backgroundOutputTool = tool({
       .boolean()
       .optional()
       .describe(
-        "Wait for completion (default: false). System notifies when done, so blocking is rarely needed.",
+        "Wait for completion (default: false). Capped at 55s to avoid tool-execution timeouts.",
       ),
     timeout: tool.schema
       .number()
       .optional()
-      .describe("Max wait time in ms (default: 60000, max: 600000)"),
+      .describe("Max wait time in ms (default: 55000, max: 55000)"),
     full_session: tool.schema
       .boolean()
       .optional()
@@ -46,7 +49,7 @@ const backgroundOutputTool = tool({
   },
   async execute(args: BackgroundOutputArgs) {
     const { manager } = getBackgroundAgent();
-    return handleBackgroundOutput(manager, args);
+    return handleBackgroundOutput(manager, args, storedContext?.client);
   },
 });
 
@@ -54,6 +57,12 @@ export default definePlugin({
   name: "background-output",
   version: "1.0.0",
   dependencies: ["delegate-task"],
+  setup(ctx) {
+    storedContext = ctx;
+  },
+  teardown() {
+    storedContext = undefined;
+  },
   tools: {
     background_output: backgroundOutputTool,
   },

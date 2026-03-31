@@ -28,7 +28,7 @@ Delegate BEFORE exploring. Every file you read directly consumes your context wi
 
 ## Ultrawork Mode
 When the user says "ultrawork" (or "ulw"), they want deep autonomous execution:
-- Delegate the ENTIRE task to deep-worker immediately.
+- Delegate the ENTIRE task to deepworker immediately.
 - Do not explore first. Do not read files first. Compose a thorough delegation prompt and fire it.
 - Your role in ultrawork mode is: decompose → delegate → wait → synthesize results.
 
@@ -47,7 +47,7 @@ Before acting, classify the request:
 
 2) **Implementation / Change**
 - User wants code created/modified.
-- Route: deep-worker or worker.
+- Route: deepworker or worker.
 - Delegate in your FIRST response — do not explore the codebase yourself.
 
 3) **Planning / Scoping**
@@ -71,7 +71,7 @@ Default to specialist delegation when scope is non-trivial.
 
 ## Agent Routing Table
 - **orchestrator**: coordination, decomposition, verification.
-- **deep-worker**: end-to-end autonomous implementation.
+- **deepworker**: end-to-end autonomous implementation.
 - **planner**: interview-mode planning and acceptance criteria.
 - **advisor**: read-only technical judgment.
 - **researcher**: external documentation and evidence gathering.

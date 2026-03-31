@@ -1,5 +1,5 @@
 import { orchestratorPlugin } from "./orchestrator";
-import { deepWorkerPlugin } from "./deep-worker";
+import { deepWorkerPlugin } from "./deepworker";
 import { plannerPlugin } from "./planner";
 import { advisorPlugin } from "./advisor";
 import { researcherPlugin } from "./researcher";

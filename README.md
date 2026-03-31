@@ -61,13 +61,13 @@ GoatCode includes 7 specialized agents.
 
 | Agent | Description |
 |-------|-------------|
-| Orchestrator | Main coordinator that plans and delegates tasks. |
-| DeepWorker | Autonomous worker for end-to-end execution. |
-| PlanBuilder | Strategic planner that interviews the user to define scope. |
-| Advisor | Read-only consultant for architecture and code review. |
-| Researcher | Specialist for documentation and code search. |
-| Explorer | Fast codebase search and pattern matching. |
-| Worker | General purpose executor for standard tasks. |
+| orchestrator | Main coordinator that plans and delegates tasks. |
+| deepworker | Autonomous worker for end-to-end execution. |
+| planbuilder | Strategic planner that interviews the user to define scope. |
+| advisor | Read-only consultant for architecture and code review. |
+| researcher | Specialist for documentation and code search. |
+| explorer | Fast codebase search and pattern matching. |
+| worker | General purpose executor for standard tasks. |
 
 ## Tools
 

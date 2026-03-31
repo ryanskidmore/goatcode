@@ -36,7 +36,16 @@ function scheduleFlush(): void {
 export function log(message: string, data?: unknown): void {
   try {
     const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${message} ${data !== undefined ? JSON.stringify(data) : ""}\n`;
+    const serialized =
+      data !== undefined
+        ? JSON.stringify(data, (_key, value) => {
+            if (value instanceof Error) {
+              return { message: value.message, name: value.name, stack: value.stack };
+            }
+            return value;
+          })
+        : "";
+    const logEntry = `[${timestamp}] ${message} ${serialized}\n`;
     buffer.push(logEntry);
     if (buffer.length >= BUFFER_SIZE_LIMIT) {
       flush();

@@ -22,7 +22,7 @@ export type AgentFactory = ((model: string) => AgentConfig) & {
 /** All built-in GoatCode agent names. */
 export type BuiltinAgentName =
   | "orchestrator"
-  | "deep-worker"
+  | "deepworker"
   | "planner"
   | "advisor"
   | "researcher"

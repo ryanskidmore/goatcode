@@ -4,7 +4,7 @@ import { PROMPT_REGISTRY, getPromptVersion } from "./prompt-registry";
 
 const ACTIVE_AGENT_NAMES = [
   "orchestrator",
-  "deep-worker",
+  "deepworker",
   "planner",
   "advisor",
   "researcher",
@@ -14,7 +14,7 @@ const ACTIVE_AGENT_NAMES = [
 
 const BUILTIN_AGENT_NAMES = [
   "orchestrator",
-  "deep-worker",
+  "deepworker",
   "planner",
   "advisor",
   "researcher",

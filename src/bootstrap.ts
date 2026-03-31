@@ -92,30 +92,56 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   resetDiscovery();
   setProviderPriority(config.provider_priority ?? []);
   setDefaultPreferredProvider(config.default_provider);
-  try {
-    const DISCOVERY_TIMEOUT_MS = 5_000;
-    const providerResponse = (await Promise.race([
-      ctx.client.provider.list(),
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error(`provider.list timeout after ${DISCOVERY_TIMEOUT_MS}ms`)),
-          DISCOVERY_TIMEOUT_MS,
-        ),
-      ),
-    ])) as Awaited<ReturnType<typeof ctx.client.provider.list>>;
-    const providerData = providerResponse?.data as ProviderListResponse | undefined;
-    if (providerData?.all && providerData?.connected) {
-      const discovery = buildDiscoveryIndex(providerData);
-      initializeDiscovery(discovery);
-    } else {
-      log("[bootstrap] Provider discovery response missing required fields");
-    }
-  } catch (error) {
-    log("[bootstrap] Provider discovery failed; using pass-through model resolution", { error });
-    const msg = error instanceof Error ? error.message : String(error);
-    process.stderr.write(
-      `[goatcode] WARNING: Provider discovery failed (${msg}) — model provider resolution will use pass-through fallback.\n`,
-    );
+  // Fire provider discovery in the background — don't block plugin init.
+  // Cannot await here or in the config hook (deadlocks OpenCode's event loop).
+  // The config hook will use discovery data if ready, or fall back to
+  // inferring the provider from OpenCode's default model assignment.
+  if (ctx.client?.provider?.list) {
+    const DISCOVERY_TIMEOUT_MS = 15_000;
+    const providerListWithTimeout = new Promise<
+      Awaited<ReturnType<typeof ctx.client.provider.list>>
+    >((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`provider.list timeout after ${DISCOVERY_TIMEOUT_MS}ms`));
+      }, DISCOVERY_TIMEOUT_MS);
+
+      try {
+        ctx.client.provider
+          .list()
+          .then(resolve, reject)
+          .finally(() => {
+            clearTimeout(timeoutId);
+          });
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    });
+
+    void providerListWithTimeout
+      .then((providerResponse) => {
+        const providerData = (
+          providerResponse as Awaited<ReturnType<typeof ctx.client.provider.list>>
+        )?.data as ProviderListResponse | undefined;
+        if (providerData?.all && providerData?.connected) {
+          const discovery = buildDiscoveryIndex(providerData);
+          initializeDiscovery(discovery);
+          log("[bootstrap] Provider discovery completed");
+        } else {
+          log("[bootstrap] Provider discovery response missing required fields", {
+            hasAll: !!providerData?.all,
+            hasConnected: !!providerData?.connected,
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        const msg = error instanceof Error ? error.message : String(error);
+        log("[bootstrap] Provider discovery failed; models will use OpenCode defaults", {
+          message: msg,
+        });
+      });
+  } else {
+    log("[bootstrap] client.provider.list not available; skipping provider discovery");
   }
 
   const registry = new PluginRegistry();

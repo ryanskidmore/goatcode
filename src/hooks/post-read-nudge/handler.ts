@@ -12,7 +12,7 @@ export const DELEGATION_ESCALATION_NUDGE =
   "\n\n---\n[DELEGATION NUDGE] You have made multiple exploration calls without delegating. " +
   "Stop reading files and delegate to a specialist agent NOW. " +
   "Each read compounds context bloat from AGENTS.md injection. " +
-  "Use explorer for codebase discovery or deep-worker for thorough analysis.";
+  "Use explorer for codebase discovery or deepworker for thorough analysis.";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

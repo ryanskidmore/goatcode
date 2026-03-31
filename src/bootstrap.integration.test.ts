@@ -61,7 +61,7 @@ const EXPECTED_TOOL_NAMES = [
 
 const EXPECTED_AGENT_NAMES = [
   "orchestrator",
-  "deep-worker",
+  "deepworker",
   "planner",
   "advisor",
   "researcher",
