@@ -2,7 +2,7 @@
 
 GoatCode includes 7 specialized agents. Each agent is tuned for specific tasks and has unique capabilities and tool restrictions.
 
-## Orchestrator
+## orchestrator
 
 The main coordinator for all tasks. It analyzes user intent, builds a plan, and delegates work to specialists.
 
@@ -10,7 +10,7 @@ The main coordinator for all tasks. It analyzes user intent, builds a plan, and 
 - **Key Capabilities**: Intent analysis, task delegation, parallel execution management, and final verification.
 - **Example Prompt**: "Analyze the user's request and break it down into atomic tasks for specialist agents."
 
-## DeepWorker
+## deepworker
 
 An autonomous worker designed for end-to-end execution of complex technical goals.
 
@@ -18,7 +18,7 @@ An autonomous worker designed for end-to-end execution of complex technical goal
 - **Key Capabilities**: Codebase exploration, research, and implementation without constant supervision.
 - **Example Prompt**: "Implement the new authentication flow including database migrations and API endpoints."
 
-## PlanBuilder
+## planbuilder
 
 A strategic planner that uses an interview mode to define project scope and requirements.
 
@@ -26,7 +26,7 @@ A strategic planner that uses an interview mode to define project scope and requ
 - **Key Capabilities**: Requirement gathering, ambiguity identification, and detailed plan generation.
 - **Example Prompt**: "Interview the user to understand the requirements for the new plugin system."
 
-## Advisor
+## advisor
 
 A read-only consultant for architecture, code review, and debugging advice.
 
@@ -34,7 +34,7 @@ A read-only consultant for architecture, code review, and debugging advice.
 - **Key Capabilities**: Architecture analysis, code review, and debugging strategy.
 - **Example Prompt**: "Review this architectural proposal for potential security vulnerabilities."
 
-## Researcher
+## researcher
 
 Specializes in searching external documentation and internal codebases.
 
@@ -42,7 +42,7 @@ Specializes in searching external documentation and internal codebases.
 - **Key Capabilities**: Documentation search, code pattern identification, and classification.
 - **Example Prompt**: "Find the best practices for implementing JWT authentication in a Bun environment."
 
-## Explorer
+## explorer
 
 A fast agent for codebase search and pattern matching using grep and glob tools.
 
@@ -50,7 +50,7 @@ A fast agent for codebase search and pattern matching using grep and glob tools.
 - **Key Capabilities**: Fast pattern matching, file discovery, and parallel tool execution.
 - **Example Prompt**: "Find all occurrences of the 'PluginRegistry' class and its usages."
 
-## Worker
+## worker
 
 A general purpose executor for standard tasks and category-based delegation.
 

@@ -10,7 +10,7 @@ export * from "./tool-restrictions";
 export * from "./fallback-chains";
 export * from "./builtin-agents";
 export * from "./orchestrator";
-export * from "./deep-worker";
+export * from "./deepworker";
 export * from "./planner";
 export * from "./advisor";
 export * from "./researcher";

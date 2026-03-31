@@ -85,7 +85,9 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       } else {
         // Discovery not ready — use fallback provider
         const fallbackModel = `${fallbackProvider}/${desiredModel}`;
-        log(`[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${fallbackModel}" (fallback provider: ${fallbackProvider})`);
+        log(
+          `[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${fallbackModel}" (fallback provider: ${fallbackProvider})`,
+        );
         agentConfig.model = fallbackModel;
       }
     }

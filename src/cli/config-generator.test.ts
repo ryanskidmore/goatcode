@@ -25,7 +25,7 @@ describe("#given generateConfig with default options", () => {
     it("#then the output contains all active agent names in comments", () => {
       const result = generateConfig();
       expect(result).toContain('"orchestrator"');
-      expect(result).toContain('"deep-worker"');
+      expect(result).toContain('"deepworker"');
       expect(result).toContain('"planner"');
       expect(result).toContain('"advisor"');
       expect(result).toContain('"researcher"');
@@ -66,7 +66,7 @@ describe("#given generateConfig with default options", () => {
     it("#then the output lists all active micro-plugins", () => {
       const result = generateConfig();
       expect(result).toContain('"goatcode-sh/orchestrator"');
-      expect(result).toContain('"goatcode-sh/deep-worker"');
+      expect(result).toContain('"goatcode-sh/deepworker"');
       expect(result).toContain('"goatcode-sh/planner"');
       expect(result).toContain('"goatcode-sh/advisor"');
       expect(result).toContain('"goatcode-sh/researcher"');

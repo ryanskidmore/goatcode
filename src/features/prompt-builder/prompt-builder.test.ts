@@ -16,7 +16,7 @@ const SAMPLE_AGENTS: AgentTableEntry[] = [
     whenToUse: "Need to find code references",
   },
   {
-    name: "deep-worker",
+    name: "deepworker",
     description: "Autonomous implementation agent.",
     whenToUse: "Complex multi-file changes",
   },
@@ -50,7 +50,7 @@ describe("prompt-builder", () => {
 
         //#then
         expect(result).toContain("explorer");
-        expect(result).toContain("deep-worker");
+        expect(result).toContain("deepworker");
         expect(result).toContain("advisor");
         expect(result).toContain("| Agent | Description | When to Use |");
       });
@@ -198,7 +198,7 @@ describe("prompt-builder", () => {
         //#then
         expect(result).toContain(ORCHESTRATOR_PROMPT);
         expect(result).toContain("explorer");
-        expect(result).toContain("deep-worker");
+        expect(result).toContain("deepworker");
         expect(result).toContain("playwright");
         expect(result).toContain("git-master");
         expect(result).toContain("visual-engineering");

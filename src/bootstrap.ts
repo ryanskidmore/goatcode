@@ -106,9 +106,12 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       }, DISCOVERY_TIMEOUT_MS);
 
       try {
-        ctx.client.provider.list().then(resolve, reject).finally(() => {
-          clearTimeout(timeoutId);
-        });
+        ctx.client.provider
+          .list()
+          .then(resolve, reject)
+          .finally(() => {
+            clearTimeout(timeoutId);
+          });
       } catch (error) {
         clearTimeout(timeoutId);
         reject(error);

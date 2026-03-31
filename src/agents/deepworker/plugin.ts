@@ -3,10 +3,10 @@ import { DEEP_WORKER_TEMPERATURE, DEEP_WORKER_MODE, DEEP_WORKER_DEFAULT_MODEL } 
 import { DEEP_WORKER_PROMPT } from "./prompt";
 
 export const deepWorkerPlugin = definePlugin({
-  name: "deep-worker",
+  name: "deepworker",
   version: "0.1.0",
   agents: {
-    "deep-worker": {
+    deepworker: {
       model: DEEP_WORKER_DEFAULT_MODEL,
       temperature: DEEP_WORKER_TEMPERATURE,
       mode: DEEP_WORKER_MODE,

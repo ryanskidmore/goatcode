@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { orchestratorPlugin } from "./orchestrator/plugin";
-import { deepWorkerPlugin } from "./deep-worker/plugin";
+import { deepWorkerPlugin } from "./deepworker/plugin";
 import { plannerPlugin } from "./planner/plugin";
 import { advisorPlugin } from "./advisor/plugin";
 import { researcherPlugin } from "./researcher/plugin";
