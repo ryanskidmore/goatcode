@@ -105,7 +105,8 @@ const MODEL_PROVIDER_HINTS: readonly [string, string][] = [
  * Returns undefined for unrecognized model names.
  */
 export function inferProviderFromModelName(model: string): string | undefined {
-  const normalized = model.toLowerCase();
+  const normalized = normalizeIdentifier(model);
+  if (!normalized) return undefined;
   for (const [prefix, provider] of MODEL_PROVIDER_HINTS) {
     if (normalized.startsWith(prefix)) return provider;
   }

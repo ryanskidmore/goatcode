@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { existsSync, mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { ensureUserConfig } from "./ensure-user-config";
@@ -66,8 +66,10 @@ describe("#given ensureUserConfig", () => {
 
   describe("#when an error occurs during write", () => {
     it("#then it does not throw", async () => {
-      // Point to an invalid path that can't be created
-      process.env.GOATCODE_CONFIG_DIR = "/dev/null/impossible";
+      // Point config dir to a path that is actually a file, not a directory.
+      const blockingPath = join(tempDir, "not-a-directory");
+      writeFileSync(blockingPath, "x", "utf8");
+      process.env.GOATCODE_CONFIG_DIR = blockingPath;
 
       // Should not throw — errors are swallowed
       await expect(ensureUserConfig()).resolves.toBeUndefined();

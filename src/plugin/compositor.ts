@@ -62,7 +62,8 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     // Priority: discovery data > config default_provider > "opencode" fallback.
     // Cannot await discovery here (deadlocks OpenCode's event loop), so we
     // use a synchronous fallback when discovery hasn't completed yet.
-    const fallbackProvider = getDefaultPreferredProvider() ?? getProviderPriority()[0] ?? "opencode";
+    const fallbackProvider =
+      getDefaultPreferredProvider() ?? getProviderPriority()[0] ?? "opencode";
 
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {

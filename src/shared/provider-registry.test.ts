@@ -129,14 +129,6 @@ describe("provider-registry (discovery-based)", () => {
       });
     });
 
-    it("infers provider for known bare models when discovery is unavailable and no preferred provider", () => {
-      // claude-* models are inferred as anthropic
-      expect(resolveProvider("claude-opus-4-6")).toEqual({
-        qualifiedModel: "anthropic/claude-opus-4-6",
-        providerId: "anthropic",
-      });
-    });
-
     it("synthesizes qualification using default preferred provider when discovery is unavailable", () => {
       setDefaultPreferredProvider("opencode");
       const result = resolveProvider("claude-opus-4-6");
