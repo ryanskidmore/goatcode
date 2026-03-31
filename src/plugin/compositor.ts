@@ -1,7 +1,8 @@
 import type { Hooks } from "@opencode-ai/plugin";
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
-import { qualifyModel } from "../shared/provider-registry";
+import { getDiscovery } from "../shared/provider-discovery";
+import { getDefaultPreferredProvider, qualifyModel } from "../shared/provider-registry";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
 
@@ -37,17 +38,30 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
   // functions inside each ToolDefinition and would throw at runtime.
   hooks.tool = { ...aggregated.tools };
 
+  let configCallCount = 0;
   const configHandlers = aggregated.hooks.get("config") ?? [];
   hooks.config = async (input) => {
+    configCallCount++;
+    const discoveryReady = !!getDiscovery();
+    const inputRecord = input as Record<string, unknown>;
+    log(`[compositor] config hook call #${configCallCount}`, {
+      discoveryReady,
+      inputKeys: Object.keys(input),
+      mode: inputRecord["mode"],
+    });
+
     if (!input.agent) {
       input.agent = {};
     }
 
+    // Detect the provider to use for qualifying bare model names.
+    // Priority: discovery data > config default_provider > "opencode" fallback.
+    // Cannot await discovery here (deadlocks OpenCode's event loop), so we
+    // use a synchronous fallback when discovery hasn't completed yet.
+    const fallbackProvider = getDefaultPreferredProvider() ?? "opencode";
+
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
-        // Spread the agent definition but omit `model` — bare model names
-        // cause OpenCode to produce invalid "model/" formats. The model
-        // is injected below only after successful provider qualification.
         const { model: _bareModel, ...configWithoutModel } = agentConfig;
         input.agent[name] = {
           ...configWithoutModel,
@@ -56,19 +70,23 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       }
     }
 
-    // Set agent models from our config when we can fully qualify them.
-    // Only override when the existing model isn't already qualified —
-    // OpenCode may set its own default (bare name); we replace it once
-    // discovery provides the correct provider/model format.
+    // Set agent models from our config.
+    // Primary path: use provider discovery to resolve bare model names.
+    // Fallback: use the detected/configured provider prefix directly.
     for (const [name, agentDef] of Object.entries(aggregated.agents)) {
       const agentConfig = input.agent[name];
       if (!agentConfig) continue;
       const desiredModel = agentDef.model;
       if (!desiredModel) continue;
-      if (agentConfig.model?.includes("/")) continue;
       const qualified = qualifyModel(desiredModel);
       if (qualified.includes("/")) {
+        log(`[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${qualified}"`);
         agentConfig.model = qualified;
+      } else {
+        // Discovery not ready — use fallback provider
+        const fallbackModel = `${fallbackProvider}/${desiredModel}`;
+        log(`[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${fallbackModel}" (fallback provider: ${fallbackProvider})`);
+        agentConfig.model = fallbackModel;
       }
     }
 

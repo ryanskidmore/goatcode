@@ -93,8 +93,9 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   setProviderPriority(config.provider_priority ?? []);
   setDefaultPreferredProvider(config.default_provider);
   // Fire provider discovery in the background — don't block plugin init.
-  // The compositor's config hook runs on every session/message, so models
-  // will be qualified once discovery completes (typically within seconds).
+  // Cannot await here or in the config hook (deadlocks OpenCode's event loop).
+  // The config hook will use discovery data if ready, or fall back to
+  // inferring the provider from OpenCode's default model assignment.
   if (ctx.client?.provider?.list) {
     const DISCOVERY_TIMEOUT_MS = 15_000;
     void Promise.race([
@@ -115,12 +116,16 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
           initializeDiscovery(discovery);
           log("[bootstrap] Provider discovery completed");
         } else {
-          log("[bootstrap] Provider discovery response missing required fields");
+          log("[bootstrap] Provider discovery response missing required fields", {
+            hasAll: !!providerData?.all,
+            hasConnected: !!providerData?.connected,
+          });
         }
       })
       .catch((error: unknown) => {
-        log("[bootstrap] Provider discovery failed; using pass-through model resolution", {
-          error,
+        const msg = error instanceof Error ? error.message : String(error);
+        log("[bootstrap] Provider discovery failed; models will use OpenCode defaults", {
+          message: msg,
         });
       });
   } else {
