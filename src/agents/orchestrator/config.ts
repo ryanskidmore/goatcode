@@ -8,3 +8,4 @@ export const ORCHESTRATOR_FALLBACK_MODELS = [
   "gemini-3.1-pro-preview",
   "claude-sonnet-4-6",
 ];
+export const ORCHESTRATOR_DEFAULT_MODEL = ORCHESTRATOR_FALLBACK_MODELS[0];

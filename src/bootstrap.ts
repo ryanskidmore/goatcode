@@ -92,9 +92,11 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   resetDiscovery();
   setProviderPriority(config.provider_priority ?? []);
   setDefaultPreferredProvider(config.default_provider);
-  try {
-    const DISCOVERY_TIMEOUT_MS = 5_000;
-    const providerResponse = (await Promise.race([
+  // Fire provider discovery in the background -- don't block plugin initialization.
+  // Model resolution uses pass-through fallback until discovery completes.
+  if (ctx.client?.provider?.list) {
+    const DISCOVERY_TIMEOUT_MS = 15_000;
+    void Promise.race([
       ctx.client.provider.list(),
       new Promise<never>((_, reject) =>
         setTimeout(
@@ -102,20 +104,26 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
           DISCOVERY_TIMEOUT_MS,
         ),
       ),
-    ])) as Awaited<ReturnType<typeof ctx.client.provider.list>>;
-    const providerData = providerResponse?.data as ProviderListResponse | undefined;
-    if (providerData?.all && providerData?.connected) {
-      const discovery = buildDiscoveryIndex(providerData);
-      initializeDiscovery(discovery);
-    } else {
-      log("[bootstrap] Provider discovery response missing required fields");
-    }
-  } catch (error) {
-    log("[bootstrap] Provider discovery failed; using pass-through model resolution", { error });
-    const msg = error instanceof Error ? error.message : String(error);
-    process.stderr.write(
-      `[goatcode] WARNING: Provider discovery failed (${msg}) — model provider resolution will use pass-through fallback.\n`,
-    );
+    ])
+      .then((providerResponse) => {
+        const providerData = (
+          providerResponse as Awaited<ReturnType<typeof ctx.client.provider.list>>
+        )?.data as ProviderListResponse | undefined;
+        if (providerData?.all && providerData?.connected) {
+          const discovery = buildDiscoveryIndex(providerData);
+          initializeDiscovery(discovery);
+          log("[bootstrap] Provider discovery completed");
+        } else {
+          log("[bootstrap] Provider discovery response missing required fields");
+        }
+      })
+      .catch((error: unknown) => {
+        log("[bootstrap] Provider discovery failed; using pass-through model resolution", {
+          error,
+        });
+      });
+  } else {
+    log("[bootstrap] client.provider.list not available; skipping provider discovery");
   }
 
   const registry = new PluginRegistry();
