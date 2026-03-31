@@ -1,9 +1,5 @@
 import { definePlugin } from "../../plugin-api";
-import {
-  RESEARCHER_TEMPERATURE,
-  RESEARCHER_MODE,
-  RESEARCHER_DEFAULT_MODEL,
-} from "./config";
+import { RESEARCHER_TEMPERATURE, RESEARCHER_MODE, RESEARCHER_DEFAULT_MODEL } from "./config";
 import { RESEARCHER_PROMPT } from "./prompt";
 
 export const researcherPlugin = definePlugin({

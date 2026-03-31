@@ -1,9 +1,5 @@
 import { definePlugin } from "../../plugin-api";
-import {
-  DEEP_WORKER_TEMPERATURE,
-  DEEP_WORKER_MODE,
-  DEEP_WORKER_DEFAULT_MODEL,
-} from "./config";
+import { DEEP_WORKER_TEMPERATURE, DEEP_WORKER_MODE, DEEP_WORKER_DEFAULT_MODEL } from "./config";
 import { DEEP_WORKER_PROMPT } from "./prompt";
 
 export const deepWorkerPlugin = definePlugin({

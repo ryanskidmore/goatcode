@@ -29,9 +29,14 @@ function makeManager(task: BackgroundTask | undefined): BackgroundAgentManager {
 function makeClient(
   messages: Array<{ id?: string; role?: string; content?: string }> = [],
 ): OpenCodeContext["client"] {
+  // Transform flat test messages to the real API shape: { info: Message; parts: Part[] }
+  const apiMessages = messages.map((m) => ({
+    info: { id: m.id, role: m.role, time: { created: Date.now() } },
+    parts: [{ type: "text", text: m.content ?? "" }],
+  }));
   return {
     session: {
-      messages: mock(async () => ({ data: messages })),
+      messages: mock(async () => ({ data: apiMessages })),
       status: mock(async () => ({ data: {} })),
     },
   } as unknown as OpenCodeContext["client"];

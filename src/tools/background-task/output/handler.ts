@@ -17,6 +17,22 @@ type SessionMessage = {
   content?: string;
 };
 
+/** Raw shape returned by client.session.messages() */
+type ApiMessage = {
+  info: { id?: string; role?: string; time?: { created?: number } };
+  parts: Array<{ type?: string; text?: string; thinking?: string }>;
+};
+
+function extractTextFromApiParts(
+  parts: ApiMessage["parts"],
+): string {
+  return parts
+    .filter((p) => p.type === "text" && typeof p.text === "string")
+    .map((p) => p.text!)
+    .join(" ")
+    .trim();
+}
+
 function formatElapsed(startedAt: number): string {
   const elapsedMs = Date.now() - startedAt;
   const seconds = Math.floor(elapsedMs / 1000);
@@ -138,7 +154,13 @@ async function fetchSessionMessages(
       path: { id: task.sessionId },
     });
 
-    let messages = (messagesResult.data ?? []) as SessionMessage[];
+    // API returns Array<{ info: Message; parts: Part[] }> — transform to flat SessionMessage
+    const rawMessages = (messagesResult.data ?? []) as ApiMessage[];
+    let messages: SessionMessage[] = rawMessages.map((m) => ({
+      id: m.info?.id,
+      role: m.info?.role,
+      content: extractTextFromApiParts(m.parts),
+    }));
 
     // Filter by since_message_id if provided
     if (args.since_message_id) {

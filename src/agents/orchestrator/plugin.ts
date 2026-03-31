@@ -1,9 +1,5 @@
 import { definePlugin } from "../../plugin-api";
-import {
-  ORCHESTRATOR_TEMPERATURE,
-  ORCHESTRATOR_MODE,
-  ORCHESTRATOR_DEFAULT_MODEL,
-} from "./config";
+import { ORCHESTRATOR_TEMPERATURE, ORCHESTRATOR_MODE, ORCHESTRATOR_DEFAULT_MODEL } from "./config";
 import { ORCHESTRATOR_PROMPT } from "./prompt";
 
 export const orchestratorPlugin = definePlugin({
