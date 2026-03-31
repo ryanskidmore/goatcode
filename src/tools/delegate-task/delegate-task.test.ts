@@ -96,7 +96,7 @@ describe("resolveCategory", () => {
     describe("#when resolving visual-engineering", () => {
       it("#then returns gemini-3.1-pro with high variant", () => {
         const config = resolveCategory("visual-engineering");
-        expect(config?.model).toBe("google/gemini-3.1-pro");
+        expect(config?.model).toBe("gemini-3.1-pro");
         expect(config?.variant).toBe("high");
         expect(config?.description).toBe("Frontend, UI/UX, design, styling, animation");
       });
@@ -105,7 +105,7 @@ describe("resolveCategory", () => {
     describe("#when resolving ultrabrain", () => {
       it("#then returns gpt-5.4 with xhigh variant", () => {
         const config = resolveCategory("ultrabrain");
-        expect(config?.model).toBe("openai/gpt-5.4");
+        expect(config?.model).toBe("gpt-5.4");
         expect(config?.variant).toBe("xhigh");
       });
     });
@@ -200,9 +200,9 @@ describe("createTaskTool", () => {
 
         expect(result).toContain("Background task launched");
         expect(result).toContain("quick");
-        expect(result).toContain("openai/gpt-5.4-mini");
+        expect(result).toContain("gpt-5.4-mini");
         expect(bgManager.launch).toHaveBeenCalledTimes(1);
-        expect(bgManager.launched[0].model).toBe("openai/gpt-5.4-mini");
+        expect(bgManager.launched[0].model).toBe("gpt-5.4-mini");
       });
     });
 
