@@ -5,10 +5,10 @@ import { log } from "../shared/logger";
 import { generateUserConfig } from "../cli/config-generator";
 import { resolveUserConfigDir } from "./paths";
 
-const USER_CONFIG_FILE_NAME = "config.ts";
+const USER_CONFIG_FILE_NAME = "goatcode.ts";
 
 /**
- * Write the default user-level config to `~/.config/goatcode/config.ts`
+ * Write the default user-level config to `~/.config/opencode/goatcode.ts`
  * if it doesn't already exist.
  *
  * This is best-effort: errors are logged but never thrown so bootstrap

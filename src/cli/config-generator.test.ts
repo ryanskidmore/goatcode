@@ -143,29 +143,48 @@ describe("#given generateUserConfig", () => {
       expect(result).toContain("export default defineConfig({");
     });
 
-    it("#then the output contains default_provider comment", () => {
+    it("#then the output contains a default provider value", () => {
       const result = generateUserConfig();
-      expect(result).toContain("// default_provider:");
+      expect(result).toContain('default_provider: "anthropic"');
     });
 
-    it("#then the output contains provider_priority comment", () => {
+    it("#then the output contains provider priority values", () => {
       const result = generateUserConfig();
-      expect(result).toContain("// provider_priority:");
+      expect(result).toContain('provider_priority: ["anthropic", "openai", "google", "opencode"]');
     });
 
-    it("#then the output contains agent override comments", () => {
+    it("#then the output contains agent overrides with all builtin agents", () => {
       const result = generateUserConfig();
-      expect(result).toContain("// agents: {");
+      expect(result).toContain("agents: {");
+      expect(result).toContain('"orchestrator": {}');
+      expect(result).toContain('"deepworker": {}');
+      expect(result).toContain('"planner": {}');
+      expect(result).toContain('"advisor": {}');
+      expect(result).toContain('"researcher": {}');
+      expect(result).toContain('"explorer": {}');
+      expect(result).toContain('"worker": {}');
     });
 
-    it("#then the output contains category override comments", () => {
+    it("#then the output contains category overrides with default models", () => {
       const result = generateUserConfig();
-      expect(result).toContain("// categories: {");
+      expect(result).toContain("categories: {");
+      expect(result).toContain('"visual-engineering": { model: "gemini-3.1-pro", variant: "high" }');
+      expect(result).toContain('"ultrabrain": { model: "gpt-5.4", variant: "xhigh" }');
+      expect(result).toContain('"deep": { model: "gpt-5.3-codex", variant: "medium" }');
+      expect(result).toContain('"quick": { model: "gpt-5.4-mini" }');
+      expect(result).toContain('"unspecified-low": { model: "claude-sonnet-4-6" }');
+      expect(result).toContain('"unspecified-high": { model: "claude-opus-4-6", variant: "max" }');
+      expect(result).toContain('"writing": { model: "gemini-3.1-flash-lite" }');
     });
 
-    it("#then the output does NOT contain a plugins array", () => {
+    it("#then the output enables auto update", () => {
       const result = generateUserConfig();
-      expect(result).not.toContain("plugins: [");
+      expect(result).toContain("auto_update: true");
+    });
+
+    it("#then the output contains a plugins array", () => {
+      const result = generateUserConfig();
+      expect(result).toContain("plugins: [");
     });
 
     it("#then the output ends with a newline", () => {
