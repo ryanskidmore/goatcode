@@ -168,7 +168,9 @@ describe("#given generateUserConfig", () => {
     it("#then the output contains category overrides with default models", () => {
       const result = generateUserConfig();
       expect(result).toContain("categories: {");
-      expect(result).toContain('"visual-engineering": { model: "gemini-3.1-pro", variant: "high" }');
+      expect(result).toContain(
+        '"visual-engineering": { model: "gemini-3.1-pro", variant: "high" }',
+      );
       expect(result).toContain('"ultrabrain": { model: "gpt-5.4", variant: "xhigh" }');
       expect(result).toContain('"deep": { model: "gpt-5.3-codex", variant: "medium" }');
       expect(result).toContain('"quick": { model: "gpt-5.4-mini" }');
