@@ -118,6 +118,10 @@ async function pollForResult(
   const start = Date.now();
   let lastMessageCount = -1;
   let stablePolls = 0;
+  // This is intentionally stricter than poller.ts STABILITY_REQUIRED_POLLS=2.
+  // In this synchronous path we may have only one chance to decide the task is
+  // done before returning to the caller, so we require extra stability to reduce
+  // the chance of returning while the assistant is still producing output.
   const STABLE_THRESHOLD = 3;
 
   while (Date.now() - start < MAX_POLL_DURATION_MS) {
@@ -140,6 +144,9 @@ async function pollForResult(
 
     // Status API may not return data for this session (undefined).
     // Fall back to message-count stability detection.
+    // messageCount > 1 is required because a new session usually starts with
+    // exactly one user message (the submitted prompt). Treating that as stable
+    // would be a false positive before any assistant response exists.
     if (sessionStatus === undefined && messageCount > 1) {
       if (messageCount === lastMessageCount) {
         stablePolls += 1;

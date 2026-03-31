@@ -25,12 +25,40 @@ type ApiMessage = {
 
 function extractTextFromApiParts(
   parts: ApiMessage["parts"],
+  options: {
+    includeThinking: boolean;
+    includeToolResults: boolean;
+    thinkingMaxChars: number;
+  },
 ): string {
-  return parts
-    .filter((p) => p.type === "text" && typeof p.text === "string")
-    .map((p) => p.text!)
-    .join(" ")
-    .trim();
+  const thinkingLimit = Math.max(0, options.thinkingMaxChars);
+  const extracted: string[] = [];
+
+  for (const part of parts) {
+    switch (part.type) {
+      case "text":
+        if (typeof part.text === "string") extracted.push(part.text);
+        break;
+      case "thinking":
+        if (!options.includeThinking) break;
+        {
+          const rawThinking = typeof part.thinking === "string" ? part.thinking : part.text;
+          if (typeof rawThinking === "string") {
+            extracted.push(
+              rawThinking.length > thinkingLimit
+                ? `${rawThinking.slice(0, thinkingLimit)}... (truncated)`
+                : rawThinking,
+            );
+          }
+        }
+        break;
+      case "tool":
+        if (options.includeToolResults && typeof part.text === "string") extracted.push(part.text);
+        break;
+    }
+  }
+
+  return extracted.join(" ").trim();
 }
 
 function formatElapsed(startedAt: number): string {
@@ -110,8 +138,7 @@ export async function handleBackgroundOutput(
   const isActive = task.status === "queued" || task.status === "running";
 
   if (args.block === true && isActive) {
-    const requestedTimeout = args.timeout ?? MAX_BLOCK_TIMEOUT_MS;
-    const timeoutMs = Math.min(requestedTimeout, MAX_BLOCK_TIMEOUT_MS);
+    const timeoutMs = Math.min(args.timeout ?? MAX_BLOCK_TIMEOUT_MS, MAX_BLOCK_TIMEOUT_MS);
     const resolved = await waitForCompletion(manager, args.task_id, timeoutMs);
     if (!resolved) {
       return `Task ${args.task_id} was deleted while waiting.`;
@@ -156,11 +183,17 @@ async function fetchSessionMessages(
 
     // API returns Array<{ info: Message; parts: Part[] }> — transform to flat SessionMessage
     const rawMessages = (messagesResult.data ?? []) as ApiMessage[];
+    const thinkingMaxChars = args.thinking_max_chars ?? 2000;
     let messages: SessionMessage[] = rawMessages.map((m) => ({
       id: m.info?.id,
       role: m.info?.role,
-      content: extractTextFromApiParts(m.parts),
+      content: extractTextFromApiParts(m.parts, {
+        includeThinking: args.include_thinking ?? false,
+        includeToolResults: args.include_tool_results ?? false,
+        thinkingMaxChars,
+      }),
     }));
+    messages = messages.filter((m) => (m.content ?? "").length > 0);
 
     // Filter by since_message_id if provided
     if (args.since_message_id) {
@@ -170,30 +203,15 @@ async function fetchSessionMessages(
       }
     }
 
-    // Filter by role based on args
-    if (!args.include_thinking) {
-      messages = messages.filter((m) => m.role !== "thinking");
-    }
-    if (!args.include_tool_results) {
-      messages = messages.filter((m) => m.role !== "tool");
-    }
-
     // Apply message limit
     const limit = Math.min(args.message_limit ?? 100, 100);
     if (messages.length > limit) {
       messages = messages.slice(-limit);
     }
 
-    // Truncate thinking content if needed
-    const thinkingMaxChars = args.thinking_max_chars ?? 2000;
-
     const formatted = messages
       .map((m) => {
-        let content = m.content ?? "";
-        if (m.role === "thinking" && content.length > thinkingMaxChars) {
-          content = content.slice(0, thinkingMaxChars) + "... (truncated)";
-        }
-        return `[${m.role ?? "unknown"}] ${content}`;
+        return `[${m.role ?? "unknown"}] ${m.content ?? ""}`;
       })
       .join("\n\n---\n\n");
 

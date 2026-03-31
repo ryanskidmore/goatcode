@@ -98,15 +98,24 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   // inferring the provider from OpenCode's default model assignment.
   if (ctx.client?.provider?.list) {
     const DISCOVERY_TIMEOUT_MS = 15_000;
-    void Promise.race([
-      ctx.client.provider.list(),
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error(`provider.list timeout after ${DISCOVERY_TIMEOUT_MS}ms`)),
-          DISCOVERY_TIMEOUT_MS,
-        ),
-      ),
-    ])
+    const providerListWithTimeout = new Promise<
+      Awaited<ReturnType<typeof ctx.client.provider.list>>
+    >((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`provider.list timeout after ${DISCOVERY_TIMEOUT_MS}ms`));
+      }, DISCOVERY_TIMEOUT_MS);
+
+      try {
+        ctx.client.provider.list().then(resolve, reject).finally(() => {
+          clearTimeout(timeoutId);
+        });
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    });
+
+    void providerListWithTimeout
       .then((providerResponse) => {
         const providerData = (
           providerResponse as Awaited<ReturnType<typeof ctx.client.provider.list>>
