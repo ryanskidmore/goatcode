@@ -9,7 +9,7 @@ import type { BackgroundOutputArgs } from "./types";
  * handler can return a meaningful "still running" message instead of
  * being forcibly aborted by the runtime.
  */
-const MAX_BLOCK_TIMEOUT_MS = 55_000;
+const MAX_BLOCK_TIMEOUT_MS = 600_000;
 
 type SessionMessage = {
   id?: string;
