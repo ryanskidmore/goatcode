@@ -47,7 +47,7 @@ describe("loadConfig", () => {
         const previousDir = process.env.GOATCODE_CONFIG_DIR;
         process.env.GOATCODE_CONFIG_DIR = userDir;
         writeFileSync(
-          join(userDir, "config.ts"),
+          join(userDir, "goatcode.ts"),
           'export default { auto_update: false, disabled_tools: ["bash"] }\n',
           "utf8",
         );
@@ -92,7 +92,7 @@ describe("loadConfig", () => {
         process.env.GOATCODE_CONFIG_DIR = userDir;
 
         writeFileSync(
-          join(userDir, "config.ts"),
+          join(userDir, "goatcode.ts"),
           `export default {
   auto_update: true,
   disabled_tools: ["grep", "glob"],
@@ -135,7 +135,7 @@ describe("loadConfig", () => {
         const overrideDir = join(baseDir, "custom-config-dir");
         mkdirSync(overrideDir);
         writeFileSync(
-          join(overrideDir, "config.ts"),
+          join(overrideDir, "goatcode.ts"),
           'export default { disabled_agents: ["advisor"] }\n',
           "utf8",
         );
@@ -159,7 +159,7 @@ describe("loadConfig", () => {
         process.env.GOATCODE_CONFIG_DIR = userDir;
 
         writeFileSync(
-          join(userDir, "config.ts"),
+          join(userDir, "goatcode.ts"),
           'export default { auto_update: "nope" }\n',
           "utf8",
         );
@@ -186,7 +186,7 @@ describe("loadConfig", () => {
         process.env.GOATCODE_CONFIG_DIR = userDir;
 
         writeFileSync(
-          join(userDir, "config.ts"),
+          join(userDir, "goatcode.ts"),
           `export default {
   agents: {
     orchestrator: { model: "anthropic/claude-opus-4-6", temperature: 0 }
