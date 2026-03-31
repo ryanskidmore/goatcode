@@ -77,6 +77,35 @@ function buildPluginsSection(): string {
 }
 
 /**
+ * Generate a user-level config for `~/.config/goatcode/config.ts`.
+ *
+ * Omits the plugins section (project-specific) and includes
+ * provider/priority settings so users can easily customise resolution.
+ */
+export function generateUserConfig(): string {
+  const agentSection = buildAgentOverridesSection();
+  const categorySection = buildCategoryOverridesSection();
+
+  return [
+    `import { defineConfig } from "goatcode-sh"`,
+    ``,
+    `export default defineConfig({`,
+    `  // Global default provider — overrides automatic provider detection.`,
+    `  // Uncomment and set to your preferred provider.`,
+    `  // default_provider: "anthropic",`,
+    ``,
+    `  // Provider priority — models are resolved using the first connected provider.`,
+    `  // provider_priority: ["anthropic", "openai", "google", "opencode"],`,
+    ``,
+    agentSection,
+    ``,
+    categorySection,
+    `})`,
+    ``,
+  ].join("\n");
+}
+
+/**
  * Generate the content of an `goatcode.config.ts` file.
  *
  * Returns a TypeScript source string that can be written directly to disk.

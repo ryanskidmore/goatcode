@@ -3,7 +3,7 @@ import { writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { generateConfig } from "./config-generator";
+import { generateConfig, generateUserConfig } from "./config-generator";
 
 describe("#given generateConfig with default options", () => {
   describe("#when called with no arguments", () => {
@@ -127,6 +127,50 @@ describe("#given generateConfig with includeCategories: false", () => {
     it("#then the output still contains agent override comments", () => {
       const result = generateConfig({ includeCategories: false });
       expect(result).toContain("// agents: {");
+    });
+  });
+});
+
+describe("#given generateUserConfig", () => {
+  describe("#when called", () => {
+    it("#then the output contains the defineConfig import", () => {
+      const result = generateUserConfig();
+      expect(result).toContain('import { defineConfig } from "goatcode-sh"');
+    });
+
+    it("#then the output contains the defineConfig call", () => {
+      const result = generateUserConfig();
+      expect(result).toContain("export default defineConfig({");
+    });
+
+    it("#then the output contains default_provider comment", () => {
+      const result = generateUserConfig();
+      expect(result).toContain("// default_provider:");
+    });
+
+    it("#then the output contains provider_priority comment", () => {
+      const result = generateUserConfig();
+      expect(result).toContain("// provider_priority:");
+    });
+
+    it("#then the output contains agent override comments", () => {
+      const result = generateUserConfig();
+      expect(result).toContain("// agents: {");
+    });
+
+    it("#then the output contains category override comments", () => {
+      const result = generateUserConfig();
+      expect(result).toContain("// categories: {");
+    });
+
+    it("#then the output does NOT contain a plugins array", () => {
+      const result = generateUserConfig();
+      expect(result).not.toContain("plugins: [");
+    });
+
+    it("#then the output ends with a newline", () => {
+      const result = generateUserConfig();
+      expect(result.endsWith("\n")).toBe(true);
     });
   });
 });

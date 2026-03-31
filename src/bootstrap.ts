@@ -23,6 +23,7 @@ import {
   setDefaultPreferredProvider,
   setProviderPriority,
 } from "./shared/provider-registry";
+import { ensureUserConfig } from "./config/ensure-user-config";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -66,6 +67,9 @@ function isValidPluginDefinition(value: unknown): value is PluginDefinition {
 }
 
 export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
+  // Ensure the user-level config exists (fire-and-forget, never blocks startup).
+  void ensureUserConfig();
+
   const rawConfig = await loadConfig(ctx.directory);
 
   const validation = validateConfig(rawConfig ?? {});
