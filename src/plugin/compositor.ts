@@ -73,14 +73,19 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     }
 
     // Resolve bare model names using the provider map from OpenCode's config.
-    // This is synchronous and always available — no async discovery needed.
+    // input.provider is { [providerId]: { models?: { [modelId]: ... } } }.
     const providers = (input as Record<string, unknown>).provider as ProviderMap | undefined;
     if (providers) {
+      log("[compositor] Provider map keys", { keys: Object.keys(providers) });
       for (const agentConfig of Object.values(input.agent)) {
         if (agentConfig?.model && !agentConfig.model.includes("/")) {
+          const before = agentConfig.model;
           agentConfig.model = qualifyModelFromProviders(agentConfig.model, providers);
+          log("[compositor] Model qualification", { before, after: agentConfig.model });
         }
       }
+    } else {
+      log("[compositor] No provider map in config hook input");
     }
 
     if (input.agent.build === undefined) {
