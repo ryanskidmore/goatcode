@@ -54,7 +54,12 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
 
     for (const agentConfig of Object.values(input.agent)) {
       if (agentConfig?.model && !agentConfig.model.includes("/")) {
-        agentConfig.model = qualifyModel(agentConfig.model);
+        const qualified = qualifyModel(agentConfig.model);
+        // Only update if qualification resolved a provider.
+        // Otherwise leave the bare name for OpenCode's own resolution.
+        if (qualified.includes("/")) {
+          agentConfig.model = qualified;
+        }
       }
     }
 
