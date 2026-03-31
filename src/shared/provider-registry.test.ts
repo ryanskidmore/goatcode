@@ -8,6 +8,7 @@ import {
 import {
   findProvidersForModel,
   getProviderPriority,
+  inferProviderFromModelName,
   isQualifiedModel,
   qualifyModel,
   registerProviderModelMap,
@@ -128,8 +129,12 @@ describe("provider-registry (discovery-based)", () => {
       });
     });
 
-    it("returns undefined for bare models when discovery is unavailable and no preferred provider", () => {
-      expect(resolveProvider("claude-opus-4-6")).toBeUndefined();
+    it("infers provider for known bare models when discovery is unavailable and no preferred provider", () => {
+      // claude-* models are inferred as anthropic
+      expect(resolveProvider("claude-opus-4-6")).toEqual({
+        qualifiedModel: "anthropic/claude-opus-4-6",
+        providerId: "anthropic",
+      });
     });
 
     it("synthesizes qualification using default preferred provider when discovery is unavailable", () => {
@@ -149,9 +154,65 @@ describe("provider-registry (discovery-based)", () => {
       });
     });
 
+    it("infers provider from model name when discovery is unavailable and no preferred provider", () => {
+      const claudeResult = resolveProvider("claude-opus-4-6");
+      expect(claudeResult).toEqual({
+        qualifiedModel: "anthropic/claude-opus-4-6",
+        providerId: "anthropic",
+      });
+
+      const gptResult = resolveProvider("gpt-5.4");
+      expect(gptResult).toEqual({
+        qualifiedModel: "openai/gpt-5.4",
+        providerId: "openai",
+      });
+
+      const geminiResult = resolveProvider("gemini-3.1-flash-lite");
+      expect(geminiResult).toEqual({
+        qualifiedModel: "google/gemini-3.1-flash-lite",
+        providerId: "google",
+      });
+    });
+
+    it("returns undefined for unknown bare models when discovery is unavailable and no preferred provider", () => {
+      expect(resolveProvider("some-unknown-model")).toBeUndefined();
+    });
+
     it("rejects malformed qualified models like /gpt-5.4", () => {
       const result = resolveProvider("/gpt-5.4");
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe("inferProviderFromModelName", () => {
+    it("infers anthropic for claude models", () => {
+      expect(inferProviderFromModelName("claude-opus-4-6")).toBe("anthropic");
+      expect(inferProviderFromModelName("claude-sonnet-4-6")).toBe("anthropic");
+    });
+
+    it("infers openai for gpt models", () => {
+      expect(inferProviderFromModelName("gpt-5.4")).toBe("openai");
+      expect(inferProviderFromModelName("gpt-5.3-codex")).toBe("openai");
+    });
+
+    it("infers openai for o-series models", () => {
+      expect(inferProviderFromModelName("o1-mini")).toBe("openai");
+      expect(inferProviderFromModelName("o3-mini")).toBe("openai");
+      expect(inferProviderFromModelName("o4-mini")).toBe("openai");
+    });
+
+    it("infers google for gemini models", () => {
+      expect(inferProviderFromModelName("gemini-3.1-flash-lite")).toBe("google");
+      expect(inferProviderFromModelName("gemini-3.1-pro-preview")).toBe("google");
+    });
+
+    it("returns undefined for unrecognized models", () => {
+      expect(inferProviderFromModelName("some-unknown-model")).toBeUndefined();
+    });
+
+    it("is case-insensitive", () => {
+      expect(inferProviderFromModelName("Claude-Opus-4-6")).toBe("anthropic");
+      expect(inferProviderFromModelName("GPT-5.4")).toBe("openai");
     });
   });
 
@@ -162,8 +223,14 @@ describe("provider-registry (discovery-based)", () => {
       expect(qualifyModel("gpt-5.4")).toBe("openai/gpt-5.4");
     });
 
-    it("falls back to pass-through when discovery is unavailable", () => {
-      expect(qualifyModel("gpt-5.4")).toBe("gpt-5.4");
+    it("infers provider from model name when discovery is unavailable", () => {
+      expect(qualifyModel("claude-opus-4-6")).toBe("anthropic/claude-opus-4-6");
+      expect(qualifyModel("gpt-5.4")).toBe("openai/gpt-5.4");
+      expect(qualifyModel("gemini-3.1-flash-lite")).toBe("google/gemini-3.1-flash-lite");
+    });
+
+    it("falls back to pass-through for unknown models when discovery is unavailable", () => {
+      expect(qualifyModel("some-unknown-model")).toBe("some-unknown-model");
     });
   });
 

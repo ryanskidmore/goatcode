@@ -2,7 +2,11 @@ import type { Hooks } from "@opencode-ai/plugin";
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
 import { getDiscovery } from "../shared/provider-discovery";
-import { getDefaultPreferredProvider, qualifyModel } from "../shared/provider-registry";
+import {
+  getDefaultPreferredProvider,
+  getProviderPriority,
+  qualifyModel,
+} from "../shared/provider-registry";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
 
@@ -58,7 +62,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     // Priority: discovery data > config default_provider > "opencode" fallback.
     // Cannot await discovery here (deadlocks OpenCode's event loop), so we
     // use a synchronous fallback when discovery hasn't completed yet.
-    const fallbackProvider = getDefaultPreferredProvider() ?? "opencode";
+    const fallbackProvider = getDefaultPreferredProvider() ?? getProviderPriority()[0] ?? "opencode";
 
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
