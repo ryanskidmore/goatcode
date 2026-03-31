@@ -53,7 +53,7 @@ export default defineConfig({
 })
 ```
 
-You can also configure GoatCode at the user level by creating `~/.config/goatcode/config.ts`. User-level configuration is merged with project-level configuration, allowing for persistent preferences across projects.
+You can also configure GoatCode at the user level by creating `~/.config/opencode/goatcode.ts`. User-level configuration is merged with project-level configuration, allowing for persistent preferences across projects.
 
 ## Agents
 

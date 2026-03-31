@@ -25,7 +25,7 @@ describe("#given ensureUserConfig", () => {
 
   describe("#when config directory exists but config file does not", () => {
     it("#then it creates the default config file", async () => {
-      const configPath = join(tempDir, "config.ts");
+      const configPath = join(tempDir, "goatcode.ts");
       expect(existsSync(configPath)).toBe(false);
 
       await ensureUserConfig();
@@ -34,12 +34,13 @@ describe("#given ensureUserConfig", () => {
       const content = readFileSync(configPath, "utf8");
       expect(content).toContain('import { defineConfig } from "goatcode-sh"');
       expect(content).toContain("export default defineConfig({");
+      expect(content).toContain('default_provider: "anthropic"');
     });
   });
 
   describe("#when config file already exists", () => {
     it("#then it does not overwrite the existing file", async () => {
-      const configPath = join(tempDir, "config.ts");
+      const configPath = join(tempDir, "goatcode.ts");
       const existingContent = "// existing user config\n";
       writeFileSync(configPath, existingContent, "utf8");
 
@@ -52,14 +53,14 @@ describe("#given ensureUserConfig", () => {
 
   describe("#when the config directory does not exist", () => {
     it("#then it creates the directory and the config file", async () => {
-      const nestedDir = join(tempDir, "nested", "goatcode");
+      const nestedDir = join(tempDir, "nested", "opencode");
       process.env.GOATCODE_CONFIG_DIR = nestedDir;
       expect(existsSync(nestedDir)).toBe(false);
 
       await ensureUserConfig();
 
       expect(existsSync(nestedDir)).toBe(true);
-      const configPath = join(nestedDir, "config.ts");
+      const configPath = join(nestedDir, "goatcode.ts");
       expect(existsSync(configPath)).toBe(true);
     });
   });

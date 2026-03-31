@@ -37,9 +37,9 @@ function buildAgentOverridesSection(): string {
   lines.push("  // agents: {");
   for (const name of BUILTIN_AGENT_NAMES) {
     lines.push(`  //   "${name}": {`);
-    lines.push('  //     // model: "provider/model-name",');
-    lines.push("  //     // temperature: 0.7,");
-    lines.push('  //     // prompt_append: "Additional instructions...",');
+    lines.push('  //     // model: "anthropic/claude-3-5-sonnet",');
+    lines.push("  //     // temperature: 0.1,");
+    lines.push('  //     // prompt_append: "Focus on clear, deterministic execution.",');
     lines.push("  //     // denied_tools: [],");
     lines.push("  //     // disable: false,");
     lines.push("  //   },");
@@ -55,12 +55,36 @@ function buildCategoryOverridesSection(): string {
   lines.push("  // categories: {");
   for (const name of BUILTIN_CATEGORY_NAMES) {
     lines.push(`  //   "${name}": {`);
-    lines.push('  //     // model: "provider/model-name",');
+    lines.push('  //     // model: "anthropic/claude-3-5-sonnet",');
     lines.push('  //     // variant: "high",');
-    lines.push('  //     // prompt_append: "Additional instructions...",');
+    lines.push('  //     // prompt_append: "Prioritize correctness and concise outputs.",');
     lines.push("  //   },");
   }
   lines.push("  // },");
+  return lines.join("\n");
+}
+
+function buildUserAgentSection(): string {
+  const lines: string[] = [];
+  lines.push("  agents: {");
+  for (const name of BUILTIN_AGENT_NAMES) {
+    lines.push(`    "${name}": {},`);
+  }
+  lines.push("  },");
+  return lines.join("\n");
+}
+
+function buildUserCategorySection(): string {
+  const lines: string[] = [];
+  lines.push("  categories: {");
+  for (const [name, def] of Object.entries(DEFAULT_CATEGORY_DEFINITIONS)) {
+    const parts = [`model: "${def.model}"`];
+    if (def.variant) {
+      parts.push(`variant: "${def.variant}"`);
+    }
+    lines.push(`    "${name}": { ${parts.join(", ")} },`);
+  }
+  lines.push("  },");
   return lines.join("\n");
 }
 
@@ -77,29 +101,31 @@ function buildPluginsSection(): string {
 }
 
 /**
- * Generate a user-level config for `~/.config/goatcode/config.ts`.
+ * Generate a user-level config for `~/.config/opencode/goatcode.ts`.
  *
  * Omits the plugins section (project-specific) and includes
  * provider/priority settings so users can easily customise resolution.
  */
 export function generateUserConfig(): string {
-  const agentSection = buildAgentOverridesSection();
-  const categorySection = buildCategoryOverridesSection();
+  const pluginSection = buildPluginsSection();
+  const agentSection = buildUserAgentSection();
+  const categorySection = buildUserCategorySection();
 
   return [
     `import { defineConfig } from "goatcode-sh"`,
     ``,
     `export default defineConfig({`,
-    `  // Global default provider — overrides automatic provider detection.`,
-    `  // Uncomment and set to your preferred provider.`,
-    `  // default_provider: "anthropic",`,
+    `  default_provider: "anthropic",`,
     ``,
-    `  // Provider priority — models are resolved using the first connected provider.`,
-    `  // provider_priority: ["anthropic", "openai", "google", "opencode"],`,
+    `  provider_priority: ["anthropic", "openai", "google", "opencode"],`,
     ``,
     agentSection,
     ``,
     categorySection,
+    ``,
+    `  auto_update: true,`,
+    ``,
+    pluginSection,
     `})`,
     ``,
   ].join("\n");
