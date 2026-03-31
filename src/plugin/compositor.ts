@@ -45,24 +45,29 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
 
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
+        // Spread the agent definition but omit `model` — bare model names
+        // cause OpenCode to produce invalid "model/" formats. The model
+        // is injected below only after successful provider qualification.
+        const { model: _bareModel, ...configWithoutModel } = agentConfig;
         input.agent[name] = {
-          ...agentConfig,
+          ...configWithoutModel,
           ...(agentConfig.tools ? { tools: { ...agentConfig.tools } } : {}),
         };
       }
     }
 
-    // Qualify bare model names using async provider discovery data.
-    // Discovery completes ~150ms after bootstrap; the config hook runs
-    // on every session/message, so models get qualified on the first
-    // call after discovery finishes. Before that, bare names pass through
-    // unchanged for OpenCode to handle.
-    for (const agentConfig of Object.values(input.agent)) {
-      if (agentConfig?.model && !agentConfig.model.includes("/")) {
-        const qualified = qualifyModel(agentConfig.model);
-        if (qualified.includes("/")) {
-          agentConfig.model = qualified;
-        }
+    // Inject default models only when provider discovery has completed and
+    // qualifyModel can resolve the bare name to provider/model format.
+    // The config hook re-runs on every session/message, so models are set
+    // once discovery finishes (~150ms after bootstrap).
+    for (const [name, agentDef] of Object.entries(aggregated.agents)) {
+      const agentConfig = input.agent[name];
+      if (!agentConfig || agentConfig.model) continue;
+      const desiredModel = agentDef.model;
+      if (!desiredModel) continue;
+      const qualified = qualifyModel(desiredModel);
+      if (qualified.includes("/")) {
+        agentConfig.model = qualified;
       }
     }
 
