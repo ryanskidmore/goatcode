@@ -1,29 +1,9 @@
 import type { Hooks } from "@opencode-ai/plugin";
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
+import { qualifyModel } from "../shared/provider-registry";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
-
-type ProviderMap = Record<string, { models?: Record<string, unknown> }>;
-
-/**
- * Resolve a bare model name (e.g. "gpt-5.4") to a qualified provider/model
- * string using the provider map from OpenCode's config hook input.
- * Returns the qualified string or the original bare name if unresolvable.
- */
-function qualifyModelFromProviders(bareModel: string, providers: ProviderMap): string {
-  const normalized = bareModel.trim().toLowerCase();
-  for (const [providerId, providerConfig] of Object.entries(providers)) {
-    const models = providerConfig?.models;
-    if (!models) continue;
-    for (const modelId of Object.keys(models)) {
-      if (modelId.toLowerCase() === normalized) {
-        return `${providerId}/${modelId}`;
-      }
-    }
-  }
-  return bareModel;
-}
 
 const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
   (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
@@ -72,20 +52,18 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       }
     }
 
-    // Resolve bare model names using the provider map from OpenCode's config.
-    // input.provider is { [providerId]: { models?: { [modelId]: ... } } }.
-    const providers = (input as Record<string, unknown>).provider as ProviderMap | undefined;
-    if (providers) {
-      log("[compositor] Provider map keys", { keys: Object.keys(providers) });
-      for (const agentConfig of Object.values(input.agent)) {
-        if (agentConfig?.model && !agentConfig.model.includes("/")) {
-          const before = agentConfig.model;
-          agentConfig.model = qualifyModelFromProviders(agentConfig.model, providers);
-          log("[compositor] Model qualification", { before, after: agentConfig.model });
+    // Qualify bare model names using async provider discovery data.
+    // Discovery completes ~150ms after bootstrap; the config hook runs
+    // on every session/message, so models get qualified on the first
+    // call after discovery finishes. Before that, bare names pass through
+    // unchanged for OpenCode to handle.
+    for (const agentConfig of Object.values(input.agent)) {
+      if (agentConfig?.model && !agentConfig.model.includes("/")) {
+        const qualified = qualifyModel(agentConfig.model);
+        if (qualified.includes("/")) {
+          agentConfig.model = qualified;
         }
       }
-    } else {
-      log("[compositor] No provider map in config hook input");
     }
 
     if (input.agent.build === undefined) {
