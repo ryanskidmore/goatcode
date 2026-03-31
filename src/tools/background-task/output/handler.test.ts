@@ -1,5 +1,6 @@
 import { describe, it, expect, mock } from "bun:test";
 import type { BackgroundTask, BackgroundAgentManager } from "../../../runtime";
+import type { OpenCodeContext } from "../../../types/plugin";
 import { handleBackgroundOutput } from "./handler";
 
 function makeTask(overrides: Partial<BackgroundTask> = {}): BackgroundTask {
@@ -23,6 +24,17 @@ function makeManager(task: BackgroundTask | undefined): BackgroundAgentManager {
     complete: mock(() => {}),
     fail: mock(() => {}),
   } as unknown as BackgroundAgentManager;
+}
+
+function makeClient(
+  messages: Array<{ id?: string; role?: string; content?: string }> = [],
+): OpenCodeContext["client"] {
+  return {
+    session: {
+      messages: mock(async () => ({ data: messages })),
+      status: mock(async () => ({ data: {} })),
+    },
+  } as unknown as OpenCodeContext["client"];
 }
 
 describe("handleBackgroundOutput", () => {
@@ -108,8 +120,8 @@ describe("handleBackgroundOutput", () => {
   });
 
   describe("#given timeout capping", () => {
-    describe("#when timeout exceeds 600000ms", () => {
-      it("#then caps at 600000ms and still returns a result", async () => {
+    describe("#when timeout exceeds 55000ms", () => {
+      it("#then caps at 55000ms and still returns a result", async () => {
         let callCount = 0;
         const task = makeTask({ status: "running" });
 
@@ -136,6 +148,51 @@ describe("handleBackgroundOutput", () => {
 
         expect(result).toContain("completed");
         expect(result).toContain("done");
+      });
+    });
+  });
+
+  describe("#given full_session mode with client", () => {
+    describe("#when task has sessionId and full_session is true", () => {
+      it("#then returns session messages", async () => {
+        const task = makeTask({
+          status: "completed",
+          sessionId: "ses_test123",
+          result: "final answer",
+        });
+        const manager = makeManager(task);
+        const client = makeClient([
+          { id: "msg1", role: "user", content: "do work" },
+          { id: "msg2", role: "assistant", content: "here is the result" },
+        ]);
+
+        const result = await handleBackgroundOutput(
+          manager,
+          { task_id: "task-42", full_session: true },
+          client,
+        );
+
+        expect(result).toContain("ses_test123");
+        expect(result).toContain("here is the result");
+      });
+    });
+
+    describe("#when full_session is true but no client provided", () => {
+      it("#then falls back to basic output", async () => {
+        const task = makeTask({
+          status: "completed",
+          sessionId: "ses_test123",
+          result: "final answer",
+        });
+        const manager = makeManager(task);
+
+        const result = await handleBackgroundOutput(manager, {
+          task_id: "task-42",
+          full_session: true,
+        });
+
+        expect(result).toContain("completed");
+        expect(result).toContain("final answer");
       });
     });
   });

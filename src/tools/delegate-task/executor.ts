@@ -103,7 +103,12 @@ export async function executeSync(
 }
 
 const POLL_INTERVAL_MS = 2_000;
-const MAX_POLL_DURATION_MS = 5 * 60 * 1_000;
+/**
+ * Maximum time (ms) for sync task polling. Capped at 55s to stay well
+ * within the OpenCode tool-execution timeout (~120s), leaving headroom
+ * for the response to be assembled and returned.
+ */
+const MAX_POLL_DURATION_MS = 55_000;
 
 async function pollForResult(
   client: OpenCodeContext["client"],
@@ -111,25 +116,41 @@ async function pollForResult(
   sessionId: string,
 ): Promise<string> {
   const start = Date.now();
+  let lastMessageCount = -1;
+  let stablePolls = 0;
+  const STABLE_THRESHOLD = 3;
 
   while (Date.now() - start < MAX_POLL_DURATION_MS) {
-    const statusResult = await client.session.status({
-      query: { directory },
-    });
+    const [statusResult, messagesResult] = await Promise.all([
+      client.session.status({ query: { directory } }),
+      client.session.messages({ path: { id: sessionId } }),
+    ]);
 
     const sessionStatus = statusResult.data?.[sessionId]?.type;
-    // undefined means session not yet visible in status map — keep polling
-    if (sessionStatus === undefined) {
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-      continue;
-    }
+    const messages = (messagesResult.data ?? []) as SessionMessage[];
+    const messageCount = messages.length;
+
     if (sessionStatus === "idle") {
       return await fetchLastAssistantMessage(client, sessionId);
     }
-    // any status other than active running states is terminal
-    if (sessionStatus !== "busy" && sessionStatus !== "retry") {
+    // any known terminal status other than active running states
+    if (sessionStatus !== undefined && sessionStatus !== "busy" && sessionStatus !== "retry") {
       return await fetchLastAssistantMessage(client, sessionId);
     }
+
+    // Status API may not return data for this session (undefined).
+    // Fall back to message-count stability detection.
+    if (sessionStatus === undefined && messageCount > 1) {
+      if (messageCount === lastMessageCount) {
+        stablePolls += 1;
+        if (stablePolls >= STABLE_THRESHOLD) {
+          return await fetchLastAssistantMessage(client, sessionId);
+        }
+      } else {
+        stablePolls = 0;
+      }
+    }
+    lastMessageCount = messageCount;
 
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
