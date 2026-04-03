@@ -37,11 +37,15 @@ function normalizePartType(type: string): string {
 }
 
 function isToolUsePart(part: unknown): part is MessagePart {
-  return isRecord(part) && typeof part.type === "string" && normalizePartType(part.type) === "tooluse";
+  return (
+    isRecord(part) && typeof part.type === "string" && normalizePartType(part.type) === "tooluse"
+  );
 }
 
 function isToolResultPart(part: unknown): part is MessagePart {
-  return isRecord(part) && typeof part.type === "string" && normalizePartType(part.type) === "toolresult";
+  return (
+    isRecord(part) && typeof part.type === "string" && normalizePartType(part.type) === "toolresult"
+  );
 }
 
 function getToolUseId(part: unknown): string | null {
@@ -132,7 +136,8 @@ export function createToolPairingValidatorHandler(): MessagesTransformHook {
         const hasToolResults = current.parts.some(isToolResultPart);
         if (!hasToolResults) continue;
 
-        const prevUseIds = prev?.info.role === "assistant" ? collectToolUseIds(prev) : new Set<string>();
+        const prevUseIds =
+          prev?.info.role === "assistant" ? collectToolUseIds(prev) : new Set<string>();
         const beforeResultCount = current.parts.length;
         current.parts = current.parts.filter((part) => {
           if (!isToolResultPart(part)) return true;

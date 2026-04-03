@@ -108,7 +108,13 @@ function formatBackgroundResult(
   ];
 
   if (sessionId) {
-    lines.push("", `<task_metadata>`, `session_id: ${sessionId}`, `task_id: ${taskId}`, `</task_metadata>`);
+    lines.push(
+      "",
+      `<task_metadata>`,
+      `session_id: ${sessionId}`,
+      `task_id: ${taskId}`,
+      `</task_metadata>`,
+    );
   }
 
   return lines.join("\n");
@@ -285,9 +291,7 @@ async function fetchLastAssistantMessage(
   });
 
   const messages = (messagesResult.data ?? []) as SessionMessage[];
-  const lastAssistant = [...messages]
-    .reverse()
-    .find((m) => extractMessageRole(m) === "assistant");
+  const lastAssistant = [...messages].reverse().find((m) => extractMessageRole(m) === "assistant");
 
   if (!lastAssistant) {
     return "Task completed but no response was returned.";

@@ -114,7 +114,9 @@ export class BackgroundAgentManager {
       // background_output does not need to fetch from a deleted session.
       if (task.sessionId && (!task.result || task.result.trim() === "")) {
         try {
-          const messagesResult = await ctx.client.session.messages({ path: { id: task.sessionId } });
+          const messagesResult = await ctx.client.session.messages({
+            path: { id: task.sessionId },
+          });
           const messages = (messagesResult.data ?? []) as SessionMessage[];
           const lastAssistant = [...messages]
             .reverse()
