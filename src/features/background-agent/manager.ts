@@ -109,6 +109,22 @@ export class BackgroundAgentManager {
       this.abortControllers.delete(task.id);
 
       this.complete(task.id, finalSnapshot.result ?? "");
+
+      // Terminate the background session to prevent continued execution
+      // after the orchestrator has consumed the result. Without this,
+      // OpenCode continuation hooks can re-activate the session and make
+      // unwanted changes after we consider the task finished.
+      if (task.sessionId) {
+        try {
+          await ctx.client.session.delete({ path: { id: task.sessionId } });
+          log("[manager] Deleted completed session", { id: task.id, sessionId: task.sessionId });
+        } catch (deleteError) {
+          log("[manager] Failed to delete completed session (non-fatal)", {
+            id: task.id,
+            error: deleteError instanceof Error ? deleteError.message : String(deleteError),
+          });
+        }
+      }
     } catch (error) {
       const isCancelledTask = task.status === "cancelled";
       const isCancelledError = error instanceof Error && error.message === "Polling cancelled";
