@@ -76,8 +76,12 @@ function formatRunningStatus(task: BackgroundTask): string {
 }
 
 function formatCompletedResult(task: BackgroundTask): string {
-  const result = task.result ?? "(no output)";
+  const result = hasMeaningfulText(task.result) ? task.result : "(no output)";
   return `Task ${task.id} completed.\n\n${result}`;
+}
+
+function hasMeaningfulText(value: string | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function formatFailedStatus(task: BackgroundTask): string {
@@ -156,7 +160,7 @@ export async function handleBackgroundOutput(
     if (args.full_session && client && resolved.sessionId) {
       return await fetchSessionMessages(client, resolved, args);
     }
-    return formatTaskOutput(resolved);
+    return await formatTaskOutputWithFallback(resolved, args, client);
   }
 
   // Non-blocking path: return full session output if requested and available
@@ -164,7 +168,7 @@ export async function handleBackgroundOutput(
     return await fetchSessionMessages(client, task, args);
   }
 
-  return formatTaskOutput(task);
+  return await formatTaskOutputWithFallback(task, args, client);
 }
 
 async function fetchSessionMessages(
@@ -226,4 +230,51 @@ async function fetchSessionMessages(
     log("[background-output] Failed to fetch session messages", { error, taskId: task.id });
     return `${formatTaskOutput(task)}\n\n(Failed to fetch session messages: ${error instanceof Error ? error.message : String(error)})`;
   }
+}
+
+async function fetchFinalAssistantResult(
+  client: OpenCodeContext["client"],
+  task: BackgroundTask,
+  args: BackgroundOutputArgs,
+): Promise<string | undefined> {
+  if (!task.sessionId) return undefined;
+
+  try {
+    const messagesResult = await client.session.messages({
+      path: { id: task.sessionId },
+    });
+
+    const rawMessages = (messagesResult.data ?? []) as ApiMessage[];
+    const thinkingMaxChars = args.thinking_max_chars ?? 2000;
+    const assistantMessages = rawMessages
+      .filter((message) => message.info?.role === "assistant")
+      .map((message) =>
+        extractTextFromApiParts(message.parts, {
+          includeThinking: args.include_thinking ?? false,
+          includeToolResults: args.include_tool_results ?? false,
+          thinkingMaxChars,
+        }),
+      )
+      .filter(hasMeaningfulText);
+
+    return assistantMessages.at(-1);
+  } catch (error) {
+    log("[background-output] Failed to fetch final assistant result", { error, taskId: task.id });
+    return undefined;
+  }
+}
+
+async function formatTaskOutputWithFallback(
+  task: BackgroundTask,
+  args: BackgroundOutputArgs,
+  client?: OpenCodeContext["client"],
+): Promise<string> {
+  if (task.status !== "completed") return formatTaskOutput(task);
+  if (hasMeaningfulText(task.result)) return formatCompletedResult(task);
+  if (!client || !task.sessionId) return formatCompletedResult(task);
+
+  const fallbackResult = await fetchFinalAssistantResult(client, task, args);
+  if (!hasMeaningfulText(fallbackResult)) return formatCompletedResult(task);
+
+  return `Task ${task.id} completed.\n\n${fallbackResult}`;
 }

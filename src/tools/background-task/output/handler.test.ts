@@ -80,6 +80,31 @@ describe("handleBackgroundOutput", () => {
         expect(result).toContain("completed");
         expect(result).toContain("final answer: 42");
       });
+
+      it("#then falls back to final assistant session message when task result is empty", async () => {
+        const task = makeTask({ status: "completed", result: "", sessionId: "ses_test123" });
+        const manager = makeManager(task);
+        const client = makeClient([
+          { id: "msg1", role: "user", content: "do work" },
+          { id: "msg2", role: "assistant", content: "useful final answer" },
+        ]);
+
+        const result = await handleBackgroundOutput(manager, { task_id: "task-42" }, client);
+
+        expect(result).toContain("completed");
+        expect(result).toContain("useful final answer");
+        expect(result).not.toContain("(no output)");
+      });
+
+      it("#then keeps no-output fallback when task result is empty and no client is provided", async () => {
+        const task = makeTask({ status: "completed", result: "", sessionId: "ses_test123" });
+        const manager = makeManager(task);
+
+        const result = await handleBackgroundOutput(manager, { task_id: "task-42" });
+
+        expect(result).toContain("completed");
+        expect(result).toContain("(no output)");
+      });
     });
   });
 
