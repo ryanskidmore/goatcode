@@ -5,10 +5,16 @@ import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
 import { qualifyModel } from "../../shared/provider-registry";
 
+export type MetadataCallback = (input: {
+  title?: string;
+  metadata?: Record<string, unknown>;
+}) => void;
+
 export interface ExecutorDeps {
   manager: BackgroundAgentManager;
   client: OpenCodeContext["client"];
   directory: string;
+  metadata?: MetadataCallback;
 }
 
 export async function executeBackground(
@@ -36,11 +42,50 @@ export async function executeBackground(
     model: config.model,
   });
 
-  return formatBackgroundResult(task.id, input, config);
+  // Wait briefly for the session to be created so we can emit metadata
+  // with sessionId. The TUI uses this to make the task card clickable
+  // and to display live tool call stats from the subagent session.
+  const sessionId = await waitForSessionId(manager, task.id);
+
+  if (deps.metadata) {
+    const metadata: Record<string, unknown> = {
+      prompt: input.prompt,
+      category: input.category,
+      description: input.description,
+      ...(sessionId ? { sessionId } : {}),
+      ...(config.model ? { model: config.model } : {}),
+    };
+    deps.metadata({ title: input.description, metadata });
+    log("[delegate-task] Emitted task metadata", { taskId, sessionId });
+  }
+
+  return formatBackgroundResult(task.id, input, config, sessionId);
 }
 
-function formatBackgroundResult(taskId: string, input: TaskInput, config: CategoryConfig): string {
-  return [
+const WAIT_FOR_SESSION_TIMEOUT_MS = 5_000;
+const WAIT_FOR_SESSION_INTERVAL_MS = 250;
+
+async function waitForSessionId(
+  manager: BackgroundAgentManager,
+  taskId: string,
+): Promise<string | undefined> {
+  const deadline = Date.now() + WAIT_FOR_SESSION_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const updated = manager.get(taskId);
+    if (updated?.sessionId) return updated.sessionId;
+    if (!updated || updated.status === "failed" || updated.status === "cancelled") return undefined;
+    await new Promise<void>((resolve) => setTimeout(resolve, WAIT_FOR_SESSION_INTERVAL_MS));
+  }
+  return manager.get(taskId)?.sessionId;
+}
+
+function formatBackgroundResult(
+  taskId: string,
+  input: TaskInput,
+  config: CategoryConfig,
+  sessionId?: string,
+): string {
+  const lines = [
     "Background task launched.",
     "",
     `Task ID: ${taskId}`,
@@ -49,7 +94,13 @@ function formatBackgroundResult(taskId: string, input: TaskInput, config: Catego
     `Description: ${input.description}`,
     "",
     `Use \`background_output\` with task_id="${taskId}" to check status.`,
-  ].join("\n");
+  ];
+
+  if (sessionId) {
+    lines.push("", `<task_metadata>`, `session_id: ${sessionId}`, `task_id: ${taskId}`, `</task_metadata>`);
+  }
+
+  return lines.join("\n");
 }
 
 export async function executeSync(
