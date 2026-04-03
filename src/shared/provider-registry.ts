@@ -87,6 +87,32 @@ export function isQualifiedModel(model: string): boolean {
   return slashIdx > 0 && slashIdx < model.length - 1;
 }
 
+/**
+ * Known model-name prefixes mapped to their native provider.
+ * Used as a fallback when provider discovery hasn't completed yet.
+ */
+const MODEL_PROVIDER_HINTS: readonly [string, string][] = [
+  ["claude-", "anthropic"],
+  ["gpt-", "openai"],
+  ["o1-", "openai"],
+  ["o3-", "openai"],
+  ["o4-", "openai"],
+  ["gemini-", "google"],
+];
+
+/**
+ * Infer the native provider for a model based on its name prefix.
+ * Returns undefined for unrecognized model names.
+ */
+export function inferProviderFromModelName(model: string): string | undefined {
+  const normalized = normalizeIdentifier(model);
+  if (!normalized) return undefined;
+  for (const [prefix, provider] of MODEL_PROVIDER_HINTS) {
+    if (normalized.startsWith(prefix)) return provider;
+  }
+  return undefined;
+}
+
 export function resetProviderRegistry(): void {
   providerPriority = [...DEFAULT_PROVIDER_PRIORITY];
   defaultPreferredProvider = undefined;
@@ -133,6 +159,16 @@ export function resolveProvider(
       return {
         qualifiedModel: `${preferred}/${providerModelId}`,
         providerId: preferred,
+      };
+    }
+    // Infer provider from model name when discovery is unavailable
+    // and no explicit preferred provider was given.
+    const inferred = inferProviderFromModelName(trimmed);
+    if (inferred) {
+      const providerModelId = getProviderSpecificModelId(inferred, trimmed);
+      return {
+        qualifiedModel: `${inferred}/${providerModelId}`,
+        providerId: inferred,
       };
     }
     return undefined;
