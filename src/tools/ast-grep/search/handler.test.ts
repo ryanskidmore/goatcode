@@ -26,6 +26,7 @@ describe("astGrepSearchTool", () => {
         expect(result).toBe("src/main.ts:1:console.log(message)");
         expect(runner).toHaveBeenCalledTimes(1);
         expect(capturedCommand[0]).toBe("sg");
+        expect(capturedCommand[1]).toBe("run");
         expect(capturedCommand).toContain("--pattern");
         expect(capturedCommand).toContain("console.log($MSG)");
         expect(capturedCommand).toContain("--lang");

@@ -69,7 +69,7 @@ describe("code search tool micro-plugins", () => {
         expect(runner).toHaveBeenCalledTimes(1);
         expect(capturedCommand).toEqual([
           "sg",
-          "scan",
+          "run",
           "--pattern",
           "console.log($MSG)",
           "--lang",

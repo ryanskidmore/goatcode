@@ -31,7 +31,7 @@ export async function runCommand(command: string[], cwd: string): Promise<Comman
 }
 
 function buildSearchCommand(args: AstGrepSearchArgs, workingDirectory: string): string[] {
-  const command = ["sg", "scan", "--pattern", args.pattern, "--lang", args.lang];
+  const command = ["sg", "run", "--pattern", args.pattern, "--lang", args.lang];
 
   for (const globPattern of args.globs ?? []) {
     command.push("--glob", globPattern);
