@@ -182,6 +182,58 @@ describe("handleBackgroundOutput", () => {
     });
   });
 
+  describe("#given block=true waiting behavior", () => {
+    describe("#when task completes before timeout", () => {
+      it("#then returns promptly without waiting full timeout", async () => {
+        let callCount = 0;
+        const runningTask = makeTask({ status: "running" });
+
+        const manager = {
+          get: mock((_id: string) => {
+            callCount += 1;
+            if (callCount >= 3) {
+              return makeTask({ status: "completed", result: "done quickly" });
+            }
+            return runningTask;
+          }),
+          getAll: mock(() => [runningTask]),
+          cancel: mock(async () => {}),
+          launch: mock(async () => runningTask),
+          complete: mock(() => {}),
+          fail: mock(() => {}),
+        } as unknown as BackgroundAgentManager;
+
+        const start = Date.now();
+        const result = await handleBackgroundOutput(manager, {
+          task_id: "task-42",
+          block: true,
+          timeout: 5_000,
+        });
+        const elapsed = Date.now() - start;
+
+        expect(result).toContain("completed");
+        expect(result).toContain("done quickly");
+        expect(elapsed).toBeLessThan(1_500);
+      });
+    });
+
+    describe("#when task is still running after timeout", () => {
+      it("#then returns timeout message", async () => {
+        const runningTask = makeTask({ status: "running" });
+        const manager = makeManager(runningTask);
+
+        const result = await handleBackgroundOutput(manager, {
+          task_id: "task-42",
+          block: true,
+          timeout: 300,
+        });
+
+        expect(result).toContain("Timed out waiting after 300ms");
+        expect(result).toContain("still running");
+      });
+    });
+  });
+
   describe("#given full_session mode with client", () => {
     describe("#when task has sessionId and full_session is true", () => {
       it("#then returns session messages", async () => {

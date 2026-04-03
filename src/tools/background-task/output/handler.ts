@@ -9,7 +9,7 @@ import type { BackgroundOutputArgs } from "./types";
  * handler can return a meaningful "still running" message instead of
  * being forcibly aborted by the runtime.
  */
-const MAX_BLOCK_TIMEOUT_MS = 600_000;
+const MAX_BLOCK_TIMEOUT_MS = 55_000;
 
 type SessionMessage = {
   id?: string;
@@ -114,17 +114,24 @@ async function waitForCompletion(
   timeoutMs: number,
 ): Promise<BackgroundTask | undefined> {
   const safeTimeout = Math.min(timeoutMs, MAX_BLOCK_TIMEOUT_MS);
-  const deadline = Date.now() + safeTimeout;
-  const pollIntervalMs = 1000;
+  const startedAt = Date.now();
+  const deadline = startedAt + safeTimeout;
+  const pollIntervalMs = 100;
 
-  while (Date.now() < deadline) {
-    await new Promise<void>((resolve) => setTimeout(resolve, pollIntervalMs));
+  while (true) {
     const current = manager.get(taskId);
     if (!current) return undefined;
     if (current.status !== "queued" && current.status !== "running") return current;
-  }
 
-  return manager.get(taskId);
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
+      return current;
+    }
+
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, Math.min(pollIntervalMs, remainingMs)),
+    );
+  }
 }
 
 export async function handleBackgroundOutput(
