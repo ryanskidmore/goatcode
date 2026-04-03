@@ -6,7 +6,7 @@ type MessagesTransformHook = NonNullable<
 >;
 
 interface MessagePart {
-  type: string;
+  type?: string;
   id?: string;
   tool_use_id?: string;
   toolUseId?: string;
@@ -36,19 +36,20 @@ function normalizePartType(type: string): string {
   return type.toLowerCase().replace(/[^a-z]/g, "");
 }
 
-function isToolUsePart(part: MessagePart): boolean {
-  return normalizePartType(part.type) === "tooluse";
+function isToolUsePart(part: unknown): part is MessagePart {
+  return isRecord(part) && typeof part.type === "string" && normalizePartType(part.type) === "tooluse";
 }
 
-function isToolResultPart(part: MessagePart): boolean {
-  return normalizePartType(part.type) === "toolresult";
+function isToolResultPart(part: unknown): part is MessagePart {
+  return isRecord(part) && typeof part.type === "string" && normalizePartType(part.type) === "toolresult";
 }
 
-function getToolUseId(part: MessagePart): string | null {
-  return typeof part.id === "string" && part.id.length > 0 ? part.id : null;
+function getToolUseId(part: unknown): string | null {
+  return isRecord(part) && typeof part.id === "string" && part.id.length > 0 ? part.id : null;
 }
 
-function getToolResultUseId(part: MessagePart): string | null {
+function getToolResultUseId(part: unknown): string | null {
+  if (!isRecord(part)) return null;
   if (typeof part.tool_use_id === "string" && part.tool_use_id.length > 0) {
     return part.tool_use_id;
   }

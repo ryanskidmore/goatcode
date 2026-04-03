@@ -6,8 +6,6 @@ const THINK_BUDGET_TOKENS = 10000;
 
 const ULTRAWORK_SYSTEM_CONTEXT = `<ultrawork-mode>
 
-**MANDATORY**: You MUST say "ULTRAWORK MODE ENABLED!" to the user as your first response when this mode activates.
-
 [CODE RED] Maximum precision required. Ultrathink before acting.
 
 ## ABSOLUTE CERTAINTY REQUIRED

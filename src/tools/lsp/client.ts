@@ -116,18 +116,28 @@ export async function callLspClient(
   throw new Error(`LSP client method unavailable: ${toolName}`);
 }
 
-let storedLspClient: OpenCodeContext["client"] | undefined;
+const storedLspClients = new Map<string, OpenCodeContext["client"]>();
 
 /**
  * Store the OpenCode client during plugin setup so tools that cannot
  * access it via the tool execution context can fall back to it.
  */
 export function initLspClientContext(ctx: OpenCodeContext): void {
-  storedLspClient = ctx.client;
+  if (ctx.client && ctx.directory) {
+    storedLspClients.set(ctx.directory, ctx.client);
+  }
 }
 
 export function resetLspClientContext(): void {
-  storedLspClient = undefined;
+  storedLspClients.clear();
+}
+
+function getDirectoryFromToolContext(
+  context: Parameters<ToolDefinition["execute"]>[1],
+): string | undefined {
+  const contextRecord = asRecord(context);
+  const directory = contextRecord?.directory;
+  return typeof directory === "string" && directory.length > 0 ? directory : undefined;
 }
 
 export function getClientFromToolContext(
@@ -141,9 +151,13 @@ export function getClientFromToolContext(
     }
   }
 
-  // Fall back to stored plugin-level client
-  if (storedLspClient) {
-    return storedLspClient;
+  // Fall back to stored plugin-level client scoped by directory
+  const directory = getDirectoryFromToolContext(context);
+  if (directory) {
+    const storedClient = storedLspClients.get(directory);
+    if (storedClient) {
+      return storedClient;
+    }
   }
 
   throw new Error("Tool context does not expose OpenCode client");

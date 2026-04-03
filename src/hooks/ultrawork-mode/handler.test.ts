@@ -55,7 +55,6 @@ describe("createUltraworkModeHandler", () => {
           budget_tokens: 10000,
         });
         expect(output.system).toContain("<ultrawork-mode>");
-        expect(output.system).toContain("ULTRAWORK MODE ENABLED!");
         expect(output.system).toContain("DELEGATION-FIRST EXECUTION");
       });
     });

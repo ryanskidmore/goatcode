@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, mock, afterEach } from "bun:test";
 import type { ToolDefinition } from "@opencode-ai/plugin";
 
 import { lspGotoDefinitionPlugin } from "./goto-definition/plugin";

@@ -110,6 +110,23 @@ export class BackgroundAgentManager {
 
       this.complete(task.id, finalSnapshot.result ?? "");
 
+      // Persist final assistant result before deleting the session so
+      // background_output does not need to fetch from a deleted session.
+      if (task.sessionId && (!task.result || task.result.trim() === "")) {
+        try {
+          const messagesResult = await ctx.client.session.messages({ path: { id: task.sessionId } });
+          const messages = (messagesResult.data ?? []) as SessionMessage[];
+          const lastAssistant = [...messages]
+            .reverse()
+            .find((message) => message.role === "assistant");
+          if (lastAssistant?.content) {
+            task.result = lastAssistant.content;
+          }
+        } catch {
+          // Non-fatal: keep existing empty result fallback behavior.
+        }
+      }
+
       // Terminate the background session to prevent continued execution
       // after the orchestrator has consumed the result. Without this,
       // OpenCode continuation hooks can re-activate the session and make
