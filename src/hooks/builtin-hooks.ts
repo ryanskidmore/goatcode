@@ -13,6 +13,7 @@ import { modelFallbackPlugin } from "./model-fallback/plugin";
 import { taskResumeInfoPlugin } from "./task-resume-info/plugin";
 import { commentCheckerPlugin } from "./comment-checker/plugin";
 import { thinkModePlugin } from "./think-mode/plugin";
+import { ultraworkModePlugin } from "./ultrawork-mode/plugin";
 import { contextWindowLimitPlugin } from "./context-window-limit/plugin";
 import { runtimeFallbackPlugin } from "./runtime-fallback/plugin";
 import { stopGuardPlugin } from "./stop-guard/plugin";
@@ -46,6 +47,7 @@ export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   taskResumeInfoPlugin,
   commentCheckerPlugin,
   thinkModePlugin,
+  ultraworkModePlugin,
   contextWindowLimitPlugin,
   runtimeFallbackPlugin,
   stopGuardPlugin,
