@@ -225,6 +225,64 @@ describe("createTaskTool", () => {
         expect(result).toBe("task result here");
       });
     });
+
+    describe("#when OpenCode returns structured message format", () => {
+      it("#then extracts text from parts array", async () => {
+        const structuredManager = makeMockManager();
+        const structuredClient = {
+          session: {
+            create: mock(async () => ({
+              data: { id: "structured-session-123" },
+              error: undefined,
+            })),
+            promptAsync: mock(async () => ({
+              data: {},
+              error: undefined,
+            })),
+            status: mock(async () => ({
+              data: {
+                "structured-session-123": { type: "idle" },
+              },
+            })),
+            // Return the structured format OpenCode actually uses
+            messages: mock(async () => ({
+              data: [
+                {
+                  info: { id: "msg_1", role: "user", sessionID: "s1" },
+                  parts: [{ type: "text", text: "implement the feature" }],
+                },
+                {
+                  info: { id: "msg_2", role: "assistant", sessionID: "s1" },
+                  parts: [
+                    { type: "text", text: "I implemented the feature." },
+                    { type: "text", text: "Here are the details." },
+                  ],
+                },
+              ],
+            })),
+            delete: mock(async () => ({})),
+          },
+        };
+        const ctx = makeMockToolContext() as Record<string, unknown>;
+        ctx.client = structuredClient;
+        const structuredTool = createTaskTool(
+          () => structuredManager as unknown as BackgroundAgentManager,
+        );
+
+        const result = await structuredTool.execute(
+          {
+            category: "unspecified-low",
+            description: "structured test",
+            prompt: "implement the feature",
+            run_in_background: false,
+          },
+          ctx as unknown as Parameters<ToolDefinition["execute"]>[1],
+        );
+
+        expect(result).toContain("I implemented the feature.");
+        expect(result).toContain("Here are the details.");
+      });
+    });
   });
 
   describe("#given the tool definition", () => {

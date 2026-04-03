@@ -163,10 +163,55 @@ async function pollForResult(
   return `Task timed out after ${MAX_POLL_DURATION_MS / 1_000}s. Session: ${sessionId}`;
 }
 
-type SessionMessage = {
+/**
+ * OpenCode messages use a structured format: { info: { role }, parts: [{ type, text }] }
+ * NOT a flat { role, content } shape. We must handle both formats for resilience.
+ */
+type MessagePart = {
+  type?: string;
+  text?: string;
+};
+
+type StructuredMessage = {
+  info?: { role?: string };
+  parts?: MessagePart[];
+};
+
+type FlatMessage = {
   role?: string;
   content?: string;
 };
+
+type SessionMessage = StructuredMessage | FlatMessage;
+
+function extractMessageRole(msg: SessionMessage): string | undefined {
+  // Structured format: { info: { role } }
+  if ("info" in msg && msg.info?.role) {
+    return msg.info.role;
+  }
+  // Flat format fallback: { role }
+  if ("role" in msg && typeof msg.role === "string") {
+    return msg.role;
+  }
+  return undefined;
+}
+
+function extractMessageText(msg: SessionMessage): string | undefined {
+  // Structured format: { parts: [{ type: "text", text: "..." }] }
+  if ("parts" in msg && Array.isArray(msg.parts)) {
+    const textParts = msg.parts
+      .filter((p) => p.type === "text" && typeof p.text === "string")
+      .map((p) => p.text!);
+    if (textParts.length > 0) {
+      return textParts.join("\n");
+    }
+  }
+  // Flat format fallback: { content }
+  if ("content" in msg && typeof msg.content === "string") {
+    return msg.content;
+  }
+  return undefined;
+}
 
 async function fetchLastAssistantMessage(
   client: OpenCodeContext["client"],
@@ -177,7 +222,13 @@ async function fetchLastAssistantMessage(
   });
 
   const messages = (messagesResult.data ?? []) as SessionMessage[];
-  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastAssistant = [...messages]
+    .reverse()
+    .find((m) => extractMessageRole(m) === "assistant");
 
-  return lastAssistant?.content ?? "Task completed but no response was returned.";
+  if (!lastAssistant) {
+    return "Task completed but no response was returned.";
+  }
+
+  return extractMessageText(lastAssistant) ?? "Task completed but no response was returned.";
 }
