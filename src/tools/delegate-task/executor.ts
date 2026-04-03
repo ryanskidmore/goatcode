@@ -5,10 +5,26 @@ import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
 import { qualifyModel } from "../../shared/provider-registry";
 
+export type MetadataCallback = (input: {
+  title?: string;
+  metadata?: Record<string, unknown>;
+}) => void;
+
 export interface ExecutorDeps {
   manager: BackgroundAgentManager;
   client: OpenCodeContext["client"];
   directory: string;
+  metadata?: MetadataCallback;
+}
+
+/**
+ * Builds the full prompt by appending the category context block (if defined)
+ * to the user's prompt. This ensures each category's behavioral guidance
+ * reaches the delegated agent.
+ */
+function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig): string {
+  if (!config.prompt_append) return prompt;
+  return `${prompt}\n\n${config.prompt_append}`;
 }
 
 export async function executeBackground(
@@ -29,18 +45,58 @@ export async function executeBackground(
     model: config.model,
   });
 
+  const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
     id: taskId,
-    prompt: input.prompt,
+    prompt: fullPrompt,
     model: config.model,
   });
 
-  return formatBackgroundResult(task.id, input, config);
+  // Wait briefly for the session to be created so we can emit metadata
+  // with sessionId. The TUI uses this to make the task card clickable
+  // and to display live tool call stats from the subagent session.
+  const sessionId = await waitForSessionId(manager, task.id);
+
+  if (deps.metadata) {
+    const metadata: Record<string, unknown> = {
+      prompt: input.prompt,
+      category: input.category,
+      description: input.description,
+      ...(sessionId ? { sessionId } : {}),
+      ...(config.model ? { model: config.model } : {}),
+    };
+    deps.metadata({ title: input.description, metadata });
+    log("[delegate-task] Emitted task metadata", { taskId, sessionId });
+  }
+
+  return formatBackgroundResult(task.id, input, config, sessionId);
 }
 
-function formatBackgroundResult(taskId: string, input: TaskInput, config: CategoryConfig): string {
-  return [
+const WAIT_FOR_SESSION_TIMEOUT_MS = 5_000;
+const WAIT_FOR_SESSION_INTERVAL_MS = 250;
+
+async function waitForSessionId(
+  manager: BackgroundAgentManager,
+  taskId: string,
+): Promise<string | undefined> {
+  const deadline = Date.now() + WAIT_FOR_SESSION_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const updated = manager.get(taskId);
+    if (updated?.sessionId) return updated.sessionId;
+    if (!updated || updated.status === "failed" || updated.status === "cancelled") return undefined;
+    await new Promise<void>((resolve) => setTimeout(resolve, WAIT_FOR_SESSION_INTERVAL_MS));
+  }
+  return manager.get(taskId)?.sessionId;
+}
+
+function formatBackgroundResult(
+  taskId: string,
+  input: TaskInput,
+  config: CategoryConfig,
+  sessionId?: string,
+): string {
+  const lines = [
     "Background task launched.",
     "",
     `Task ID: ${taskId}`,
@@ -49,7 +105,19 @@ function formatBackgroundResult(taskId: string, input: TaskInput, config: Catego
     `Description: ${input.description}`,
     "",
     `Use \`background_output\` with task_id="${taskId}" to check status.`,
-  ].join("\n");
+  ];
+
+  if (sessionId) {
+    lines.push(
+      "",
+      `<task_metadata>`,
+      `session_id: ${sessionId}`,
+      `task_id: ${taskId}`,
+      `</task_metadata>`,
+    );
+  }
+
+  return lines.join("\n");
 }
 
 export async function executeSync(
@@ -85,10 +153,11 @@ export async function executeSync(
   }
   const parsed = parseModelId(qualifyModel(config.model));
 
+  const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const promptResult = await client.session.promptAsync({
     path: { id: sessionId },
     body: {
-      parts: [{ type: "text", text: input.prompt }],
+      parts: [{ type: "text", text: fullPrompt }],
       ...(parsed && { model: { providerID: parsed.provider, modelID: parsed.modelId } }),
     },
   });
@@ -163,10 +232,55 @@ async function pollForResult(
   return `Task timed out after ${MAX_POLL_DURATION_MS / 1_000}s. Session: ${sessionId}`;
 }
 
-type SessionMessage = {
+/**
+ * OpenCode messages use a structured format: { info: { role }, parts: [{ type, text }] }
+ * NOT a flat { role, content } shape. We must handle both formats for resilience.
+ */
+type MessagePart = {
+  type?: string;
+  text?: string;
+};
+
+type StructuredMessage = {
+  info?: { role?: string };
+  parts?: MessagePart[];
+};
+
+type FlatMessage = {
   role?: string;
   content?: string;
 };
+
+type SessionMessage = StructuredMessage | FlatMessage;
+
+function extractMessageRole(msg: SessionMessage): string | undefined {
+  // Structured format: { info: { role } }
+  if ("info" in msg && msg.info?.role) {
+    return msg.info.role;
+  }
+  // Flat format fallback: { role }
+  if ("role" in msg && typeof msg.role === "string") {
+    return msg.role;
+  }
+  return undefined;
+}
+
+function extractMessageText(msg: SessionMessage): string | undefined {
+  // Structured format: { parts: [{ type: "text", text: "..." }] }
+  if ("parts" in msg && Array.isArray(msg.parts)) {
+    const textParts = msg.parts
+      .filter((p) => p.type === "text" && typeof p.text === "string")
+      .map((p) => p.text!);
+    if (textParts.length > 0) {
+      return textParts.join("\n");
+    }
+  }
+  // Flat format fallback: { content }
+  if ("content" in msg && typeof msg.content === "string") {
+    return msg.content;
+  }
+  return undefined;
+}
 
 async function fetchLastAssistantMessage(
   client: OpenCodeContext["client"],
@@ -177,7 +291,11 @@ async function fetchLastAssistantMessage(
   });
 
   const messages = (messagesResult.data ?? []) as SessionMessage[];
-  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastAssistant = [...messages].reverse().find((m) => extractMessageRole(m) === "assistant");
 
-  return lastAssistant?.content ?? "Task completed but no response was returned.";
+  if (!lastAssistant) {
+    return "Task completed but no response was returned.";
+  }
+
+  return extractMessageText(lastAssistant) ?? "Task completed but no response was returned.";
 }

@@ -13,7 +13,7 @@ const SG_NOT_FOUND_MESSAGE =
 function buildReplaceCommand(args: AstGrepReplaceArgs, workingDirectory: string): string[] {
   const command = [
     "sg",
-    "scan",
+    "run",
     "--pattern",
     args.pattern,
     "--rewrite",

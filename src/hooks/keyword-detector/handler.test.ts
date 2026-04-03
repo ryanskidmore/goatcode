@@ -14,6 +14,17 @@ function makeOutput(text: string) {
   };
 }
 
+async function invokeHandler(
+  handler: ReturnType<typeof createKeywordDetectorHandler>,
+  input: ReturnType<typeof makeInput>,
+  output: ReturnType<typeof makeOutput>,
+) {
+  await handler(
+    input as Parameters<ReturnType<typeof createKeywordDetectorHandler>>[0],
+    output as Parameters<ReturnType<typeof createKeywordDetectorHandler>>[1],
+  );
+}
+
 describe("createKeywordDetectorHandler", () => {
   afterEach(() => {
     clearSessionMode(SESSION_ID);
@@ -27,7 +38,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("let's ultrawork on this");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBe("ultrawork");
       });
@@ -38,7 +49,29 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("ulw this task");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
+
+        expect(getSessionMode(SESSION_ID)).toBe("ultrawork");
+      });
+    });
+
+    describe("#when message contains 'goatwork'", () => {
+      it("#then sets session mode to ultrawork", async () => {
+        const input = makeInput();
+        const output = makeOutput("let's goatwork this feature");
+
+        await invokeHandler(handler, input, output);
+
+        expect(getSessionMode(SESSION_ID)).toBe("ultrawork");
+      });
+    });
+
+    describe("#when message contains 'goated'", () => {
+      it("#then sets session mode to ultrawork", async () => {
+        const input = makeInput();
+        const output = makeOutput("goated effort on this refactor");
+
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBe("ultrawork");
       });
@@ -49,7 +82,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("deepthink this problem");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBe("think");
       });
@@ -60,7 +93,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("please deep-think about this");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBe("think");
       });
@@ -71,7 +104,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("do this fast");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBe("fast");
       });
@@ -82,7 +115,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("check this: ```ultrawork```");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBeUndefined();
       });
@@ -93,7 +126,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("the function `ultrawork` is defined here");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBeUndefined();
       });
@@ -104,7 +137,7 @@ describe("createKeywordDetectorHandler", () => {
         const input = makeInput();
         const output = makeOutput("hello world");
 
-        await handler(input, output);
+        await invokeHandler(handler, input, output);
 
         expect(getSessionMode(SESSION_ID)).toBeUndefined();
       });

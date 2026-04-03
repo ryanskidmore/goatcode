@@ -27,6 +27,8 @@ describe("astGrepReplaceTool", () => {
           ctx,
         );
 
+        expect(capturedCommand[0]).toBe("sg");
+        expect(capturedCommand[1]).toBe("run");
         expect(capturedCommand).not.toContain("--update-all");
         expect(result).toBe("[DRY RUN]\nwould replace in src/main.ts");
       });

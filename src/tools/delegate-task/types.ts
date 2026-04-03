@@ -11,6 +11,7 @@ export interface CategoryConfig {
   model: string;
   variant?: string;
   description?: string;
+  prompt_append?: string;
 }
 
 export interface CategoryResolver {

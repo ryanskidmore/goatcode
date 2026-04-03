@@ -23,7 +23,7 @@ const CODE_BLOCK_PATTERN = /```[\s\S]*?```/g;
 const INLINE_CODE_PATTERN = /`[^`]+`/g;
 
 const KEYWORD_MAP: Array<{ pattern: RegExp; mode: ActiveMode }> = [
-  { pattern: /\b(ultrawork|ulw)\b/i, mode: "ultrawork" },
+  { pattern: /\b(ultrawork|ulw|goatwork|goated)\b/i, mode: "ultrawork" },
   { pattern: /\b(deep-think|deepthink|ultrathink)\b/i, mode: "think" },
   { pattern: /\bfast\b/i, mode: "fast" },
 ];

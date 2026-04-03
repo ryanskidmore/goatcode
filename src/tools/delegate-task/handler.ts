@@ -89,6 +89,7 @@ export function createTaskTool(
         manager,
         client,
         directory: toolContext.directory,
+        metadata: (input) => toolContext.metadata(input),
       };
 
       log("[delegate-task] Routing task", {

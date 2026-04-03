@@ -13,6 +13,7 @@ import { modelFallbackPlugin } from "./model-fallback/plugin";
 import { taskResumeInfoPlugin } from "./task-resume-info/plugin";
 import { commentCheckerPlugin } from "./comment-checker/plugin";
 import { thinkModePlugin } from "./think-mode/plugin";
+import { ultraworkModePlugin } from "./ultrawork-mode/plugin";
 import { contextWindowLimitPlugin } from "./context-window-limit/plugin";
 import { runtimeFallbackPlugin } from "./runtime-fallback/plugin";
 import { stopGuardPlugin } from "./stop-guard/plugin";
@@ -29,6 +30,7 @@ import { phaseReminderPlugin } from "./phase-reminder";
 import { postReadNudgePlugin } from "./post-read-nudge";
 import { errorDiagnosticsPlugin } from "./error-diagnostics/plugin";
 import { skillDiscoveryPlugin } from "./skill-discovery/plugin";
+import { toolPairingValidatorPlugin } from "./tool-pairing-validator/plugin";
 
 export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   thinkingBlockValidatorPlugin,
@@ -45,6 +47,7 @@ export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   taskResumeInfoPlugin,
   commentCheckerPlugin,
   thinkModePlugin,
+  ultraworkModePlugin,
   contextWindowLimitPlugin,
   runtimeFallbackPlugin,
   stopGuardPlugin,
@@ -59,6 +62,7 @@ export const BUILTIN_HOOK_PLUGINS: PluginDefinition[] = [
   foregroundFallbackPlugin,
   phaseReminderPlugin,
   postReadNudgePlugin,
+  toolPairingValidatorPlugin,
   errorDiagnosticsPlugin,
   skillDiscoveryPlugin,
 ];
