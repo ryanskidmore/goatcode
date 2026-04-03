@@ -17,6 +17,16 @@ export interface ExecutorDeps {
   metadata?: MetadataCallback;
 }
 
+/**
+ * Builds the full prompt by appending the category context block (if defined)
+ * to the user's prompt. This ensures each category's behavioral guidance
+ * reaches the delegated agent.
+ */
+function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig): string {
+  if (!config.prompt_append) return prompt;
+  return `${prompt}\n\n${config.prompt_append}`;
+}
+
 export async function executeBackground(
   input: TaskInput,
   config: CategoryConfig,
@@ -35,10 +45,11 @@ export async function executeBackground(
     model: config.model,
   });
 
+  const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
     id: taskId,
-    prompt: input.prompt,
+    prompt: fullPrompt,
     model: config.model,
   });
 
@@ -136,10 +147,11 @@ export async function executeSync(
   }
   const parsed = parseModelId(qualifyModel(config.model));
 
+  const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const promptResult = await client.session.promptAsync({
     path: { id: sessionId },
     body: {
-      parts: [{ type: "text", text: input.prompt }],
+      parts: [{ type: "text", text: fullPrompt }],
       ...(parsed && { model: { providerID: parsed.provider, modelID: parsed.modelId } }),
     },
   });
