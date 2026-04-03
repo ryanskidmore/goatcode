@@ -1,4 +1,4 @@
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import type { ToolDefinition } from "@opencode-ai/plugin";
 
 import { lspGotoDefinitionPlugin } from "./goto-definition/plugin";
@@ -7,6 +7,8 @@ import { lspSymbolsPlugin } from "./symbols/plugin";
 import { lspDiagnosticsPlugin } from "./diagnostics/plugin";
 import { lspPrepareRenamePlugin } from "./prepare-rename/plugin";
 import { lspRenamePlugin } from "./rename/plugin";
+import { initLspClientContext, resetLspClientContext } from "./client";
+import type { OpenCodeContext } from "../../types/plugin";
 
 type ToolContext = Parameters<ToolDefinition["execute"]>[1];
 
@@ -19,6 +21,52 @@ function createToolContext(result: unknown) {
   } as unknown as ToolContext;
   return { call, context };
 }
+
+describe("lsp client stored fallback", () => {
+  afterEach(() => {
+    resetLspClientContext();
+  });
+
+  describe("#given tool context does NOT expose client", () => {
+    describe("#when stored client is initialized", () => {
+      it("#then uses stored client as fallback", async () => {
+        const call = mock(async () => ({ data: [{ filePath: "fallback.ts", line: 1 }] }));
+        const mockCtx = {
+          client: { tool: { call } },
+          directory: "/repo",
+        } as unknown as OpenCodeContext;
+        initLspClientContext(mockCtx);
+
+        const tool = lspGotoDefinitionPlugin.tools!.lsp_goto_definition;
+        // Context WITHOUT client - should fall back to stored
+        const contextWithoutClient = { directory: "/repo" } as unknown as ToolContext;
+
+        const result = await tool.execute(
+          { filePath: "a.ts", line: 1, character: 0 },
+          contextWithoutClient,
+        );
+
+        expect(call).toHaveBeenCalledTimes(1);
+        expect(result).toContain("fallback.ts");
+      });
+    });
+
+    describe("#when stored client is NOT initialized", () => {
+      it("#then returns error message", async () => {
+        resetLspClientContext();
+        const tool = lspGotoDefinitionPlugin.tools!.lsp_goto_definition;
+        const contextWithoutClient = { directory: "/repo" } as unknown as ToolContext;
+
+        const result = await tool.execute(
+          { filePath: "a.ts", line: 1, character: 0 },
+          contextWithoutClient,
+        );
+
+        expect(result).toContain("Tool context does not expose OpenCode client");
+      });
+    });
+  });
+});
 
 describe("lsp tool plugins", () => {
   describe("#given lsp_goto_definition plugin", () => {

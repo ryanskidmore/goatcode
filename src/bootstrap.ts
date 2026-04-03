@@ -10,6 +10,8 @@ import type { PluginDefinition } from "./types/plugin";
 import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents";
 import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks";
 import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools";
+import { initSessionManagerContext } from "./tools/session-manager";
+import { initLspClientContext } from "./tools/lsp/client";
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features";
 import { registerProjectSkillLoader } from "./features/skills";
 import {
@@ -184,6 +186,12 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
   }
 
   registerProjectSkillLoader(ctx.directory);
+
+  // Initialize tool contexts that need the OpenCode client before plugin setup.
+  // These must be called before registry.setup() so tools can access the client
+  // even when the tool execution context doesn't expose it directly.
+  initSessionManagerContext(ctx);
+  initLspClientContext(ctx);
 
   const resolved = registry.resolve();
   const initializedPlugins = await registry.setup(resolved, ctx);
