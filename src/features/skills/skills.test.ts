@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   createMergedSkillLoader,
-  gitMasterSkill,
+  gitGudSkill,
   loadProjectSkills,
   mergeSkills,
   registerProjectSkillLoader,
@@ -18,12 +18,12 @@ afterEach(() => {
   }
 });
 
-describe("#given builtin git-master skill", () => {
+describe("#given builtin git-gud skill", () => {
   describe("#when reading its metadata", () => {
     it("#then it has name, description, and non-empty template", () => {
-      expect(gitMasterSkill.name).toBe("git-master");
-      expect(gitMasterSkill.description.length).toBeGreaterThan(0);
-      expect(gitMasterSkill.template.length).toBeGreaterThan(0);
+      expect(gitGudSkill.name).toBe("git-gud");
+      expect(gitGudSkill.description.length).toBeGreaterThan(0);
+      expect(gitGudSkill.template.length).toBeGreaterThan(0);
     });
   });
 });
@@ -59,13 +59,13 @@ describe("#given builtin and user skills with same name", () => {
   describe("#when merging skills", () => {
     it("#then user skill overrides builtin by name", () => {
       const merged = mergeSkills(
-        [{ name: "git-master", description: "builtin", template: "builtin template" }],
-        [{ name: "git-master", description: "user", template: "user template" }],
+        [{ name: "git-gud", description: "builtin", template: "builtin template" }],
+        [{ name: "git-gud", description: "user", template: "user template" }],
       );
 
       expect(merged).toHaveLength(1);
       expect(merged[0]).toEqual({
-        name: "git-master",
+        name: "git-gud",
         description: "user",
         template: "user template",
       });
@@ -73,15 +73,15 @@ describe("#given builtin and user skills with same name", () => {
   });
 });
 
-describe("#given a user override file for git-master", () => {
+describe("#given a user override file for git-gud", () => {
   describe("#when creating merged skill loader", () => {
-    it("#then load('git-master') returns user template", () => {
+    it("#then load('git-gud') returns user template", () => {
       const projectDirectory = createTempProjectDirectory();
       writeProjectSkill(
         projectDirectory,
-        "git-master.md",
+        "git-gud.md",
         `---
-name: git-master
+name: git-gud
 description: custom project git policy
 ---
 Use custom git policy for this repository.
@@ -90,7 +90,7 @@ Use custom git policy for this repository.
 
       const loader = createMergedSkillLoader(projectDirectory);
 
-      expect(loader.load("git-master")).toBe("Use custom git policy for this repository.");
+      expect(loader.load("git-gud")).toBe("Use custom git policy for this repository.");
     });
   });
 });

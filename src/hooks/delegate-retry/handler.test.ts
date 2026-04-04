@@ -138,7 +138,7 @@ describe("detectDelegateTaskError", () => {
     describe("#when output matches Skills not found pattern", () => {
       it("#then returns unknown_skills error", () => {
         const result = detectDelegateTaskError(
-          "[ERROR] Skills not found: badskill. Available skills: git-master",
+          "[ERROR] Skills not found: badskill. Available skills: git-gud",
         );
         expect(result).not.toBeNull();
         expect(result?.errorType).toBe("unknown_skills");
