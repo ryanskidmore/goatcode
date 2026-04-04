@@ -56,6 +56,40 @@ function detectPlatform(input: Record<string, unknown>): PlatformId {
   return "direct";
 }
 
+function providerFromModel(model: unknown): string | undefined {
+  if (typeof model !== "string") return undefined;
+  const normalized = model.trim().toLowerCase();
+  const separator = normalized.indexOf("/");
+  if (separator <= 0) return undefined;
+  return normalized.slice(0, separator);
+}
+
+function inferProviderFromOpenCodeAgentModels(
+  inputAgents: Record<string, { model?: string } | undefined>,
+): string | undefined {
+  // Prefer OpenCode primary agents first when present.
+  for (const agentName of [
+    "build",
+    "plan",
+    "general",
+    "explore",
+    "title",
+    "summary",
+    "compaction",
+  ]) {
+    const provider = providerFromModel(inputAgents[agentName]?.model);
+    if (provider) return provider;
+  }
+
+  // Fall back to any existing configured agent model.
+  for (const agent of Object.values(inputAgents)) {
+    const provider = providerFromModel(agent?.model);
+    if (provider) return provider;
+  }
+
+  return undefined;
+}
+
 const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
   (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
 ) as readonly Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool">[];
@@ -108,8 +142,14 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
     // Priority: discovery data > config default_provider > "opencode" fallback.
     // Cannot await discovery here (deadlocks OpenCode's event loop), so we
     // use a synchronous fallback when discovery hasn't completed yet.
+    const discoveredProvider = inferProviderFromOpenCodeAgentModels(input.agent);
     const fallbackProvider =
-      getDefaultPreferredProvider() ?? getProviderPriority()[0] ?? "opencode";
+      getDefaultPreferredProvider() ?? discoveredProvider ?? getProviderPriority()[0] ?? "opencode";
+    log("[compositor] model provider selection", {
+      configuredDefault: getDefaultPreferredProvider(),
+      discoveredFromAgents: discoveredProvider,
+      selectedFallback: fallbackProvider,
+    });
 
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
@@ -138,7 +178,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       if (!agentConfig) continue;
       const desiredModel = agentDef.model;
       if (!desiredModel) continue;
-      const qualified = qualifyModel(desiredModel);
+      const qualified = qualifyModel(desiredModel, fallbackProvider);
       if (qualified.includes("/")) {
         const platformModel = toPlatformModel(qualified, platform);
         log(
