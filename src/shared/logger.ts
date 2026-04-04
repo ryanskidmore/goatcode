@@ -25,10 +25,10 @@ function ensureLogDir(): void {
   }
 }
 
-function rotateIfNeeded(): void {
+function rotateIfNeeded(incomingBytes = 0): void {
   try {
     const stats = statSync(LOG_FILE);
-    if (stats.size < MAX_LOG_SIZE_BYTES) return;
+    if (stats.size + incomingBytes < MAX_LOG_SIZE_BYTES) return;
 
     // Shift existing rotated files: debug.log.2 → debug.log.3, etc.
     for (let i = MAX_ROTATED_FILES - 1; i >= 1; i--) {
@@ -47,10 +47,11 @@ function rotateIfNeeded(): void {
 function flush(): void {
   if (buffer.length === 0) return;
   const data = buffer.join("");
+  const dataBytes = Buffer.byteLength(data);
   buffer = [];
   try {
     ensureLogDir();
-    rotateIfNeeded();
+    rotateIfNeeded(dataBytes);
     appendFileSync(LOG_FILE, data);
   } catch {
     // Ignore log write failures - never crash the plugin for logging

@@ -68,6 +68,31 @@ describe("createToolErrorHandler", () => {
         await handler({}, "not-a-record");
       });
     });
+
+    describe("#when output is exactly MAX_SCANNABLE_OUTPUT_LENGTH (1500 chars)", () => {
+      it("#then diagnostics are still injected", async () => {
+        const input = {};
+        const errorPrefix = "rate limit exceeded";
+        const output = { output: errorPrefix + "x".repeat(1500 - errorPrefix.length) };
+        expect(output.output.length).toBe(1500);
+        await handler(input, output);
+        expect(output.output).toContain("[ERROR DIAGNOSTIC]");
+        expect(output.output).toContain("Category: rate-limit");
+      });
+    });
+
+    describe("#when output exceeds MAX_SCANNABLE_OUTPUT_LENGTH (1501 chars)", () => {
+      it("#then diagnostics are skipped", async () => {
+        const input = {};
+        const errorPrefix = "rate limit exceeded";
+        const padded = errorPrefix + "x".repeat(1501 - errorPrefix.length);
+        const output = { output: padded };
+        expect(output.output.length).toBe(1501);
+        await handler(input, output);
+        expect(output.output).not.toContain("[ERROR DIAGNOSTIC]");
+        expect(output.output).toBe(padded);
+      });
+    });
   });
 });
 

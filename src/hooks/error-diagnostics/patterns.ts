@@ -7,7 +7,7 @@ export const DIAGNOSTIC_PATTERNS: DiagnosticPattern[] = [
       /\brate[- ]?limit(?:ed|ing)?\b/i,
       /\btoo many requests\b/i,
       /\bstatus(?:\s*(?:code)?:?\s*)429\b/i,
-      /\bHTTP[\/\s]+429\b/i,
+      /\bHTTP[/\s]+429\b/i,
       /\b429\s+Too Many/i,
       /\bquota exceeded\b/i,
     ],
