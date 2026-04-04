@@ -151,6 +151,22 @@ export async function executeSync(
 
     sessionId = createResult.data.id;
   }
+
+  // Emit metadata with sessionId so the TUI can make the tool card
+  // clickable and navigate to the subagent session.
+  if (deps.metadata) {
+    deps.metadata({
+      title: input.description,
+      metadata: {
+        prompt: input.prompt,
+        category: input.category,
+        description: input.description,
+        sessionId,
+        ...(config.model ? { model: config.model } : {}),
+      },
+    });
+  }
+
   const parsed = parseModelId(qualifyModel(config.model));
 
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
