@@ -3,7 +3,14 @@ import type { DiagnosticPattern, DiagnosticResult } from "./types";
 export const DIAGNOSTIC_PATTERNS: DiagnosticPattern[] = [
   {
     category: "rate-limit",
-    patterns: [/rate limit/i, /too many requests/i, /429/i, /quota exceeded/i],
+    patterns: [
+      /\brate[- ]?limit(?:ed|ing)?\b/i,
+      /\btoo many requests\b/i,
+      /\bstatus(?:\s*(?:code)?:?\s*)429\b/i,
+      /\bHTTP[/\s]+429\b/i,
+      /\b429\s+Too Many/i,
+      /\bquota exceeded\b/i,
+    ],
     severity: "warning",
     suggestion:
       "Rate limited. Wait 30-60 seconds then retry. If persistent, check API quota or switch to a different model.",
@@ -16,7 +23,13 @@ export const DIAGNOSTIC_PATTERNS: DiagnosticPattern[] = [
   },
   {
     category: "timeout",
-    patterns: [/timeout/i, /timed out/i, /deadline exceeded/i, /ETIMEDOUT/i],
+    patterns: [
+      /\brequest\s+timed?\s*out\b/i,
+      /\bconnection\s+timed?\s*out\b/i,
+      /\boperation\s+timed?\s*out\b/i,
+      /\bdeadline exceeded\b/i,
+      /\bETIMEDOUT\b/,
+    ],
     severity: "warning",
     suggestion:
       "Request timed out. Try a shorter prompt, reduce context size, or check network connectivity.",
