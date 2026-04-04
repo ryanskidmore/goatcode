@@ -108,24 +108,51 @@ export class BackgroundAgentManager {
 
       this.abortControllers.delete(task.id);
 
-      this.complete(task.id, finalSnapshot.result ?? "");
+      const hasMessages = finalSnapshot.messageCount > 0;
+      const pollerResult = finalSnapshot.result?.trim();
+      const hasPollerResult = pollerResult != null && pollerResult.length > 0;
 
-      // Persist final assistant result before deleting the session so
-      // background_output does not need to fetch from a deleted session.
-      if (task.sessionId && (!task.result || task.result.trim() === "")) {
-        try {
-          const messagesResult = await ctx.client.session.messages({
-            path: { id: task.sessionId },
-          });
-          const messages = (messagesResult.data ?? []) as SessionMessage[];
-          const lastAssistant = [...messages]
-            .reverse()
-            .find((message) => message.role === "assistant");
-          if (lastAssistant?.content) {
-            task.result = lastAssistant.content;
+      if (!hasMessages) {
+        // Session stabilised with zero messages — the agent never started or
+        // all messages were lost (e.g. rate limiting prevented the provider
+        // from returning any response).
+        this.fail(
+          task.id,
+          "Background agent produced no output (0 messages). " +
+            "This may indicate rate limiting or a session creation failure.",
+        );
+      } else if (hasPollerResult) {
+        this.complete(task.id, finalSnapshot.result!);
+      } else {
+        // Messages were recorded but the poller did not capture assistant
+        // content. Try one final direct fetch before giving up.
+        let recovered = false;
+        if (task.sessionId) {
+          try {
+            const messagesResult = await ctx.client.session.messages({
+              path: { id: task.sessionId },
+            });
+            const messages = (messagesResult.data ?? []) as SessionMessage[];
+            const lastAssistant = [...messages]
+              .reverse()
+              .find((message) => message.role === "assistant");
+            if (lastAssistant?.content && lastAssistant.content.trim().length > 0) {
+              this.complete(task.id, lastAssistant.content);
+              recovered = true;
+            }
+          } catch (fetchError) {
+            log("[manager] Failed to recover assistant result from session", {
+              id: task.id,
+              error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+            });
           }
-        } catch {
-          // Non-fatal: keep existing empty result fallback behavior.
+        }
+        if (!recovered) {
+          this.fail(
+            task.id,
+            `Background agent session ended without usable output ` +
+              `(${finalSnapshot.messageCount} messages recorded, no assistant content found).`,
+          );
         }
       }
 
@@ -136,9 +163,9 @@ export class BackgroundAgentManager {
       if (task.sessionId) {
         try {
           await ctx.client.session.delete({ path: { id: task.sessionId } });
-          log("[manager] Deleted completed session", { id: task.id, sessionId: task.sessionId });
+          log("[manager] Deleted session", { id: task.id, sessionId: task.sessionId });
         } catch (deleteError) {
-          log("[manager] Failed to delete completed session (non-fatal)", {
+          log("[manager] Failed to delete session (non-fatal)", {
             id: task.id,
             error: deleteError instanceof Error ? deleteError.message : String(deleteError),
           });
