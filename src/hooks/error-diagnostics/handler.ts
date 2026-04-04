@@ -4,6 +4,14 @@ import { matchDiagnostic } from "./patterns";
 
 const ERROR_DIAGNOSTIC_MARKER = "[ERROR DIAGNOSTIC]";
 
+/**
+ * Maximum tool output length to scan for diagnostics. Outputs longer than
+ * this are almost certainly content (file reads, search results) rather than
+ * error messages. Scanning them causes false positives when the content
+ * happens to mention rate limits, timeouts, etc.
+ */
+const MAX_SCANNABLE_OUTPUT_LENGTH = 1_500;
+
 type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]>;
 type EventHook = NonNullable<PluginHookContributions["event"]>;
 
@@ -64,6 +72,12 @@ export function createToolErrorHandler(): PostToolUseHook {
 
       const toolOutput = output.output;
       if (typeof toolOutput !== "string" || toolOutput.includes(ERROR_DIAGNOSTIC_MARKER)) {
+        return;
+      }
+
+      // Skip large outputs — they are content (file reads, search results),
+      // not error messages. Scanning them causes false-positive diagnostics.
+      if (toolOutput.length > MAX_SCANNABLE_OUTPUT_LENGTH) {
         return;
       }
 
