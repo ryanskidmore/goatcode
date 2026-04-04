@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running pre-commit checks..."
+
+echo "  Lint..."
+bun run lint
+
+echo "  Format check..."
+bun run fmt:check
+
+echo "  Typecheck..."
+bun run typecheck
+
+echo "  Tests..."
+bun run test
+
+echo "All pre-commit checks passed."
