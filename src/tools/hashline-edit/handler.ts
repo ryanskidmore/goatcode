@@ -29,11 +29,14 @@ export async function executeHashlineEdit(
     let existing: string;
     try {
       existing = await readFile(args.filePath, "utf8");
-    } catch {
-      if (canCreateFile) {
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "ENOENT" && canCreateFile) {
         existing = "";
-      } else {
+      } else if (code === "ENOENT") {
         return `Error: File not found: ${args.filePath}`;
+      } else {
+        throw error;
       }
     }
 

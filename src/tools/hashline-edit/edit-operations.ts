@@ -191,20 +191,38 @@ function detectOverlappingRanges(edits: HashlineEdit[]): string | null {
       ranges.push({ start: edit.pos.line, end: edit.pos.line, idx: i });
     }
   }
-  if (ranges.length < 2) return null;
 
-  ranges.sort((a, b) => a.start - b.start || a.end - b.end);
-  for (let i = 1; i < ranges.length; i++) {
-    const prev = ranges[i - 1];
-    const curr = ranges[i];
-    if (curr.start <= prev.end) {
-      return (
-        `Overlapping range edits detected: ` +
-        `edit ${prev.idx + 1} (lines ${prev.start}-${prev.end}) overlaps with ` +
-        `edit ${curr.idx + 1} (lines ${curr.start}-${curr.end}).`
-      );
+  // Check replace spans overlap each other
+  if (ranges.length >= 2) {
+    ranges.sort((a, b) => a.start - b.start || a.end - b.end);
+    for (let i = 1; i < ranges.length; i++) {
+      const prev = ranges[i - 1];
+      const curr = ranges[i];
+      if (curr.start <= prev.end) {
+        return (
+          `Overlapping range edits detected: ` +
+          `edit ${prev.idx + 1} (lines ${prev.start}-${prev.end}) overlaps with ` +
+          `edit ${curr.idx + 1} (lines ${curr.start}-${curr.end}).`
+        );
+      }
     }
   }
+
+  // Reject insert anchors that sit inside a replaced span
+  for (let i = 0; i < edits.length; i++) {
+    const edit = edits[i];
+    if (edit.op !== "append_at" && edit.op !== "prepend_at") continue;
+    const anchor = edit.pos.line;
+    for (const range of ranges) {
+      if (anchor >= range.start && anchor <= range.end) {
+        return (
+          `Conflicting edits detected: edit ${i + 1} anchors line ${anchor}, ` +
+          `but edit ${range.idx + 1} replaces lines ${range.start}-${range.end}.`
+        );
+      }
+    }
+  }
+
   return null;
 }
 
@@ -318,7 +336,26 @@ export function applyHashlineEdits(content: string, edits: HashlineEdit[]): Hash
     idx,
     ...getEditSortKey(edit, fileLines.length),
   }));
-  annotated.sort((a, b) => b.sortLine - a.sortLine || a.precedence - b.precedence || a.idx - b.idx);
+  annotated.sort((a, b) => {
+    const byLine = b.sortLine - a.sortLine;
+    if (byLine !== 0) return byLine;
+    const byPrec = a.precedence - b.precedence;
+    if (byPrec !== 0) return byPrec;
+    // For insert ops at the same position, preserve the original edits[] order
+    // (use b.idx - a.idx because the outer sort is bottom-up / reversed).
+    const aIsInsert =
+      a.edit.op === "append_at" ||
+      a.edit.op === "prepend_at" ||
+      a.edit.op === "append_file" ||
+      a.edit.op === "prepend_file";
+    const bIsInsert =
+      b.edit.op === "append_at" ||
+      b.edit.op === "prepend_at" ||
+      b.edit.op === "append_file" ||
+      b.edit.op === "prepend_file";
+    if (aIsInsert && bIsInsert) return b.idx - a.idx;
+    return a.idx - b.idx;
+  });
 
   // Phase 6: Apply edits bottom-up
   function trackFirstChanged(line: number): void {
