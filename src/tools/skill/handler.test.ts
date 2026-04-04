@@ -6,12 +6,12 @@ describe("executeSkill", () => {
     beforeEach(() => {
       registerSkillLoader({
         load: (name: string, userMessage?: string) => {
-          if (name === "git-master") return "Git workflow instructions";
+          if (name === "git-gud") return "Git workflow instructions";
           if (name === "with-msg" && userMessage) return `Context: ${userMessage}`;
           return undefined;
         },
         list: () => [
-          { name: "git-master", description: "Git workflow" },
+          { name: "git-gud", description: "Git workflow" },
           { name: "with-msg", description: "Uses the forwarded user message" },
         ],
       });
@@ -19,7 +19,7 @@ describe("executeSkill", () => {
 
     describe("#when called with a known skill name", () => {
       it("#then returns the skill content from the loader", () => {
-        const result = executeSkill({ name: "git-master" });
+        const result = executeSkill({ name: "git-gud" });
         expect(result).toBe("Git workflow instructions");
       });
     });

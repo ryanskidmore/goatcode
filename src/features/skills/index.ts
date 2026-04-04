@@ -2,7 +2,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../../shared/logger";
 import { getDataDir } from "../../shared/data-path";
-import { gitMasterSkill } from "./builtin/git-master";
+import { gitGudSkill } from "./builtin/git-gud";
 import {
   createProjectSkillLoader,
   loadProjectSkills,
@@ -12,13 +12,13 @@ import {
 import { mergeSkills } from "./skill-merger";
 import * as skillHandler from "../../tools/skill/handler";
 
-export { gitMasterSkill } from "./builtin/git-master";
+export { gitGudSkill } from "./builtin/git-gud";
 export { createProjectSkillLoader, loadProjectSkills } from "./skill-loader";
 export { mergeSkills } from "./skill-merger";
 export type { Skill, SkillInfo, SkillLoader } from "./skill-loader";
 
 export function getBuiltinSkills(): Skill[] {
-  return [gitMasterSkill];
+  return [gitGudSkill];
 }
 
 function skillToMarkdown(skill: Skill): string {

@@ -29,7 +29,7 @@ const SAMPLE_AGENTS: AgentTableEntry[] = [
 
 const SAMPLE_SKILLS: SkillEntry[] = [
   { name: "playwright", description: "Browser automation and testing." },
-  { name: "git-master", description: "Atomic commits and rebase surgery." },
+  { name: "git-gud", description: "Atomic commits and rebase surgery." },
 ];
 
 const SAMPLE_CATEGORIES: AvailableCategory[] = [
@@ -109,7 +109,7 @@ describe("prompt-builder", () => {
 
         //#then
         expect(result).toContain("playwright");
-        expect(result).toContain("git-master");
+        expect(result).toContain("git-gud");
         expect(result).toContain("### Available Skills");
       });
     });
@@ -200,7 +200,7 @@ describe("prompt-builder", () => {
         expect(result).toContain("explorer");
         expect(result).toContain("deepworker");
         expect(result).toContain("playwright");
-        expect(result).toContain("git-master");
+        expect(result).toContain("git-gud");
         expect(result).toContain("visual-engineering");
         expect(result).toContain("gpt-5.3-codex");
       });
