@@ -7,8 +7,54 @@ import {
   getProviderPriority,
   qualifyModel,
 } from "../shared/provider-registry";
+import { toPlatformModel, type PlatformId } from "../shared/model-prefix-map";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
+
+/**
+ * Detect the deployment platform from available signals.
+ *
+ * Priority:
+ * 1. Provider discovery connected providers (most reliable when ready)
+ * 2. Config input's default model prefix
+ * 3. Config input's provider keys
+ * 4. Config input's existing agent model prefixes
+ *
+ * Returns "zen" if any zen-prefixed provider/model is detected, "direct" otherwise.
+ */
+function detectPlatform(input: Record<string, unknown>): PlatformId {
+  // 1. Check provider discovery (most reliable if available)
+  const discovery = getDiscovery();
+  if (discovery) {
+    for (const providerId of discovery.connectedProviders) {
+      if (providerId.startsWith("zen-")) return "zen";
+    }
+    // Discovery is ready and shows no zen providers → direct
+    return "direct";
+  }
+
+  // 2. Check the config's default model
+  const model = input["model"] as string | undefined;
+  if (model && model.startsWith("zen-")) return "zen";
+
+  // 3. Check provider configuration keys
+  const provider = input["provider"] as Record<string, unknown> | undefined;
+  if (provider) {
+    for (const key of Object.keys(provider)) {
+      if (key.startsWith("zen-")) return "zen";
+    }
+  }
+
+  // 4. Check existing agent models (OpenCode may have pre-set these)
+  const agents = input["agent"] as Record<string, { model?: string }> | undefined;
+  if (agents) {
+    for (const agent of Object.values(agents)) {
+      if (agent?.model?.startsWith("zen-")) return "zen";
+    }
+  }
+
+  return "direct";
+}
 
 const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
   (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
@@ -75,9 +121,18 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       }
     }
 
+    // Detect platform so qualified canonical models (e.g. "anthropic/claude-opus-4-6")
+    // are translated to the correct platform-specific form (e.g. "zen-anthropic/claude-opus-4-6").
+    const platform = detectPlatform(inputRecord);
+    if (platform !== "direct") {
+      log(`[compositor] Detected platform: ${platform}`);
+    }
+
     // Set agent models from our config.
     // Primary path: use provider discovery to resolve bare model names.
     // Fallback: use the detected/configured provider prefix directly.
+    // Finally, apply platform mapping so models use the correct provider prefix
+    // (e.g. on zen: "anthropic/X" → "zen-anthropic/X").
     for (const [name, agentDef] of Object.entries(aggregated.agents)) {
       const agentConfig = input.agent[name];
       if (!agentConfig) continue;
@@ -85,11 +140,14 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       if (!desiredModel) continue;
       const qualified = qualifyModel(desiredModel);
       if (qualified.includes("/")) {
-        log(`[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${qualified}"`);
-        agentConfig.model = qualified;
+        const platformModel = toPlatformModel(qualified, platform);
+        log(
+          `[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${platformModel}"${platformModel !== qualified ? ` (canonical: ${qualified})` : ""}`,
+        );
+        agentConfig.model = platformModel;
       } else {
         // Discovery not ready — use fallback provider
-        const fallbackModel = `${fallbackProvider}/${desiredModel}`;
+        const fallbackModel = toPlatformModel(`${fallbackProvider}/${desiredModel}`, platform);
         log(
           `[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${fallbackModel}" (fallback provider: ${fallbackProvider})`,
         );
