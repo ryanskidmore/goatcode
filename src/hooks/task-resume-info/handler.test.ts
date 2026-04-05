@@ -110,6 +110,48 @@ describe("createTaskResumeInfoHandler", () => {
 
         const matches = output.output.match(/to continue:/g);
         expect(matches?.length).toBe(1);
+        expect(output.metadata).toEqual(
+          expect.objectContaining({
+            sessionId: "ses_dup",
+            session_id: "ses_dup",
+          }),
+        );
+      });
+    });
+  });
+
+  describe("#given completed task output with session and category/subagent lines", () => {
+    describe("#when metadata is missing or partial", () => {
+      it("#then backfills metadata fields needed for completed card navigation", async () => {
+        const handler = createTaskResumeInfoHandler();
+        const input = {
+          tool: "task",
+          sessionID: "s1",
+          callID: "c1",
+          args: {
+            category: "deep",
+            description: "Long-running clickability test delegation",
+            subagent_type: "deepworker",
+          },
+        };
+        const output = {
+          title: "task",
+          output:
+            "Background task launched.\nCategory: deep\nAgent: deepworker (subagent)\nSession ID: ses_fill123\n<task_metadata>\nsession_id: ses_fill123\nsubagent: deepworker\n</task_metadata>",
+          metadata: {},
+        };
+
+        await handler(input, output);
+
+        expect(output.metadata).toEqual(
+          expect.objectContaining({
+            sessionId: "ses_fill123",
+            session_id: "ses_fill123",
+            category: "deep",
+            subagent_type: "deepworker",
+            description: "Long-running clickability test delegation",
+          }),
+        );
       });
     });
   });

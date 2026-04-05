@@ -97,6 +97,15 @@ const mockSessions = [
     version: "1.0",
     time: { created: NOW, updated: NOW },
   },
+  {
+    id: "ses_child_333",
+    projectID: "proj_001",
+    directory: "/tmp/test-project",
+    title: "Session Child",
+    version: "1.0",
+    parentID: SESSION_A_ID,
+    time: { created: NOW, updated: NOW },
+  },
 ];
 
 const mockTodos = [
@@ -133,6 +142,7 @@ describe("session_list", () => {
         expect(result).toContain("Messages");
         expect(result).toContain(SESSION_A_ID);
         expect(result).toContain(SESSION_B_ID);
+        expect(result).not.toContain("ses_child_333");
       });
     });
 

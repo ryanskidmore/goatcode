@@ -17,4 +17,6 @@ export interface LaunchInput {
   id: string;
   prompt: string;
   model: string;
+  parentSessionID?: string;
+  title?: string;
 }

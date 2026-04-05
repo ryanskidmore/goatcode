@@ -1,6 +1,7 @@
 import type { OpenCodeContext } from "../../types/plugin";
 
 import { log } from "../../shared/logger";
+import { logDelegationDebug } from "../../shared/delegation-debug";
 import { resetMessageCursor } from "../session-state/session-cursor";
 import { deleteSessionTools } from "../session-state/session-tools-store";
 
@@ -14,7 +15,43 @@ const TASK_TTL_MS = 5 * 60 * 1_000;
 type SessionMessage = {
   role?: string;
   content?: string;
+  info?: { role?: string };
+  parts?: Array<{ type?: string; text?: string; thinking?: string }>;
 };
+
+function extractAssistantContent(message: SessionMessage): string | undefined {
+  if (
+    message.role === "assistant" &&
+    typeof message.content === "string" &&
+    message.content.trim().length > 0
+  ) {
+    return message.content;
+  }
+
+  const role = message.role ?? message.info?.role;
+  if (role !== "assistant" || !Array.isArray(message.parts)) {
+    return undefined;
+  }
+
+  const content = message.parts
+    .filter(
+      (part) =>
+        part.type === "text" && typeof part.text === "string" && part.text.trim().length > 0,
+    )
+    .map((part) => part.text!.trim())
+    .join("\n\n");
+
+  return content.length > 0 ? content : undefined;
+}
+
+function getLastAssistantContent(messages: SessionMessage[]): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const content = extractAssistantContent(messages[i]);
+    if (content) return content;
+  }
+
+  return undefined;
+}
 
 function isTerminalStatus(status: BackgroundTask["status"]): boolean {
   return status === "completed" || status === "failed" || status === "cancelled";
@@ -64,6 +101,7 @@ export class BackgroundAgentManager {
 
       const { sessionId } = await spawnBackgroundSession(ctx, input);
       task.sessionId = sessionId;
+      logDelegationDebug("manager.session.spawned", { id: task.id, sessionId, model: task.model });
 
       // cancel() may have mutated status concurrently while spawn was in-flight
       if ((task as BackgroundTask).status === "cancelled") {
@@ -92,14 +130,19 @@ export class BackgroundAgentManager {
           // completion detection — message-count stability prevents
           // false positives during brief thinking pauses.
           const isIdle = statusType === "idle" || statusType === undefined;
-          const lastAssistantMessage = [...messages]
-            .reverse()
-            .find((message) => message.role === "assistant");
+          const lastAssistantContent = getLastAssistantContent(messages);
+          logDelegationDebug("manager.poll.snapshot", {
+            id: task.id,
+            sessionId,
+            messageCount: messages.length,
+            isIdle,
+            hasResult: Boolean(lastAssistantContent && lastAssistantContent.trim().length > 0),
+          });
 
           return {
             messageCount: messages.length,
             isIdle,
-            result: lastAssistantMessage?.content,
+            result: lastAssistantContent,
           };
         },
         120,
@@ -111,6 +154,11 @@ export class BackgroundAgentManager {
       const hasMessages = finalSnapshot.messageCount > 0;
       const pollerResult = finalSnapshot.result?.trim();
       const hasPollerResult = pollerResult != null && pollerResult.length > 0;
+      logDelegationDebug("manager.retention", {
+        id: task.id,
+        sessionId: task.sessionId,
+        retainSessionForNavigation: Boolean(task.sessionId),
+      });
 
       if (!hasMessages) {
         // Session stabilised with zero messages — the agent never started or
@@ -133,11 +181,9 @@ export class BackgroundAgentManager {
               path: { id: task.sessionId },
             });
             const messages = (messagesResult.data ?? []) as SessionMessage[];
-            const lastAssistant = [...messages]
-              .reverse()
-              .find((message) => message.role === "assistant");
-            if (lastAssistant?.content && lastAssistant.content.trim().length > 0) {
-              this.complete(task.id, lastAssistant.content);
+            const lastAssistantContent = getLastAssistantContent(messages);
+            if (lastAssistantContent && lastAssistantContent.trim().length > 0) {
+              this.complete(task.id, lastAssistantContent);
               recovered = true;
             }
           } catch (fetchError) {
@@ -160,17 +206,7 @@ export class BackgroundAgentManager {
       // after the orchestrator has consumed the result. Without this,
       // OpenCode continuation hooks can re-activate the session and make
       // unwanted changes after we consider the task finished.
-      if (task.sessionId) {
-        try {
-          await ctx.client.session.delete({ path: { id: task.sessionId } });
-          log("[manager] Deleted session", { id: task.id, sessionId: task.sessionId });
-        } catch (deleteError) {
-          log("[manager] Failed to delete session (non-fatal)", {
-            id: task.id,
-            error: deleteError instanceof Error ? deleteError.message : String(deleteError),
-          });
-        }
-      }
+      // Keep session alive for post-completion navigation from task cards.
     } catch (error) {
       const isCancelledTask = task.status === "cancelled";
       const isCancelledError = error instanceof Error && error.message === "Polling cancelled";
@@ -181,6 +217,12 @@ export class BackgroundAgentManager {
           this.concurrency.release(task.model);
           this.cleanupSession(task.sessionId);
           this.evictStaleTasks();
+          logDelegationDebug("manager.task.cancelled", {
+            id: task.id,
+            sessionId: task.sessionId,
+            retainSessionForNavigation: Boolean(task.sessionId),
+            wasRunning: task.startedAt !== undefined,
+          });
         }
         return;
       }
@@ -207,6 +249,11 @@ export class BackgroundAgentManager {
     this.concurrency.release(task.model);
     this.cleanupSession(task.sessionId);
     this.evictStaleTasks();
+    logDelegationDebug("manager.task.completed", {
+      id,
+      sessionId: task.sessionId,
+      retainSessionForNavigation: Boolean(task.sessionId),
+    });
     log("[manager] Task completed", { id });
   }
 
@@ -221,6 +268,12 @@ export class BackgroundAgentManager {
     this.concurrency.release(task.model);
     this.cleanupSession(task.sessionId);
     this.evictStaleTasks();
+    logDelegationDebug("manager.task.failed", {
+      id,
+      sessionId: task.sessionId,
+      retainSessionForNavigation: Boolean(task.sessionId),
+      error,
+    });
     log("[manager] Task failed", { id, error });
   }
 
@@ -248,6 +301,12 @@ export class BackgroundAgentManager {
 
     this.cleanupSession(task.sessionId);
     this.evictStaleTasks();
+    logDelegationDebug("manager.task.cancelled", {
+      id,
+      sessionId: task.sessionId,
+      retainSessionForNavigation: Boolean(task.sessionId),
+      wasRunning,
+    });
     log("[manager] Task cancelled", { id });
   }
 

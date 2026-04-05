@@ -12,12 +12,67 @@ const SESSION_ID_PATTERNS = [
   /sessionId: (ses_[a-zA-Z0-9_-]+)/,
 ];
 
+const SUBAGENT_PATTERNS = [/^\s*subagent:\s*(.+?)\s*$/m, /^\s*Agent:\s*(.+?)\s*\(subagent\)\s*$/m];
+
+const CATEGORY_PATTERNS = [/^\s*Category:\s*(.+?)\s*$/m];
+
 function extractSessionId(output: string): string | null {
   for (const pattern of SESSION_ID_PATTERNS) {
     const match = output.match(pattern);
     if (match) return match[1] ?? null;
   }
   return null;
+}
+
+function extractFirstMatch(output: string, patterns: RegExp[]): string | null {
+  for (const pattern of patterns) {
+    const match = output.match(pattern);
+    if (match && typeof match[1] === "string" && match[1].trim().length > 0) {
+      return match[1].trim();
+    }
+  }
+  return null;
+}
+
+function ensureTaskMetadata(
+  input: Record<string, unknown>,
+  output: Record<string, unknown>,
+  toolOutput: string,
+  sessionId: string,
+): void {
+  const existing = isRecord(output.metadata) ? output.metadata : {};
+  const args = isRecord(input.args) ? input.args : {};
+
+  const category =
+    typeof args.category === "string"
+      ? args.category
+      : extractFirstMatch(toolOutput, CATEGORY_PATTERNS);
+  const subagent =
+    typeof args.subagent_type === "string"
+      ? args.subagent_type
+      : extractFirstMatch(toolOutput, SUBAGENT_PATTERNS);
+
+  const merged: Record<string, unknown> = {
+    ...existing,
+    sessionId,
+    session_id: sessionId,
+  };
+
+  if (
+    typeof args.description === "string" &&
+    args.description.trim().length > 0 &&
+    typeof merged.description !== "string"
+  ) {
+    merged.description = args.description;
+  }
+  if (category && typeof merged.category !== "string") {
+    merged.category = category;
+  }
+  if (subagent && typeof merged.subagent_type !== "string") {
+    merged.subagent_type = subagent;
+  }
+
+  output.metadata = merged;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -44,12 +99,14 @@ export function createTaskResumeInfoHandler(): PostToolUseHook {
       return;
     }
 
-    if (toolOutput.includes("\nto continue:")) {
+    const sessionId = extractSessionId(toolOutput);
+    if (!sessionId) {
       return;
     }
 
-    const sessionId = extractSessionId(toolOutput);
-    if (!sessionId) {
+    ensureTaskMetadata(input, output, toolOutput, sessionId);
+
+    if (toolOutput.includes("\nto continue:")) {
       return;
     }
 

@@ -16,6 +16,10 @@ const categoryListForDescription = CATEGORY_NAMES.map((name) => `"${name}"`).joi
 
 const taskArgsSchema = z.object({
   category: z.string().describe(`Category to route to. One of: ${categoryListForDescription}`),
+  subagent_type: z
+    .string()
+    .optional()
+    .describe("Optional agent label for UI metadata (ex: deepworker, explorer)."),
   description: z.string().describe("Short 3-5 word task description"),
   prompt: z.string().describe("Full prompt/instructions for the delegated agent"),
   load_skills: z.array(z.string()).optional().describe("Skill names to inject"),
@@ -52,6 +56,18 @@ function resolveClient(
   }
 }
 
+function resolveParentSessionID(
+  toolContext: Parameters<ToolDefinition["execute"]>[1],
+): string | undefined {
+  const legacy = Reflect.get(toolContext as Record<string, unknown>, "sessionID");
+  if (typeof legacy === "string" && legacy.length > 0) return legacy;
+
+  const camel = Reflect.get(toolContext as Record<string, unknown>, "sessionId");
+  if (typeof camel === "string" && camel.length > 0) return camel;
+
+  return undefined;
+}
+
 export function createTaskTool(
   getManager: () => BackgroundAgentManager,
   getStoredContext?: () => OpenCodeContext | undefined,
@@ -69,6 +85,7 @@ export function createTaskTool(
       const args = taskArgsSchema.parse(rawArgs);
       const input: TaskInput = {
         category: args.category,
+        subagent_type: args.subagent_type,
         description: args.description,
         prompt: args.prompt,
         load_skills: args.load_skills,
@@ -89,6 +106,7 @@ export function createTaskTool(
         manager,
         client,
         directory: toolContext.directory,
+        sessionID: resolveParentSessionID(toolContext),
         metadata: (input) => toolContext.metadata(input),
       };
 
