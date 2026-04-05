@@ -16,6 +16,11 @@ const SUBAGENT_PATTERNS = [/^\s*subagent:\s*(.+?)\s*$/m, /^\s*Agent:\s*(.+?)\s*\
 
 const CATEGORY_PATTERNS = [/^\s*Category:\s*(.+?)\s*$/m];
 
+const TASK_ID_PATTERNS = [
+  /^\s*Task ID:\s*(task_[a-zA-Z0-9_-]+)\s*$/m,
+  /^\s*task_id:\s*(task_[a-zA-Z0-9_-]+)\s*$/m,
+];
+
 function extractSessionId(output: string): string | null {
   for (const pattern of SESSION_ID_PATTERNS) {
     const match = output.match(pattern);
@@ -32,6 +37,23 @@ function extractFirstMatch(output: string, patterns: RegExp[]): string | null {
     }
   }
   return null;
+}
+
+function ensureTaskStatusLine(toolOutput: string, sessionId: string): string {
+  if (toolOutput.includes("\nStatus:")) {
+    return toolOutput;
+  }
+
+  const taskId = extractFirstMatch(toolOutput, TASK_ID_PATTERNS);
+  const lines = toolOutput.split("\n");
+  const taskIdIndex = lines.findIndex((line) => line.startsWith("Task ID:"));
+  if (taskIdIndex === -1) {
+    return toolOutput;
+  }
+
+  const marker = taskId ? `running (${taskId})` : `running (${sessionId})`;
+  lines.splice(taskIdIndex + 1, 0, `Status: ${marker}`);
+  return lines.join("\n");
 }
 
 function ensureTaskMetadata(
@@ -106,12 +128,18 @@ export function createTaskResumeInfoHandler(): PostToolUseHook {
 
     ensureTaskMetadata(input, output, toolOutput, sessionId);
 
-    if (toolOutput.includes("\nto continue:")) {
+    const withStatus = ensureTaskStatusLine(toolOutput, sessionId);
+    if (withStatus !== toolOutput) {
+      output.output = withStatus;
+    }
+
+    if ((output.output as string).includes("\nto continue:")) {
       return;
     }
 
     output.output =
-      toolOutput.trimEnd() + `\n\nto continue: task(session_id="${sessionId}", prompt="...")`;
+      (output.output as string).trimEnd() +
+      `\n\nto continue: task(session_id="${sessionId}", prompt="...")`;
 
     log("[task-resume-info] injected resume continuation info", { sessionId });
   };

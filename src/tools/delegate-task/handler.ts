@@ -68,6 +68,18 @@ function resolveParentSessionID(
   return undefined;
 }
 
+function resolveParentMessageID(
+  toolContext: Parameters<ToolDefinition["execute"]>[1],
+): string | undefined {
+  const legacy = Reflect.get(toolContext as Record<string, unknown>, "messageID");
+  if (typeof legacy === "string" && legacy.length > 0) return legacy;
+
+  const camel = Reflect.get(toolContext as Record<string, unknown>, "messageId");
+  if (typeof camel === "string" && camel.length > 0) return camel;
+
+  return undefined;
+}
+
 export function createTaskTool(
   getManager: () => BackgroundAgentManager,
   getStoredContext?: () => OpenCodeContext | undefined,
@@ -107,6 +119,7 @@ export function createTaskTool(
         client,
         directory: toolContext.directory,
         sessionID: resolveParentSessionID(toolContext),
+        messageID: resolveParentMessageID(toolContext),
         metadata: (input) => toolContext.metadata(input),
       };
 

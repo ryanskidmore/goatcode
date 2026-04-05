@@ -16,6 +16,7 @@ export interface ExecutorDeps {
   client: OpenCodeContext["client"];
   directory: string;
   sessionID?: string;
+  messageID?: string;
   metadata?: MetadataCallback;
 }
 
@@ -87,6 +88,8 @@ export async function executeBackground(
       category: input.category,
       subagent_type: subagent,
       description: input.description,
+      ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
+      ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
       ...(sessionId ? { session_id: sessionId } : {}),
       ...(sessionId ? { sessionId } : {}),
       ...(config.model ? { model: config.model } : {}),
@@ -134,6 +137,7 @@ function formatBackgroundResult(
     "Background task launched.",
     "",
     `Task ID: ${taskId}`,
+    `Status: running`,
     `Category: ${input.category}`,
     `Model: ${config.model}${config.variant ? ` (variant: ${config.variant})` : ""}`,
     `Description: ${input.description}`,
@@ -147,7 +151,7 @@ function formatBackgroundResult(
       taskId,
       sessionId,
       subagent,
-      lineCount: 6,
+      lineCount: 7,
     });
     lines.push("", ...buildTaskMetadataLines(sessionId, taskId, subagent));
   }
@@ -212,6 +216,8 @@ export async function executeSync(
         category: input.category,
         subagent_type: subagent,
         description: input.description,
+        ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
+        ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
         session_id: sessionId,
         sessionId,
         ...(config.model ? { model: config.model } : {}),

@@ -225,6 +225,7 @@ describe("createTaskTool", () => {
         expect(result).toContain("Background task launched");
         expect(result).toContain("quick");
         expect(result).toContain("gpt-5.4-mini");
+        expect(result).toContain("Status: running");
         expect(result).toContain("Session ID: ses_task_");
         expect(result).toContain("Agent: quick (subagent)");
         expect(result).toContain("subagent: quick");
@@ -265,7 +266,46 @@ describe("createTaskTool", () => {
               category: "quick",
               session_id: expect.stringMatching(/^ses_task_/),
               sessionId: expect.stringMatching(/^ses_task_/),
+              parentMessageId: "test-message",
+              parent_message_id: "test-message",
               subagent_type: "worker",
+            }),
+          }),
+        );
+      });
+
+      it("#then resolves nested parent session and message identifiers", async () => {
+        const bgManager = makeMockManager();
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const ctx = makeMockToolContext({
+          sessionID: undefined,
+          sessionId: "nested-session-42",
+          messageID: undefined,
+          messageId: "nested-message-42",
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await bgTool.execute(
+          {
+            category: "deep",
+            subagent_type: "deepworker",
+            description: "nested handoff",
+            prompt: "continue in nested subagent",
+            run_in_background: true,
+          },
+          ctx,
+        );
+
+        expect(bgManager.launched[0].parentSessionID).toBe("nested-session-42");
+        expect(result).toContain("Status: running");
+        expect(events[0]).toEqual(
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              session_id: expect.stringMatching(/^ses_task_/),
+              sessionId: expect.stringMatching(/^ses_task_/),
+              parentMessageId: "nested-message-42",
+              parent_message_id: "nested-message-42",
             }),
           }),
         );

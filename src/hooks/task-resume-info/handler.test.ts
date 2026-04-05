@@ -156,6 +156,35 @@ describe("createTaskResumeInfoHandler", () => {
     });
   });
 
+  describe("#given running task output missing explicit status line", () => {
+    describe("#when session metadata can be extracted", () => {
+      it("#then injects a running status line before continuation hint", async () => {
+        const handler = createTaskResumeInfoHandler();
+        const input = {
+          tool: "task",
+          sessionID: "s1",
+          callID: "c1",
+          args: {
+            category: "quick",
+            description: "status test",
+            subagent_type: "worker",
+          },
+        };
+        const output = {
+          title: "task",
+          output:
+            "Background task launched.\n\nTask ID: task_status1\nCategory: quick\nDescription: status test\nSession ID: ses_status1\n<task_metadata>\nsession_id: ses_status1\ntask_id: task_status1\nsubagent: worker\n</task_metadata>",
+          metadata: {},
+        };
+
+        await handler(input, output);
+
+        expect(output.output).toContain("Status: running (task_status1)");
+        expect(output.output).toContain('to continue: task(session_id="ses_status1"');
+      });
+    });
+  });
+
   describe("#given a task tool output starting with Error:", () => {
     describe("#when the output is an error even with a session ID", () => {
       it("#then does not modify the output", async () => {
