@@ -162,8 +162,10 @@ function formatBackgroundResult(
 function buildTaskMetadataLines(sessionId: string, taskId: string, subagent: string): string[] {
   return [
     `Session ID: ${sessionId}`,
+    `sessionId: ${sessionId}`,
     `<task_metadata>`,
     `session_id: ${sessionId}`,
+    `sessionId: ${sessionId}`,
     `task_id: ${taskId}`,
     `subagent: ${subagent}`,
     `</task_metadata>`,
