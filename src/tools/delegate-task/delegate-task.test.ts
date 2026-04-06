@@ -6,20 +6,41 @@ import { createTaskTool } from "./handler";
 import type { ToolDefinition } from "@opencode-ai/plugin";
 
 function makeMockManager() {
-  const launched: Array<{ id: string; prompt: string; model: string }> = [];
+  const launched: Array<{
+    id: string;
+    prompt: string;
+    model: string;
+    parentSessionID?: string;
+    title?: string;
+  }> = [];
+  const tasks = new Map<string, BackgroundTask>();
   return {
     launched,
-    launch: mock(async (_ctx: unknown, input: { id: string; prompt: string; model: string }) => {
-      launched.push(input);
-      return {
-        id: input.id,
-        status: "queued" as BackgroundTask["status"],
-        prompt: input.prompt,
-        model: input.model,
-        createdAt: Date.now(),
-      };
-    }),
-    get: mock(() => undefined),
+    launch: mock(
+      async (
+        _ctx: unknown,
+        input: {
+          id: string;
+          prompt: string;
+          model: string;
+          parentSessionID?: string;
+          title?: string;
+        },
+      ) => {
+        launched.push(input);
+        const task = {
+          id: input.id,
+          sessionId: `ses_${input.id}`,
+          status: "queued" as BackgroundTask["status"],
+          prompt: input.prompt,
+          model: input.model,
+          createdAt: Date.now(),
+        };
+        tasks.set(input.id, task);
+        return task;
+      },
+    ),
+    get: mock((id: string) => tasks.get(id)),
     getAll: mock(() => []),
     complete: mock(() => {}),
     fail: mock(() => {}),
@@ -27,7 +48,7 @@ function makeMockManager() {
   };
 }
 
-function makeMockToolContext(overrides: Partial<Parameters<ToolDefinition["execute"]>[1]> = {}) {
+function makeMockToolContext(overrides: Record<string, unknown> = {}) {
   return {
     sessionID: "test-session",
     messageID: "test-message",
@@ -170,6 +191,7 @@ describe("createTaskTool", () => {
         const result = await tool.execute(
           {
             category: "bogus",
+            subagent_type: "bogus",
             description: "test task",
             prompt: "do something",
             run_in_background: false,
@@ -191,6 +213,7 @@ describe("createTaskTool", () => {
         const result = await bgTool.execute(
           {
             category: "quick",
+            subagent_type: "quick",
             description: "fix typo",
             prompt: "fix the typo in readme",
             run_in_background: true,
@@ -201,8 +224,103 @@ describe("createTaskTool", () => {
         expect(result).toContain("Background task launched");
         expect(result).toContain("quick");
         expect(result).toContain("gpt-5.4-mini");
+        expect(result).toContain("Status: running");
+        expect(result).toContain("Session ID: ses_task_");
+        expect(result).toContain("Agent: quick (subagent)");
+        expect(result).toContain("subagent: quick");
         expect(bgManager.launch).toHaveBeenCalledTimes(1);
         expect(bgManager.launched[0].model).toBe("gpt-5.4-mini");
+        expect(bgManager.launched[0].parentSessionID).toBe("test-session");
+        expect(bgManager.launched[0].title).toBe("fix typo (@quick subagent)");
+      });
+
+      it("#then includes task metadata with subagent label", async () => {
+        const bgManager = makeMockManager();
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const ctx = makeMockToolContext({
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await bgTool.execute(
+          {
+            category: "quick",
+            subagent_type: "worker",
+            description: "fix typo",
+            prompt: "fix the typo in readme",
+            run_in_background: true,
+          },
+          ctx,
+        );
+
+        expect(result).toContain("<task_metadata>");
+        expect(result).toContain("Session ID: ses_task_");
+        expect(result).toContain("session_id: ses_");
+        expect(result).toContain("subagent: worker");
+        // Two metadata emissions: early (title/subagent) + full (with sessionId)
+        expect(events.length).toBe(2);
+        // Early emission: no sessionId yet
+        expect(events[0]).toEqual(
+          expect.objectContaining({
+            title: "fix typo",
+            metadata: expect.objectContaining({
+              category: "quick",
+              subagent_type: "worker",
+            }),
+          }),
+        );
+        // Full emission: includes sessionId
+        expect(events[1]).toEqual(
+          expect.objectContaining({
+            title: "fix typo",
+            metadata: expect.objectContaining({
+              category: "quick",
+              session_id: expect.stringMatching(/^ses_task_/),
+              sessionId: expect.stringMatching(/^ses_task_/),
+              parentMessageId: "test-message",
+              parent_message_id: "test-message",
+              subagent_type: "worker",
+            }),
+          }),
+        );
+      });
+
+      it("#then resolves nested parent session and message identifiers", async () => {
+        const bgManager = makeMockManager();
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const ctx = makeMockToolContext({
+          sessionID: undefined,
+          sessionId: "nested-session-42",
+          messageID: undefined,
+          messageId: "nested-message-42",
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await bgTool.execute(
+          {
+            category: "deep",
+            subagent_type: "deepworker",
+            description: "nested handoff",
+            prompt: "continue in nested subagent",
+            run_in_background: true,
+          },
+          ctx,
+        );
+
+        expect(bgManager.launched[0].parentSessionID).toBe("nested-session-42");
+        expect(result).toContain("Status: running");
+        // Second emission has full metadata including sessionId
+        expect(events[1]).toEqual(
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              session_id: expect.stringMatching(/^ses_task_/),
+              sessionId: expect.stringMatching(/^ses_task_/),
+              parentMessageId: "nested-message-42",
+              parent_message_id: "nested-message-42",
+            }),
+          }),
+        );
       });
     });
 
@@ -215,6 +333,7 @@ describe("createTaskTool", () => {
         const result = await syncTool.execute(
           {
             category: "unspecified-low",
+            subagent_type: "unspecified-low",
             description: "moderate task",
             prompt: "implement the feature",
             run_in_background: false,
@@ -222,7 +341,70 @@ describe("createTaskTool", () => {
           ctx,
         );
 
-        expect(result).toBe("task result here");
+        expect(result).toContain("task result here");
+        expect(result).toContain("<task_metadata>");
+        expect(result).toContain("session_id: sync-session-123");
+        expect(result).toContain("subagent: unspecified-low");
+      });
+
+      it("#then creates sync session as a child of the parent session", async () => {
+        const syncManager = makeMockManager();
+        const syncTool = createTaskTool(() => syncManager as unknown as BackgroundAgentManager);
+        const client = makeMockClient();
+        const ctx = makeMockToolContext({ client });
+
+        await syncTool.execute(
+          {
+            category: "unspecified-low",
+            subagent_type: "unspecified-low",
+            description: "moderate task",
+            prompt: "implement the feature",
+            run_in_background: false,
+          },
+          ctx,
+        );
+
+        expect(client.session.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({
+              parentID: "test-session",
+            }),
+          }),
+        );
+      });
+
+      it("#then emits metadata with sessionId and default subagent label", async () => {
+        const syncManager = makeMockManager();
+        const syncTool = createTaskTool(() => syncManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const ctx = makeMockToolContext({
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await syncTool.execute(
+          {
+            category: "unspecified-low",
+            subagent_type: "unspecified-low",
+            description: "moderate task",
+            prompt: "implement the feature",
+            run_in_background: false,
+          },
+          ctx,
+        );
+
+        expect(result).toContain("task result here");
+        expect(events.length).toBe(1);
+        expect(events[0]).toEqual(
+          expect.objectContaining({
+            title: "moderate task",
+            metadata: expect.objectContaining({
+              category: "unspecified-low",
+              session_id: "sync-session-123",
+              sessionId: "sync-session-123",
+              subagent_type: "unspecified-low",
+            }),
+          }),
+        );
       });
     });
 
@@ -272,6 +454,7 @@ describe("createTaskTool", () => {
         const result = await structuredTool.execute(
           {
             category: "unspecified-low",
+            subagent_type: "unspecified-low",
             description: "structured test",
             prompt: "implement the feature",
             run_in_background: false,

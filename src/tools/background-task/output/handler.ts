@@ -276,12 +276,21 @@ async function formatTaskOutputWithFallback(
   args: BackgroundOutputArgs,
   client?: OpenCodeContext["client"],
 ): Promise<string> {
-  if (task.status !== "completed") return formatTaskOutput(task);
-  if (hasMeaningfulText(task.result)) return formatCompletedResult(task);
-  if (!client || !task.sessionId) return formatCompletedResult(task);
+  if (task.status !== "completed") {
+    return formatTaskOutput(task);
+  }
+  if (hasMeaningfulText(task.result)) {
+    return formatCompletedResult(task);
+  }
+  if (!client || !task.sessionId) {
+    return formatCompletedResult(task);
+  }
+
 
   const fallbackResult = await fetchFinalAssistantResult(client, task, args);
-  if (!hasMeaningfulText(fallbackResult)) return formatCompletedResult(task);
+  if (!hasMeaningfulText(fallbackResult)) {
+    return formatCompletedResult(task);
+  }
 
   return `Task ${task.id} completed.\n\n${fallbackResult}`;
 }

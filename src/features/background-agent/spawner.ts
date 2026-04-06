@@ -3,7 +3,6 @@ import type { OpenCodeContext } from "../../types/plugin";
 import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
 import { qualifyModel } from "../../shared/provider-registry";
-
 import type { LaunchInput } from "./types";
 
 export type SpawnResult = {
@@ -21,7 +20,8 @@ export async function spawnBackgroundSession(
 
   const createResult = await ctx.client.session.create({
     body: {
-      title: `bg:${input.id}`,
+      title: input.title ?? `bg:${input.id}`,
+      ...(input.parentSessionID ? { parentID: input.parentSessionID } : {}),
     },
     query: {
       directory: ctx.directory,

@@ -5,6 +5,7 @@ export interface ProviderResolutionResult {
   readonly providerId: string;
 }
 
+// Users can override this via goatcode.config.ts provider_priority.
 const DEFAULT_PROVIDER_PRIORITY = ["anthropic", "openai", "google", "opencode"] as const;
 
 let providerPriority: string[] = [...DEFAULT_PROVIDER_PRIORITY];

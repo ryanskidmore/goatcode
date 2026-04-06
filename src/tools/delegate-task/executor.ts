@@ -14,6 +14,8 @@ export interface ExecutorDeps {
   manager: BackgroundAgentManager;
   client: OpenCodeContext["client"];
   directory: string;
+  sessionID?: string;
+  messageID?: string;
   metadata?: MetadataCallback;
 }
 
@@ -27,6 +29,15 @@ function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig):
   return `${prompt}\n\n${config.prompt_append}`;
 }
 
+function sanitiseValue(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").trim();
+}
+
+function deriveSubagent(input: TaskInput): string {
+  if (input.subagent_type && input.subagent_type.trim().length > 0) return sanitiseValue(input.subagent_type);
+  return input.category;
+}
+
 export async function executeBackground(
   input: TaskInput,
   config: CategoryConfig,
@@ -38,6 +49,7 @@ export async function executeBackground(
 
   const { manager, client, directory } = deps;
   const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const subagent = deriveSubagent(input);
 
   log("[delegate-task] Launching background task", {
     taskId,
@@ -45,24 +57,49 @@ export async function executeBackground(
     model: config.model,
   });
 
+  // Emit metadata immediately with title/subagent so the TUI can render
+  // a meaningful card label before the child session is ready. The TUI's
+  // onMount only fires once — if sessionId isn't available at that point
+  // the sync never triggers, so we emit early then update with sessionId.
+  if (deps.metadata) {
+    deps.metadata({
+      title: input.description,
+      metadata: {
+        category: input.category,
+        subagent_type: subagent,
+        description: input.description,
+        ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
+        ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
+        ...(config.model ? { model: config.model } : {}),
+      },
+    });
+  }
+
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
     id: taskId,
     prompt: fullPrompt,
     model: config.model,
+    parentSessionID: deps.sessionID,
+    title: `${sanitiseValue(input.description)} (@${subagent} subagent)`,
   });
 
-  // Wait briefly for the session to be created so we can emit metadata
+  // Wait briefly for the session to be created so we can update metadata
   // with sessionId. The TUI uses this to make the task card clickable
-  // and to display live tool call stats from the subagent session.
+  // and to subscribe to the child session for live tool call stats.
   const sessionId = await waitForSessionId(manager, task.id);
 
+  // Second metadata emission: add sessionId now that child session exists.
   if (deps.metadata) {
     const metadata: Record<string, unknown> = {
       prompt: input.prompt,
       category: input.category,
+      subagent_type: subagent,
       description: input.description,
+      ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
+      ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
+      ...(sessionId ? { session_id: sessionId } : {}),
       ...(sessionId ? { sessionId } : {}),
       ...(config.model ? { model: config.model } : {}),
     };
@@ -96,28 +133,38 @@ function formatBackgroundResult(
   config: CategoryConfig,
   sessionId?: string,
 ): string {
+  const subagent = deriveSubagent(input);
   const lines = [
     "Background task launched.",
     "",
     `Task ID: ${taskId}`,
+    `Status: running`,
     `Category: ${input.category}`,
     `Model: ${config.model}${config.variant ? ` (variant: ${config.variant})` : ""}`,
-    `Description: ${input.description}`,
+    `Description: ${sanitiseValue(input.description)}`,
+    `Agent: ${subagent} (subagent)`,
     "",
     `Use \`background_output\` with task_id="${taskId}" to check status.`,
   ];
 
   if (sessionId) {
-    lines.push(
-      "",
-      `<task_metadata>`,
-      `session_id: ${sessionId}`,
-      `task_id: ${taskId}`,
-      `</task_metadata>`,
-    );
+    lines.push("", ...buildTaskMetadataLines(sessionId, taskId, subagent));
   }
 
   return lines.join("\n");
+}
+
+function buildTaskMetadataLines(sessionId: string, taskId: string, subagent: string): string[] {
+  return [
+    `Session ID: ${sessionId}`,
+    `sessionId: ${sessionId}`,
+    `<task_metadata>`,
+    `session_id: ${sessionId}`,
+    `sessionId: ${sessionId}`,
+    `task_id: ${taskId}`,
+    `subagent: ${subagent}`,
+    `</task_metadata>`,
+  ];
 }
 
 export async function executeSync(
@@ -139,7 +186,10 @@ export async function executeSync(
     log("[delegate-task] Resuming existing session", { sessionId });
   } else {
     const createResult = await client.session.create({
-      body: { title: `task:${input.category}:${input.description.slice(0, 50)}` },
+      body: {
+        title: `task:${input.category}:${sanitiseValue(input.description).slice(0, 50)}`,
+        ...(deps.sessionID ? { parentID: deps.sessionID } : {}),
+      },
       query: { directory },
     });
 
@@ -155,21 +205,26 @@ export async function executeSync(
   // Emit metadata with sessionId so the TUI can make the tool card
   // clickable and navigate to the subagent session.
   if (deps.metadata) {
+    const subagent = deriveSubagent(input);
     deps.metadata({
       title: input.description,
       metadata: {
         prompt: input.prompt,
         category: input.category,
+        subagent_type: subagent,
         description: input.description,
+        ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
+        ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
+        session_id: sessionId,
         sessionId,
         ...(config.model ? { model: config.model } : {}),
       },
     });
   }
 
-  const parsed = parseModelId(qualifyModel(config.model));
-
+  // Await discovery so qualifyModel has real provider data before routing.
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
+  const parsed = parseModelId(qualifyModel(config.model));
   const promptResult = await client.session.promptAsync({
     path: { id: sessionId },
     body: {
@@ -184,7 +239,10 @@ export async function executeSync(
     return errorMsg;
   }
 
-  return await pollForResult(client, directory, sessionId);
+  const result = await pollForResult(client, directory, sessionId);
+  const subagent = deriveSubagent(input);
+  const taskId = `sync_${sessionId.slice(0, 8)}`;
+  return `${result}\n\n${buildTaskMetadataLines(sessionId, taskId, subagent).join("\n")}`;
 }
 
 const POLL_INTERVAL_MS = 2_000;

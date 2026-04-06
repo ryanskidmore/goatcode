@@ -110,6 +110,108 @@ describe("createTaskResumeInfoHandler", () => {
 
         const matches = output.output.match(/to continue:/g);
         expect(matches?.length).toBe(1);
+        expect(output.metadata).toEqual(
+          expect.objectContaining({
+            sessionId: "ses_dup",
+            session_id: "ses_dup",
+          }),
+        );
+      });
+    });
+  });
+
+  describe("#given completed task output with session and category/subagent lines", () => {
+    describe("#when metadata is missing or partial", () => {
+      it("#then backfills metadata fields needed for completed card navigation", async () => {
+        const handler = createTaskResumeInfoHandler();
+        const input = {
+          tool: "task",
+          sessionID: "s1",
+          callID: "c1",
+          args: {
+            category: "deep",
+            description: "Long-running clickability test delegation",
+            subagent_type: "deepworker",
+          },
+        };
+        const output = {
+          title: "task",
+          output:
+            "Background task launched.\nCategory: deep\nAgent: deepworker (subagent)\nSession ID: ses_fill123\n<task_metadata>\nsession_id: ses_fill123\nsubagent: deepworker\n</task_metadata>",
+          metadata: {},
+        };
+
+        await handler(input, output);
+
+        expect(output.metadata).toEqual(
+          expect.objectContaining({
+            sessionId: "ses_fill123",
+            session_id: "ses_fill123",
+            category: "deep",
+            subagent_type: "deepworker",
+            description: "Long-running clickability test delegation",
+          }),
+        );
+      });
+    });
+  });
+
+  describe("#given task output with Session header but no task metadata block", () => {
+    it("#then still injects continuation using extracted session id", async () => {
+      const handler = createTaskResumeInfoHandler();
+      const input = {
+        tool: "task",
+        sessionID: "s1",
+        callID: "c1",
+        args: {
+          category: "quick",
+          description: "header session test",
+          subagent_type: "worker",
+        },
+      };
+      const output = {
+        title: "task",
+        output: "Task timed out after 55s. Session: ses_header_777",
+        metadata: {},
+      };
+
+      await handler(input, output);
+
+      expect(output.output).toContain('to continue: task(session_id="ses_header_777"');
+      expect(output.metadata).toEqual(
+        expect.objectContaining({
+          sessionId: "ses_header_777",
+          session_id: "ses_header_777",
+        }),
+      );
+    });
+  });
+
+  describe("#given running task output missing explicit status line", () => {
+    describe("#when session metadata can be extracted", () => {
+      it("#then injects a running status line before continuation hint", async () => {
+        const handler = createTaskResumeInfoHandler();
+        const input = {
+          tool: "task",
+          sessionID: "s1",
+          callID: "c1",
+          args: {
+            category: "quick",
+            description: "status test",
+            subagent_type: "worker",
+          },
+        };
+        const output = {
+          title: "task",
+          output:
+            "Background task launched.\n\nTask ID: task_status1\nCategory: quick\nDescription: status test\nSession ID: ses_status1\n<task_metadata>\nsession_id: ses_status1\ntask_id: task_status1\nsubagent: worker\n</task_metadata>",
+          metadata: {},
+        };
+
+        await handler(input, output);
+
+        expect(output.output).toContain("Status: running (task_status1)");
+        expect(output.output).toContain('to continue: task(session_id="ses_status1"');
       });
     });
   });

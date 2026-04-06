@@ -1,5 +1,6 @@
 export interface TaskInput {
   category: string;
+  subagent_type: string;
   description: string;
   prompt: string;
   load_skills?: string[];
