@@ -21,11 +21,6 @@ import {
   resetDiscovery,
   type ProviderListResponse,
 } from "./shared/provider-discovery";
-import {
-  resetProviderRegistry,
-  setDefaultPreferredProvider,
-  setProviderPriority,
-} from "./shared/provider-registry";
 import { ensureUserConfig } from "./config/ensure-user-config";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -95,10 +90,7 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     config = fallback.config;
   }
 
-  resetProviderRegistry();
   resetDiscovery();
-  setProviderPriority(config.provider_priority ?? []);
-  setDefaultPreferredProvider(config.default_provider);
   // Fire provider discovery in the background — don't block plugin init.
   // The config hook reads connected providers from the disk cache (written
   // on prior runs). On first run, no cache exists and the config hook skips

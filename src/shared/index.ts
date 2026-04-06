@@ -13,7 +13,7 @@ export {
   resetConnectedProvidersCache,
 } from "./connected-providers-cache";
 export { safeCreateHook } from "./safe-create-hook";
-export { normalizeModel, parseModelId, normalizeAndQualifyModel } from "./model-normalization";
+export { normalizeModel, parseModelId } from "./model-normalization";
 export { isModelAvailable } from "./model-availability";
 export { buildFallbackChain } from "./fallback-chain";
 export { resolveModel, resolveQualifiedModel } from "./model-resolution-pipeline";
@@ -22,27 +22,7 @@ export type {
   ModelResolutionSource,
   ModelResolutionResult,
 } from "./model-resolution-pipeline";
-export {
-  toPlatformModel,
-  toCanonicalModel,
-  registerPlatformMappings,
-  getKnownPlatforms,
-} from "./model-prefix-map";
-export type { PlatformId, BuiltinPlatformId } from "./model-prefix-map";
-export {
-  resolveProvider,
-  qualifyModel,
-  isQualifiedModel,
-  findProvidersForModel,
-  setProviderPriority,
-  getProviderPriority,
-  setDefaultPreferredProvider,
-  getDefaultPreferredProvider,
-  registerProviderModelMap,
-  unregisterProviderModelMap,
-  resetProviderRegistry,
-} from "./provider-registry";
-export type { ProviderResolutionResult } from "./provider-registry";
+export { isQualifiedModel } from "./provider-registry";
 export {
   buildDiscoveryIndex,
   initializeDiscovery,

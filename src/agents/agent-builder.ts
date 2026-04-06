@@ -1,7 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentFactory, AgentOverrideConfig } from "../types/agent";
 import type { CategoryConfig } from "../types/category";
-import { qualifyModel } from "../shared/provider-registry";
 
 export type AgentSource = AgentFactory | AgentConfig;
 
@@ -87,10 +86,6 @@ export function buildAgent(
 
   if (base.temperature === undefined && options?.defaultTemperature !== undefined) {
     base.temperature = options.defaultTemperature;
-  }
-
-  if (base.model) {
-    base.model = qualifyModel(base.model, options?.preferredProvider);
   }
 
   return base;
