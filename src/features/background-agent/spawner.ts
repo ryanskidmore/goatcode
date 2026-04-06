@@ -1,7 +1,9 @@
 import type { OpenCodeContext } from "../../types/plugin";
 
 import { log } from "../../shared/logger";
-
+import { awaitDiscovery } from "../../shared/provider-discovery";
+import { parseModelId, normalizeModel } from "../../shared/model-normalization";
+import { qualifyModel } from "../../shared/provider-registry";
 import type { LaunchInput } from "./types";
 
 export type SpawnResult = {
@@ -33,13 +35,17 @@ export async function spawnBackgroundSession(
 
   const sessionId = createResult.data.id;
 
-  // Route through the opencode provider (zen) rather than inferring the native
-  // provider from the model name prefix, which would bypass zen routing.
+  // Await discovery so qualifyModel has real provider data before routing.
+  // Discovery fires at bootstrap but is non-blocking — delegations that happen
+  // before it resolves would otherwise fall through to name-prefix inference
+  // (gpt-* → openai) and bypass the user's configured routing (e.g. zen).
+  await awaitDiscovery();
+  const parsed = parseModelId(qualifyModel(normalizeModel(input.model) ?? input.model));
   const promptResult = await ctx.client.session.promptAsync({
     path: { id: sessionId },
     body: {
       parts: [{ type: "text", text: input.prompt }],
-      ...(input.model && { model: { providerID: "opencode", modelID: input.model } }),
+      ...(parsed && { model: { providerID: parsed.provider, modelID: parsed.modelId } }),
     },
   });
 
