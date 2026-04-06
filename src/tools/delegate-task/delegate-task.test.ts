@@ -194,6 +194,7 @@ describe("createTaskTool", () => {
         const result = await tool.execute(
           {
             category: "bogus",
+            subagent_type: "bogus",
             description: "test task",
             prompt: "do something",
             run_in_background: false,
@@ -215,6 +216,7 @@ describe("createTaskTool", () => {
         const result = await bgTool.execute(
           {
             category: "quick",
+            subagent_type: "quick",
             description: "fix typo",
             prompt: "fix the typo in readme",
             run_in_background: true,
@@ -258,8 +260,20 @@ describe("createTaskTool", () => {
         expect(result).toContain("Session ID: ses_task_");
         expect(result).toContain("session_id: ses_");
         expect(result).toContain("subagent: worker");
-        expect(events.length).toBe(1);
+        // Two metadata emissions: early (title/subagent) + full (with sessionId)
+        expect(events.length).toBe(2);
+        // Early emission: no sessionId yet
         expect(events[0]).toEqual(
+          expect.objectContaining({
+            title: "fix typo",
+            metadata: expect.objectContaining({
+              category: "quick",
+              subagent_type: "worker",
+            }),
+          }),
+        );
+        // Full emission: includes sessionId
+        expect(events[1]).toEqual(
           expect.objectContaining({
             title: "fix typo",
             metadata: expect.objectContaining({
@@ -299,7 +313,8 @@ describe("createTaskTool", () => {
 
         expect(bgManager.launched[0].parentSessionID).toBe("nested-session-42");
         expect(result).toContain("Status: running");
-        expect(events[0]).toEqual(
+        // Second emission has full metadata including sessionId
+        expect(events[1]).toEqual(
           expect.objectContaining({
             metadata: expect.objectContaining({
               session_id: expect.stringMatching(/^ses_task_/),
@@ -322,6 +337,7 @@ describe("createTaskTool", () => {
         await bgTool.execute(
           {
             category: "quick",
+            subagent_type: "quick",
             description: "fix typo",
             prompt: "fix the typo in readme",
             run_in_background: true,
@@ -348,6 +364,7 @@ describe("createTaskTool", () => {
         const result = await syncTool.execute(
           {
             category: "unspecified-low",
+            subagent_type: "unspecified-low",
             description: "moderate task",
             prompt: "implement the feature",
             run_in_background: false,
@@ -370,6 +387,7 @@ describe("createTaskTool", () => {
         await syncTool.execute(
           {
             category: "unspecified-low",
+            subagent_type: "unspecified-low",
             description: "moderate task",
             prompt: "implement the feature",
             run_in_background: false,
@@ -397,6 +415,7 @@ describe("createTaskTool", () => {
         const result = await syncTool.execute(
           {
             category: "unspecified-low",
+            subagent_type: "unspecified-low",
             description: "moderate task",
             prompt: "implement the feature",
             run_in_background: false,
@@ -466,6 +485,7 @@ describe("createTaskTool", () => {
         const result = await structuredTool.execute(
           {
             category: "unspecified-low",
+            subagent_type: "unspecified-low",
             description: "structured test",
             prompt: "implement the feature",
             run_in_background: false,

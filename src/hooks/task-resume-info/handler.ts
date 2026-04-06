@@ -7,6 +7,7 @@ const TARGET_TOOLS = ["task", "Task", "task_tool", "call_omo_agent"];
 
 const SESSION_ID_PATTERNS = [
   /Session ID: (ses_[a-zA-Z0-9_-]+)/,
+  /Session: (ses_[a-zA-Z0-9_-]+)/,
   /session_id: (ses_[a-zA-Z0-9_-]+)/,
   /<task_metadata>\s*session_id: (ses_[a-zA-Z0-9_-]+)/,
   /sessionId: (ses_[a-zA-Z0-9_-]+)/,

@@ -59,6 +59,24 @@ export async function executeBackground(
     subagent,
   });
 
+  // Emit metadata immediately with title/subagent so the TUI can render
+  // a meaningful card label before the child session is ready. The TUI's
+  // onMount only fires once — if sessionId isn't available at that point
+  // the sync never triggers, so we emit early then update with sessionId.
+  if (deps.metadata) {
+    deps.metadata({
+      title: input.description,
+      metadata: {
+        category: input.category,
+        subagent_type: subagent,
+        description: input.description,
+        ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
+        ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
+        ...(config.model ? { model: config.model } : {}),
+      },
+    });
+  }
+
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
@@ -66,22 +84,23 @@ export async function executeBackground(
     prompt: fullPrompt,
     model: config.model,
     parentSessionID: deps.sessionID,
-    title: `${input.description} (@${deriveSubagent(input)} subagent)`,
+    title: `${input.description} (@${subagent} subagent)`,
   });
   logDelegationDebug("delegate.background.launch.end", {
     taskId,
     status: task.status,
   });
 
-  // Wait briefly for the session to be created so we can emit metadata
+  // Wait briefly for the session to be created so we can update metadata
   // with sessionId. The TUI uses this to make the task card clickable
-  // and to display live tool call stats from the subagent session.
+  // and to subscribe to the child session for live tool call stats.
   const sessionId = await waitForSessionId(manager, task.id);
   logDelegationDebug("delegate.background.sessionId.waited", {
     taskId,
     sessionId,
   });
 
+  // Second metadata emission: add sessionId now that child session exists.
   if (deps.metadata) {
     const metadata: Record<string, unknown> = {
       prompt: input.prompt,

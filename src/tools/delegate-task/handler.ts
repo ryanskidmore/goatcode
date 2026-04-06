@@ -18,8 +18,11 @@ const taskArgsSchema = z.object({
   category: z.string().describe(`Category to route to. One of: ${categoryListForDescription}`),
   subagent_type: z
     .string()
-    .optional()
-    .describe("Optional agent label for UI metadata (ex: deepworker, explorer)."),
+    .describe(
+      "The type of specialized agent to use for this task. " +
+        "Determines the UI label shown on the task card (ex: deepworker, explorer, quick, deep). " +
+        "If unsure, use the same value as category.",
+    ),
   description: z.string().describe("Short 3-5 word task description"),
   prompt: z.string().describe("Full prompt/instructions for the delegated agent"),
   load_skills: z.array(z.string()).optional().describe("Skill names to inject"),

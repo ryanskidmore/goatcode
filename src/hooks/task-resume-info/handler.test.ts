@@ -156,6 +156,37 @@ describe("createTaskResumeInfoHandler", () => {
     });
   });
 
+  describe("#given task output with Session header but no task metadata block", () => {
+    it("#then still injects continuation using extracted session id", async () => {
+      const handler = createTaskResumeInfoHandler();
+      const input = {
+        tool: "task",
+        sessionID: "s1",
+        callID: "c1",
+        args: {
+          category: "quick",
+          description: "header session test",
+          subagent_type: "worker",
+        },
+      };
+      const output = {
+        title: "task",
+        output: "Task timed out after 55s. Session: ses_header_777",
+        metadata: {},
+      };
+
+      await handler(input, output);
+
+      expect(output.output).toContain('to continue: task(session_id="ses_header_777"');
+      expect(output.metadata).toEqual(
+        expect.objectContaining({
+          sessionId: "ses_header_777",
+          session_id: "ses_header_777",
+        }),
+      );
+    });
+  });
+
   describe("#given running task output missing explicit status line", () => {
     describe("#when session metadata can be extracted", () => {
       it("#then injects a running status line before continuation hint", async () => {
