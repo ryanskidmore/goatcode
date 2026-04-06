@@ -222,14 +222,14 @@ export async function executeSync(
     });
   }
 
-  const parsed = parseModelId(qualifyModel(config.model));
-
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
+  // Route through the opencode provider (zen) rather than inferring the native
+  // provider from the model name prefix, which would bypass zen routing.
   const promptResult = await client.session.promptAsync({
     path: { id: sessionId },
     body: {
       parts: [{ type: "text", text: fullPrompt }],
-      ...(parsed && { model: { providerID: parsed.provider, modelID: parsed.modelId } }),
+      ...(config.model && { model: { providerID: "opencode", modelID: config.model } }),
     },
   });
 

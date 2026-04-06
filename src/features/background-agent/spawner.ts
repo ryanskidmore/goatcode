@@ -1,8 +1,6 @@
 import type { OpenCodeContext } from "../../types/plugin";
 
 import { log } from "../../shared/logger";
-import { parseModelId } from "../../shared/model-normalization";
-import { qualifyModel } from "../../shared/provider-registry";
 
 import type { LaunchInput } from "./types";
 
@@ -35,12 +33,13 @@ export async function spawnBackgroundSession(
 
   const sessionId = createResult.data.id;
 
-  const parsed = parseModelId(qualifyModel(input.model));
+  // Route through the opencode provider (zen) rather than inferring the native
+  // provider from the model name prefix, which would bypass zen routing.
   const promptResult = await ctx.client.session.promptAsync({
     path: { id: sessionId },
     body: {
       parts: [{ type: "text", text: input.prompt }],
-      ...(parsed && { model: { providerID: parsed.provider, modelID: parsed.modelId } }),
+      ...(input.model && { model: { providerID: "opencode", modelID: input.model } }),
     },
   });
 
