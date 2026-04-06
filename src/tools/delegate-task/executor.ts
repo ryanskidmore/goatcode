@@ -4,7 +4,6 @@ import type { TaskInput, CategoryConfig } from "./types";
 import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
 import { qualifyModel } from "../../shared/provider-registry";
-import { awaitDiscovery } from "../../shared/provider-discovery";
 
 export type MetadataCallback = (input: {
   title?: string;
@@ -224,7 +223,6 @@ export async function executeSync(
   }
 
   // Await discovery so qualifyModel has real provider data before routing.
-  await awaitDiscovery();
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
   const parsed = parseModelId(qualifyModel(config.model));
   const promptResult = await client.session.promptAsync({
