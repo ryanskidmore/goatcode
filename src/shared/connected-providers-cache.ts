@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { log } from "./logger";
 import { getGoatCodeCacheDir } from "./data-path";
 
-const CONNECTED_PROVIDERS_FILE = "connected-providers.json";
-const PROVIDER_MODELS_FILE = "provider-models.json";
+const CONNECTED_PROVIDERS_FILE = "goatcode-connected-providers.json";
+const PROVIDER_MODELS_FILE = "goatcode-provider-models.json";
 
 interface ConnectedProvidersData {
   connected: string[];

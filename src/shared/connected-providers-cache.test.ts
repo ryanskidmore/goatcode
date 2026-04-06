@@ -18,7 +18,7 @@ describe("connected-providers-cache", () => {
     resetConnectedProvidersCache();
     // Override the cache dir by setting XDG_CACHE_HOME
     process.env.XDG_CACHE_HOME = join(TEST_CACHE_DIR, "xdg-cache");
-    const cacheDir = join(TEST_CACHE_DIR, "xdg-cache", "goatcode-sh");
+    const cacheDir = join(TEST_CACHE_DIR, "xdg-cache", "opencode");
     if (existsSync(cacheDir)) {
       rmSync(cacheDir, { recursive: true });
     }
@@ -66,7 +66,7 @@ describe("connected-providers-cache", () => {
   describe("writeConnectedProviders", () => {
     it("creates cache directory if missing", () => {
       writeConnectedProviders(["openai"]);
-      const cacheDir = join(TEST_CACHE_DIR, "xdg-cache", "goatcode-sh");
+      const cacheDir = join(TEST_CACHE_DIR, "xdg-cache", "opencode");
       expect(existsSync(cacheDir)).toBe(true);
     });
 
