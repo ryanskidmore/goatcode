@@ -13,6 +13,7 @@ export interface CategoryConfig {
   variant?: string;
   description?: string;
   prompt_append?: string;
+  fallback_chain?: Array<{ providers: string[]; model: string; variant?: string }>;
 }
 
 export interface CategoryResolver {
