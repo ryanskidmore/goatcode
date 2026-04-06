@@ -5,7 +5,10 @@ export interface ProviderResolutionResult {
   readonly providerId: string;
 }
 
-const DEFAULT_PROVIDER_PRIORITY = ["anthropic", "openai", "google", "opencode"] as const;
+// opencode (zen) is preferred first — it proxies to native providers and
+// is the correct routing layer for canonical model aliases like gpt-5.4-mini.
+// Users can override this via goatcode.config.ts provider_priority.
+const DEFAULT_PROVIDER_PRIORITY = ["opencode", "anthropic", "openai", "google"] as const;
 
 let providerPriority: string[] = [...DEFAULT_PROVIDER_PRIORITY];
 let defaultPreferredProvider: string | undefined;

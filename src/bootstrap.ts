@@ -18,6 +18,7 @@ import {
   buildDiscoveryIndex,
   initializeDiscovery,
   resetDiscovery,
+  setDiscoveryPromise,
   type ProviderListResponse,
 } from "./shared/provider-discovery";
 import {
@@ -124,7 +125,7 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       }
     });
 
-    void providerListWithTimeout
+    const discoverySettled = providerListWithTimeout
       .then((providerResponse) => {
         const providerData = (
           providerResponse as Awaited<ReturnType<typeof ctx.client.provider.list>>
@@ -146,6 +147,9 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
           message: msg,
         });
       });
+    // Register the promise so awaitDiscovery() in the delegation path can
+    // wait for real provider data before calling qualifyModel().
+    setDiscoveryPromise(discoverySettled);
   } else {
     log("[bootstrap] client.provider.list not available; skipping provider discovery");
   }
