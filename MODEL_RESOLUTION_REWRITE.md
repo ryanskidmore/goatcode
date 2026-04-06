@@ -16,44 +16,54 @@ oh-my-openagent solves this correctly with three key design decisions:
 
 ## Phases
 
-### Phase 1: Provider-aware fallback chains [PENDING]
-- Replace bare model strings in `fallback-chains.ts` with `FallbackEntry` objects: `{ providers: string[], model: string, variant?: string }`
-- Update `category-config.ts` and `delegate-task/constants.ts` to use the same format
-- Update agent plugin configs to reference the new fallback format
-- Update `agent-builder.ts` to consume the new format
+### Phase 1: Provider-aware fallback chains [DONE]
+- Replaced bare model strings in `fallback-chains.ts` with `FallbackEntry` objects: `{ providers: string[], model: string, variant?: string }`
+- Added `CATEGORY_FALLBACK_CHAINS` for task delegation categories
+- Updated `delegate-task/constants.ts` and `types.ts` to carry `fallback_chain`
 
-### Phase 2: Connected providers disk cache [PENDING]
-- Add `src/shared/connected-providers-cache.ts` — sync reads, async writes, modeled on oh-my-openagent's implementation
-- Write `connected-providers.json` and `provider-models.json` after discovery completes in bootstrap
-- Read synchronously in config hook and resolution pipeline
-- Add `hasCache()` for first-run detection
+### Phase 2: Connected providers disk cache [DONE]
+- Added `src/shared/connected-providers-cache.ts` — sync reads, async writes
+- Writes `connected-providers.json` and `provider-models.json` to `~/.cache/goatcode-sh/`
+- Bootstrap calls `updateFromProviderList()` after discovery completes
+- 14 tests covering read/write/first-run behavior
 
-### Phase 3: New resolution pipeline [PENDING]
-- Rewrite `provider-registry.ts` resolution to use the new pipeline:
-  - Input: `FallbackEntry[]` + connected providers set (from disk cache or live discovery)
-  - Iterate entries, find first whose `providers` intersects with connected set
-  - Output: `"provider/model"` fully qualified string + optional variant
-  - First run (no cache): return `undefined` — let OpenCode handle routing
-- Remove `inferProviderFromModelName`, `MODEL_PROVIDER_HINTS`, `qualifyModel` inference path
+### Phase 3: New resolution pipeline [DONE]
+- Rewrote `model-resolution-pipeline.ts`:
+  - `resolveModel()` takes `FallbackEntry[]` + connected providers, picks first connected match
+  - `resolveQualifiedModel()` for runtime fallback hooks (already-qualified strings)
+  - First run (no cache): returns `undefined` — let OpenCode handle routing
+- Updated runtime hooks (model-fallback, runtime-fallback, foreground-fallback) to use `resolveQualifiedModel`
+- 25 tests covering all resolution paths
 
-### Phase 4: Config hook simplification [PENDING]
-- Remove all inference heuristics from compositor (`inferProviderFromOpenCodeInput`, etc.)
+### Phase 4: Config hook simplification [DONE]
+- Removed all inference heuristics from compositor:
+  - No more `inferProviderFromOpenCodeInput`
+  - No more `inferProviderFromModelName` / `MODEL_PROVIDER_HINTS` in config path
+  - No more `qualifyModel` in config hook
+  - No more `detectPlatform` / `toPlatformModel`
 - Config hook reads connected providers from disk cache (sync)
-- If no cache (first run): skip model assignment entirely, let OpenCode use its defaults
-- Remove async discovery await from config hook
+- On first run (no cache): skips model assignment, OpenCode uses system defaults
 
-### Phase 5: Task delegation alignment [PENDING]
-- Category configs carry `FallbackEntry[]` instead of bare model strings
-- Spawner and executor use new pipeline with connected providers
-- Remove `awaitDiscovery()` calls — disk cache is synchronous
-- First-run: skip model specification in prompt, let OpenCode handle routing
+### Phase 5: Task delegation alignment [DONE]
+- Category configs carry `fallback_chain` from `CATEGORY_FALLBACK_CHAINS`
+- Spawner uses `resolveModel()` with fallback chain from `LaunchInput`
+- Sync executor uses same pipeline
+- No more `awaitDiscovery()` calls — disk cache is synchronous
 
-### Phase 6: Cleanup [PENDING]
-- Remove dead code: `model-prefix-map.ts` zen platform mappings, `inferProviderFromModelName`, `MODEL_PROVIDER_HINTS`
-- Add `provider-model-id-transform.ts` for provider-specific model name transforms (e.g., github-copilot dot notation)
-- Update all tests to use new pipeline
-- Remove `provider-discovery.ts` inline discovery (replaced by disk cache + live fallback)
+### Phase 6: Cleanup [TODO]
+- Remove dead code that is no longer used by any live path:
+  - Old inference functions in `provider-registry.ts`
+  - `model-prefix-map.ts` zen platform mappings (if unused)
+  - `provider-discovery.ts` async await helpers
+- Consider adding `provider-model-id-transform.ts` for provider-specific model name transforms
+- Full test review
 
 ## Key Design Principle
 
 > **Never infer the provider from a model name.** Always use explicit provider lists + connected provider data. On first run, gracefully degrade by letting OpenCode handle model routing.
+
+## Test Results
+
+- 912 tests pass (0 failures in GoatCode source)
+- TypeScript: 0 errors
+- Lint: 0 warnings
