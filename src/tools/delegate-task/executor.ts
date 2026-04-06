@@ -2,7 +2,6 @@ import type { OpenCodeContext } from "../../types/plugin";
 import type { BackgroundAgentManager } from "../../runtime";
 import type { TaskInput, CategoryConfig } from "./types";
 import { log } from "../../shared/logger";
-import { logDelegationDebug } from "../../shared/delegation-debug";
 import { parseModelId } from "../../shared/model-normalization";
 import { qualifyModel } from "../../shared/provider-registry";
 
@@ -30,8 +29,12 @@ function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig):
   return `${prompt}\n\n${config.prompt_append}`;
 }
 
+function sanitiseValue(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").trim();
+}
+
 function deriveSubagent(input: TaskInput): string {
-  if (input.subagent_type && input.subagent_type.trim().length > 0) return input.subagent_type;
+  if (input.subagent_type && input.subagent_type.trim().length > 0) return sanitiseValue(input.subagent_type);
   return input.category;
 }
 
@@ -52,11 +55,6 @@ export async function executeBackground(
     taskId,
     category: input.category,
     model: config.model,
-  });
-  logDelegationDebug("delegate.background.launch.start", {
-    taskId,
-    category: input.category,
-    subagent,
   });
 
   // Emit metadata immediately with title/subagent so the TUI can render
@@ -84,21 +82,13 @@ export async function executeBackground(
     prompt: fullPrompt,
     model: config.model,
     parentSessionID: deps.sessionID,
-    title: `${input.description} (@${subagent} subagent)`,
-  });
-  logDelegationDebug("delegate.background.launch.end", {
-    taskId,
-    status: task.status,
+    title: `${sanitiseValue(input.description)} (@${subagent} subagent)`,
   });
 
   // Wait briefly for the session to be created so we can update metadata
   // with sessionId. The TUI uses this to make the task card clickable
   // and to subscribe to the child session for live tool call stats.
   const sessionId = await waitForSessionId(manager, task.id);
-  logDelegationDebug("delegate.background.sessionId.waited", {
-    taskId,
-    sessionId,
-  });
 
   // Second metadata emission: add sessionId now that child session exists.
   if (deps.metadata) {
@@ -114,14 +104,6 @@ export async function executeBackground(
       ...(config.model ? { model: config.model } : {}),
     };
     deps.metadata({ title: input.description, metadata });
-    logDelegationDebug("delegate.metadata.emitted", {
-      taskId,
-      title: input.description,
-      category: input.category,
-      subagent,
-      sessionId,
-      session_id: sessionId,
-    });
     log("[delegate-task] Emitted task metadata", { taskId, sessionId });
   }
 
@@ -159,19 +141,13 @@ function formatBackgroundResult(
     `Status: running`,
     `Category: ${input.category}`,
     `Model: ${config.model}${config.variant ? ` (variant: ${config.variant})` : ""}`,
-    `Description: ${input.description}`,
+    `Description: ${sanitiseValue(input.description)}`,
     `Agent: ${subagent} (subagent)`,
     "",
     `Use \`background_output\` with task_id="${taskId}" to check status.`,
   ];
 
   if (sessionId) {
-    logDelegationDebug("delegate.task_metadata.generated", {
-      taskId,
-      sessionId,
-      subagent,
-      lineCount: 7,
-    });
     lines.push("", ...buildTaskMetadataLines(sessionId, taskId, subagent));
   }
 
@@ -211,7 +187,7 @@ export async function executeSync(
   } else {
     const createResult = await client.session.create({
       body: {
-        title: `task:${input.category}:${input.description.slice(0, 50)}`,
+        title: `task:${input.category}:${sanitiseValue(input.description).slice(0, 50)}`,
         ...(deps.sessionID ? { parentID: deps.sessionID } : {}),
       },
       query: { directory },

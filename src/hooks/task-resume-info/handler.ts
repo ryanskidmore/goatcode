@@ -5,13 +5,29 @@ type PostToolUseHook = NonNullable<PluginHookContributions["tool.execute.after"]
 
 const TARGET_TOOLS = ["task", "Task", "task_tool", "call_omo_agent"];
 
+function extractTaskMetadataBlock(output: string): string | null {
+  const match = output.match(/<task_metadata>([\s\S]*?)<\/task_metadata>/);
+  return match?.[1] ?? null;
+}
+
 const SESSION_ID_PATTERNS = [
-  /Session ID: (ses_[a-zA-Z0-9_-]+)/,
-  /Session: (ses_[a-zA-Z0-9_-]+)/,
-  /session_id: (ses_[a-zA-Z0-9_-]+)/,
-  /<task_metadata>\s*session_id: (ses_[a-zA-Z0-9_-]+)/,
-  /sessionId: (ses_[a-zA-Z0-9_-]+)/,
+  /^\s*session_id:\s*([^\s<]+)/m,
+  /^\s*sessionId:\s*([^\s<]+)/m,
+  /^\s*Session ID:\s*([^\s<]+)/m,
+  /\bSession:\s*(ses_[a-zA-Z0-9_-]+)/,
 ];
+
+function extractSessionId(output: string): string | null {
+  // Prefer structured metadata block to avoid false matches in free-form text
+  const block = extractTaskMetadataBlock(output);
+  for (const source of [block, output].filter((s): s is string => s != null && s.length > 0)) {
+    for (const pattern of SESSION_ID_PATTERNS) {
+      const match = source.match(pattern);
+      if (match) return match[1] ?? null;
+    }
+  }
+  return null;
+}
 
 const SUBAGENT_PATTERNS = [/^\s*subagent:\s*(.+?)\s*$/m, /^\s*Agent:\s*(.+?)\s*\(subagent\)\s*$/m];
 
@@ -21,14 +37,6 @@ const TASK_ID_PATTERNS = [
   /^\s*Task ID:\s*(task_[a-zA-Z0-9_-]+)\s*$/m,
   /^\s*task_id:\s*(task_[a-zA-Z0-9_-]+)\s*$/m,
 ];
-
-function extractSessionId(output: string): string | null {
-  for (const pattern of SESSION_ID_PATTERNS) {
-    const match = output.match(pattern);
-    if (match) return match[1] ?? null;
-  }
-  return null;
-}
 
 function extractFirstMatch(output: string, patterns: RegExp[]): string | null {
   for (const pattern of patterns) {

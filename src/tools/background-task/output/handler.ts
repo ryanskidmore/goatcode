@@ -1,7 +1,6 @@
 import type { BackgroundAgentManager, BackgroundTask } from "../../../runtime";
 import type { OpenCodeContext } from "../../../types/plugin";
 import { log } from "../../../shared/logger";
-import { logDelegationDebug } from "../../../shared/delegation-debug";
 import type { BackgroundOutputArgs } from "./types";
 
 /**
@@ -143,29 +142,13 @@ export async function handleBackgroundOutput(
   log("[background-output] called", { task_id: args.task_id, block: args.block });
 
   const task = manager.get(args.task_id);
-  logDelegationDebug("background-output.task.read", {
-    task_id: args.task_id,
-    found: Boolean(task),
-    status: task?.status,
-    hasSessionId: Boolean(task?.sessionId),
-    block: args.block,
-    full_session: args.full_session,
-  });
   if (!task) {
-    logDelegationDebug("background-output.task.branch", {
-      task_id: args.task_id,
-      branch: "not-found",
-    });
     return `Task not found: ${args.task_id}`;
   }
 
   const isActive = task.status === "queued" || task.status === "running";
 
   if (args.block === true && isActive) {
-    logDelegationDebug("background-output.task.branch", {
-      task_id: args.task_id,
-      branch: "block-wait",
-    });
     const timeoutMs = Math.min(args.timeout ?? MAX_BLOCK_TIMEOUT_MS, MAX_BLOCK_TIMEOUT_MS);
     const resolved = await waitForCompletion(manager, args.task_id, timeoutMs);
     if (!resolved) {
@@ -189,17 +172,9 @@ export async function handleBackgroundOutput(
 
   // Non-blocking path: return full session output if requested and available
   if (args.full_session && client && task.sessionId) {
-    logDelegationDebug("background-output.task.branch", {
-      task_id: args.task_id,
-      branch: "full-session",
-    });
     return await fetchSessionMessages(client, task, args);
   }
 
-  logDelegationDebug("background-output.task.branch", {
-    task_id: args.task_id,
-    branch: "fallback",
-  });
   return await formatTaskOutputWithFallback(task, args, client);
 }
 
@@ -260,11 +235,6 @@ async function fetchSessionMessages(
     return `${header}\n\n${formatted}`;
   } catch (error) {
     log("[background-output] Failed to fetch session messages", { error, taskId: task.id });
-    logDelegationDebug("background-output.session.fetch.failed", {
-      taskId: task.id,
-      sessionId: task.sessionId,
-      error,
-    });
     return `${formatTaskOutput(task)}\n\n(Failed to fetch session messages: ${error instanceof Error ? error.message : String(error)})`;
   }
 }
@@ -307,40 +277,18 @@ async function formatTaskOutputWithFallback(
   client?: OpenCodeContext["client"],
 ): Promise<string> {
   if (task.status !== "completed") {
-    logDelegationDebug("background-output.fallback.skipped", {
-      taskId: task.id,
-      reason: "not-completed",
-      status: task.status,
-    });
     return formatTaskOutput(task);
   }
   if (hasMeaningfulText(task.result)) {
-    logDelegationDebug("background-output.fallback.skipped", {
-      taskId: task.id,
-      reason: "has-task-result",
-    });
     return formatCompletedResult(task);
   }
   if (!client || !task.sessionId) {
-    logDelegationDebug("background-output.fallback.skipped", {
-      taskId: task.id,
-      reason: !client ? "missing-client" : "missing-sessionId",
-    });
     return formatCompletedResult(task);
   }
 
-  logDelegationDebug("background-output.fallback.attempt", {
-    taskId: task.id,
-    sessionId: task.sessionId,
-  });
 
   const fallbackResult = await fetchFinalAssistantResult(client, task, args);
   if (!hasMeaningfulText(fallbackResult)) {
-    logDelegationDebug("background-output.fallback.empty", {
-      taskId: task.id,
-      sessionId: task.sessionId,
-      reason: "no-usable-assistant-output",
-    });
     return formatCompletedResult(task);
   }
 

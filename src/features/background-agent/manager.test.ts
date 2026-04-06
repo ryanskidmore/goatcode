@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, afterAll } from "bun:test";
+import { describe, expect, test, mock, afterAll, beforeEach } from "bun:test";
 import type { OpenCodeContext } from "../../types/plugin";
 
 let pollUntilStableSnapshot: { messageCount: number; isIdle: boolean; result?: string } = {
@@ -19,6 +19,14 @@ const { BackgroundAgentManager } = await import("./manager");
 
 afterAll(() => {
   mock.restore();
+});
+
+beforeEach(() => {
+  pollUntilStableSnapshot = {
+    messageCount: 2,
+    isIdle: true,
+    result: "delegated task finished",
+  };
 });
 
 describe("BackgroundAgentManager", () => {
@@ -73,11 +81,6 @@ describe("BackgroundAgentManager", () => {
     expect(latest?.result).toBe("assistant content from top-level role");
     expect((ctx.client.session.delete as ReturnType<typeof mock>).mock.calls.length).toBe(0);
 
-    pollUntilStableSnapshot = {
-      messageCount: 2,
-      isIdle: true,
-      result: "delegated task finished",
-    };
   });
 
   test("#when poller misses assistant text in API-shaped messages #then manager recovers result from final session fetch", async () => {
@@ -134,10 +137,5 @@ describe("BackgroundAgentManager", () => {
     ).toBeGreaterThan(0);
     expect((ctx.client.session.delete as ReturnType<typeof mock>).mock.calls.length).toBe(0);
 
-    pollUntilStableSnapshot = {
-      messageCount: 2,
-      isIdle: true,
-      result: "delegated task finished",
-    };
   });
 });

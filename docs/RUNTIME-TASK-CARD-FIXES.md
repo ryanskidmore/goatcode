@@ -6,18 +6,18 @@ This document describes three issues in the OpenCode runtime (TUI + session proc
 
 When GoatCode delegates a task via the `task` tool, the OpenCode TUI renders an inline task card:
 
-```
+```text
 │ <SubagentType> Task — <description>
 ↳ <N> toolcalls                          (while running)
 └ <N> toolcalls · <duration>             (when completed)
-```
+```text
 
 Currently, cards always show:
 
-```
+```text
 │ General Task — <description>
 └ 0 toolcalls · 0ms
-```
+```text
 
 Three separate runtime issues contribute to this.
 
@@ -45,7 +45,7 @@ execute: async (args, toolCtx) => {
                                                              // ← only truncation info
     }
 }
-```
+```text
 
 Then in the session processor (`processor.ts`, `tool-result` handler around line 215–231), the completion state **overwrites** the tool part's metadata entirely:
 
@@ -63,7 +63,7 @@ case "tool-result": {
         },
     })
 }
-```
+```text
 
 Any metadata set during execution via `ctx.metadata()` (including `sessionId`, `subagent_type`, `model`) is destroyed when the tool completes.
 
@@ -101,7 +101,7 @@ return {
         ...(out.truncated && { outputPath: out.outputPath }),
     },
 }
-```
+```text
 
 **Option B (broader):** Allow plugin tools to return structured objects (not just strings). If the plugin's `execute()` returns `{ title, metadata, output }`, pass it through instead of wrapping.
 
@@ -122,7 +122,7 @@ onMount(() => {
     if (props.metadata.sessionId && !sync.data.message[props.metadata.sessionId]?.length)
         sync.session.sync(props.metadata.sessionId)
 })
-```
+```text
 
 For the **built-in** `TaskTool`, this works because it creates the session synchronously in-process — `ctx.metadata({ metadata: { sessionId } })` is called before any child work begins, so `sessionId` is available when the component mounts.
 
@@ -151,7 +151,7 @@ createEffect(() => {
         sync.session.sync(id)
     }
 })
-```
+```text
 
 This is a one-line change (swap `onMount` for `createEffect`, remove the closure wrapper). SolidJS's `createEffect` will re-run whenever `props.metadata.sessionId` changes from `undefined` to a real value, triggering the sync at the right time.
 
@@ -172,7 +172,7 @@ const duration = createMemo(() => {
     if (!first || !assistant) return 0
     return assistant - first
 })
-```
+```text
 
 This reads `time.completed` from the last assistant message. While a task is still running, `time.completed` is `undefined` → duration returns 0.
 
@@ -196,7 +196,7 @@ const duration = createMemo(() => {
     if (!end) return 0
     return end - first
 })
-```
+```text
 
 For this to tick live while running, wrap it in a polling signal or use SolidJS's `createTimer` pattern to re-evaluate periodically.
 

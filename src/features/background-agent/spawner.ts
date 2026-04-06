@@ -10,22 +10,6 @@ export type SpawnResult = {
   sessionId: string;
 };
 
-function resolveSessionCreate(
-  ctx: OpenCodeContext,
-): OpenCodeContext["client"]["session"]["create"] {
-  const create = ctx.client.session.create;
-  if (typeof create === "function") {
-    return create.bind(ctx.client.session);
-  }
-
-  const fallback = Reflect.get(ctx.client.session as unknown as Record<string, unknown>, "create");
-  if (typeof fallback === "function") {
-    return (fallback as OpenCodeContext["client"]["session"]["create"]).bind(ctx.client.session);
-  }
-
-  throw new Error("Session create API is unavailable in background spawner");
-}
-
 export async function spawnBackgroundSession(
   ctx: OpenCodeContext,
   input: LaunchInput,
@@ -35,8 +19,7 @@ export async function spawnBackgroundSession(
     model: input.model,
   });
 
-  const create = resolveSessionCreate(ctx);
-  const createResult = await create({
+  const createResult = await ctx.client.session.create({
     body: {
       title: input.title ?? `bg:${input.id}`,
       ...(input.parentSessionID ? { parentID: input.parentSessionID } : {}),

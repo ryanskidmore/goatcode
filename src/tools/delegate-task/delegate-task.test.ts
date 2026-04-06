@@ -1,7 +1,4 @@
 import { describe, it, expect, mock } from "bun:test";
-import { readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { resolveCategory } from "./category-resolver";
 import { DEFAULT_CATEGORIES, CATEGORY_NAMES } from "./constants";
 import type { BackgroundTask, BackgroundAgentManager } from "../../runtime";
@@ -324,34 +321,6 @@ describe("createTaskTool", () => {
             }),
           }),
         );
-      });
-
-      it("#then emits GoatCode delegation debug logs", async () => {
-        const bgManager = makeMockManager();
-        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
-        const filePath = join(tmpdir(), `goatcode-delegation-${Date.now()}.log`);
-        process.env.GOATCODE_DEBUG_DELEGATION = "1";
-        process.env.GOATCODE_DEBUG_DELEGATION_FILE = filePath;
-        const ctx = makeMockToolContext();
-
-        await bgTool.execute(
-          {
-            category: "quick",
-            subagent_type: "quick",
-            description: "fix typo",
-            prompt: "fix the typo in readme",
-            run_in_background: true,
-          },
-          ctx,
-        );
-
-        const content = readFileSync(filePath, "utf8");
-        expect(content).toContain("delegate.background.launch.start");
-        expect(content).toContain("delegate.metadata.emitted");
-
-        delete process.env.GOATCODE_DEBUG_DELEGATION;
-        delete process.env.GOATCODE_DEBUG_DELEGATION_FILE;
-        rmSync(filePath, { force: true });
       });
     });
 

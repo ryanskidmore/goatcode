@@ -1,7 +1,6 @@
 import type { OpenCodeContext } from "../../types/plugin";
 
 import { log } from "../../shared/logger";
-import { logDelegationDebug } from "../../shared/delegation-debug";
 import { resetMessageCursor } from "../session-state/session-cursor";
 import { deleteSessionTools } from "../session-state/session-tools-store";
 
@@ -101,7 +100,6 @@ export class BackgroundAgentManager {
 
       const { sessionId } = await spawnBackgroundSession(ctx, input);
       task.sessionId = sessionId;
-      logDelegationDebug("manager.session.spawned", { id: task.id, sessionId, model: task.model });
 
       // cancel() may have mutated status concurrently while spawn was in-flight
       if ((task as BackgroundTask).status === "cancelled") {
@@ -131,13 +129,6 @@ export class BackgroundAgentManager {
           // false positives during brief thinking pauses.
           const isIdle = statusType === "idle" || statusType === undefined;
           const lastAssistantContent = getLastAssistantContent(messages);
-          logDelegationDebug("manager.poll.snapshot", {
-            id: task.id,
-            sessionId,
-            messageCount: messages.length,
-            isIdle,
-            hasResult: Boolean(lastAssistantContent && lastAssistantContent.trim().length > 0),
-          });
 
           return {
             messageCount: messages.length,
@@ -154,11 +145,6 @@ export class BackgroundAgentManager {
       const hasMessages = finalSnapshot.messageCount > 0;
       const pollerResult = finalSnapshot.result?.trim();
       const hasPollerResult = pollerResult != null && pollerResult.length > 0;
-      logDelegationDebug("manager.retention", {
-        id: task.id,
-        sessionId: task.sessionId,
-        retainSessionForNavigation: Boolean(task.sessionId),
-      });
 
       if (!hasMessages) {
         // Session stabilised with zero messages — the agent never started or
@@ -217,12 +203,6 @@ export class BackgroundAgentManager {
           this.concurrency.release(task.model);
           this.cleanupSession(task.sessionId);
           this.evictStaleTasks();
-          logDelegationDebug("manager.task.cancelled", {
-            id: task.id,
-            sessionId: task.sessionId,
-            retainSessionForNavigation: Boolean(task.sessionId),
-            wasRunning: task.startedAt !== undefined,
-          });
         }
         return;
       }
@@ -249,11 +229,6 @@ export class BackgroundAgentManager {
     this.concurrency.release(task.model);
     this.cleanupSession(task.sessionId);
     this.evictStaleTasks();
-    logDelegationDebug("manager.task.completed", {
-      id,
-      sessionId: task.sessionId,
-      retainSessionForNavigation: Boolean(task.sessionId),
-    });
     log("[manager] Task completed", { id });
   }
 
@@ -268,12 +243,6 @@ export class BackgroundAgentManager {
     this.concurrency.release(task.model);
     this.cleanupSession(task.sessionId);
     this.evictStaleTasks();
-    logDelegationDebug("manager.task.failed", {
-      id,
-      sessionId: task.sessionId,
-      retainSessionForNavigation: Boolean(task.sessionId),
-      error,
-    });
     log("[manager] Task failed", { id, error });
   }
 
@@ -301,12 +270,6 @@ export class BackgroundAgentManager {
 
     this.cleanupSession(task.sessionId);
     this.evictStaleTasks();
-    logDelegationDebug("manager.task.cancelled", {
-      id,
-      sessionId: task.sessionId,
-      retainSessionForNavigation: Boolean(task.sessionId),
-      wasRunning,
-    });
     log("[manager] Task cancelled", { id });
   }
 
