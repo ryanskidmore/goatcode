@@ -1,6 +1,6 @@
 import type { PluginHookContributions } from "../../types/hook";
 import { buildFallbackChain } from "../../shared/fallback-chain";
-import { resolveModel } from "../../shared/model-resolution-pipeline";
+import { resolveQualifiedModel } from "../../shared/model-resolution-pipeline";
 import { log } from "../../shared/logger";
 
 type EventHook = NonNullable<PluginHookContributions["event"]>;
@@ -160,7 +160,7 @@ function getNextFallbackModel(input: {
   );
   const remaining = currentIndex >= 0 ? fullChain.slice(currentIndex + 1) : fullChain;
 
-  return resolveModel({
+  return resolveQualifiedModel({
     fallbackChain: remaining,
     availableModels: input.availableModels,
   })?.model;

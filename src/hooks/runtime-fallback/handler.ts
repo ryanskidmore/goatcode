@@ -1,5 +1,5 @@
 import { buildFallbackChain } from "../../shared/fallback-chain";
-import { resolveModel } from "../../shared/model-resolution-pipeline";
+import { resolveQualifiedModel } from "../../shared/model-resolution-pipeline";
 import { log } from "../../shared/logger";
 
 type RuntimeFallbackReason = "model-not-found" | "context-exceeded";
@@ -93,13 +93,13 @@ function getNextRuntimeFallbackModel(input: {
       ? remaining
       : remaining.filter((model) => getProvider(model) === currentProvider);
 
-  const compatibleResolved = resolveModel({
+  const compatibleResolved = resolveQualifiedModel({
     fallbackChain: compatibleRemaining,
     availableModels: input.availableModels,
   })?.model;
   if (compatibleResolved) return compatibleResolved;
 
-  return resolveModel({
+  return resolveQualifiedModel({
     fallbackChain: remaining,
     availableModels: input.availableModels,
   })?.model;

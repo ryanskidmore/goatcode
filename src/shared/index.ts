@@ -16,7 +16,7 @@ export { safeCreateHook } from "./safe-create-hook";
 export { normalizeModel, parseModelId, normalizeAndQualifyModel } from "./model-normalization";
 export { isModelAvailable } from "./model-availability";
 export { buildFallbackChain } from "./fallback-chain";
-export { resolveModel } from "./model-resolution-pipeline";
+export { resolveModel, resolveQualifiedModel } from "./model-resolution-pipeline";
 export type {
   ModelResolutionInput,
   ModelResolutionSource,

@@ -1,5 +1,5 @@
 import { buildFallbackChain } from "../../shared/fallback-chain";
-import { resolveModel } from "../../shared/model-resolution-pipeline";
+import { resolveQualifiedModel } from "../../shared/model-resolution-pipeline";
 import { log } from "../../shared/logger";
 
 type ModelSwitchReason = "rate-limit" | "service-unavailable";
@@ -106,7 +106,7 @@ function getNextFallbackModel(input: {
   );
   const remaining = currentIndex >= 0 ? fullChain.slice(currentIndex + 1) : fullChain;
 
-  return resolveModel({
+  return resolveQualifiedModel({
     fallbackChain: remaining,
     availableModels: input.availableModels,
   })?.model;
