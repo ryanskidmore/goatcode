@@ -50,13 +50,14 @@ oh-my-openagent solves this correctly with three key design decisions:
 - Sync executor uses same pipeline
 - No more `awaitDiscovery()` calls — disk cache is synchronous
 
-### Phase 6: Cleanup [TODO]
-- Remove dead code that is no longer used by any live path:
-  - Old inference functions in `provider-registry.ts`
-  - `model-prefix-map.ts` zen platform mappings (if unused)
-  - `provider-discovery.ts` async await helpers
-- Consider adding `provider-model-id-transform.ts` for provider-specific model name transforms
-- Full test review
+### Phase 6: Cleanup [DONE]
+- Removed from `provider-registry.ts`: `inferProviderFromModelName`, `MODEL_PROVIDER_HINTS`, `qualifyModel`, `resolveProvider`, `findProvidersForModel`, `setProviderPriority`, `getProviderPriority`, `setDefaultPreferredProvider`, `registerProviderModelMap`, `unregisterProviderModelMap`, `resetProviderRegistry`. Only `isQualifiedModel()` remains.
+- Removed from `provider-discovery.ts`: `awaitDiscovery`, `setDiscoveryPromise`
+- Removed from `model-normalization.ts`: `normalizeAndQualifyModel` (depended on `qualifyModel`)
+- Removed from `agent-builder.ts`: `qualifyModel` call (compositor handles model resolution now)
+- Removed from `bootstrap.ts`: `resetProviderRegistry()`, `setProviderPriority()`, `setDefaultPreferredProvider()` calls
+- Deleted `provider-registry.test.ts` (tested removed functions)
+- `model-prefix-map.ts` retained but no longer in the live config hook path; only its test imports it directly
 
 ## Key Design Principle
 
@@ -64,6 +65,18 @@ oh-my-openagent solves this correctly with three key design decisions:
 
 ## Test Results
 
-- 912 tests pass (0 failures in GoatCode source)
+- 888 tests pass (0 failures in GoatCode source)
+- 24 tests removed (tested deleted inference functions)
 - TypeScript: 0 errors
 - Lint: 0 warnings
+
+## Deleted Code
+
+526 lines removed in Phase 6 alone. Total removed inference functions:
+- `inferProviderFromModelName` + `MODEL_PROVIDER_HINTS` (model name → provider heuristics)
+- `qualifyModel` + `resolveProvider` (old resolution pipeline)
+- `findProvidersForModel` (discovery-based lookup used by old pipeline)
+- `setProviderPriority` / `getProviderPriority` (sorting config no longer used for routing)
+- `setDefaultPreferredProvider` / `getDefaultPreferredProvider` (old config hook fallback)
+- `normalizeAndQualifyModel` (wrapper around removed qualifyModel)
+- `awaitDiscovery` / `setDiscoveryPromise` (async discovery wait — replaced by disk cache)
