@@ -286,7 +286,6 @@ async function formatTaskOutputWithFallback(
     return formatCompletedResult(task);
   }
 
-
   const fallbackResult = await fetchFinalAssistantResult(client, task, args);
   if (!hasMeaningfulText(fallbackResult)) {
     return formatCompletedResult(task);

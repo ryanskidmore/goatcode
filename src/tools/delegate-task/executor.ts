@@ -34,7 +34,8 @@ function sanitiseValue(value: string): string {
 }
 
 function deriveSubagent(input: TaskInput): string {
-  if (input.subagent_type && input.subagent_type.trim().length > 0) return sanitiseValue(input.subagent_type);
+  if (input.subagent_type && input.subagent_type.trim().length > 0)
+    return sanitiseValue(input.subagent_type);
   return input.category;
 }
 

@@ -80,7 +80,6 @@ describe("BackgroundAgentManager", () => {
     expect(latest?.status).toBe("completed");
     expect(latest?.result).toBe("assistant content from top-level role");
     expect((ctx.client.session.delete as ReturnType<typeof mock>).mock.calls.length).toBe(0);
-
   });
 
   test("#when poller misses assistant text in API-shaped messages #then manager recovers result from final session fetch", async () => {
@@ -136,6 +135,5 @@ describe("BackgroundAgentManager", () => {
       (ctx.client.session.messages as ReturnType<typeof mock>).mock.calls.length,
     ).toBeGreaterThan(0);
     expect((ctx.client.session.delete as ReturnType<typeof mock>).mock.calls.length).toBe(0);
-
   });
 });
