@@ -1,4 +1,4 @@
-# GoatCode
+![GoatCode Logo](./docs/header.png)
 
 GoatCode is a professional agent harness for OpenCode. It provides a modular plugin architecture where every agent, tool, and hook is an independent plugin. This system allows for deep customization and reliable multi-agent orchestration.
 
