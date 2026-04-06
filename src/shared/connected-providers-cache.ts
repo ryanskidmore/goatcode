@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "./logger";
 import { getGoatCodeCacheDir } from "./data-path";
@@ -29,6 +29,18 @@ function ensureCacheDir(): void {
   const dir = getGoatCodeCacheDir();
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
+  }
+}
+
+function writeJsonAtomically(filePath: string, payload: unknown): void {
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync(tempPath, JSON.stringify(payload, null, 2));
+    renameSync(tempPath, filePath);
+  } finally {
+    if (existsSync(tempPath)) {
+      rmSync(tempPath, { force: true });
+    }
   }
 }
 
@@ -75,7 +87,7 @@ export function writeConnectedProviders(connected: string[]): void {
     updatedAt: new Date().toISOString(),
   };
   try {
-    writeFileSync(filePath, JSON.stringify(data, null, 2));
+    writeJsonAtomically(filePath, data);
     memConnected = connected;
     log("[connected-providers-cache] Written", { count: connected.length });
   } catch (err) {
@@ -132,7 +144,7 @@ export function writeProviderModels(data: {
     updatedAt: new Date().toISOString(),
   };
   try {
-    writeFileSync(filePath, JSON.stringify(cacheData, null, 2));
+    writeJsonAtomically(filePath, cacheData);
     memProviderModels = cacheData;
     log("[connected-providers-cache] Written provider-models", {
       providerCount: Object.keys(data.models).length,
@@ -163,7 +175,13 @@ export async function updateFromProviderList(client: {
 
   try {
     const result = await client.provider.list();
-    const connected = result.data?.connected ?? [];
+    const payload = result.data;
+    if (!payload || !Array.isArray(payload.connected)) {
+      log("[connected-providers-cache] Ignoring invalid provider-list payload");
+      return;
+    }
+
+    const connected = [...payload.connected];
     log("[connected-providers-cache] Fetched providers", {
       count: connected.length,
       providers: connected,
@@ -171,8 +189,15 @@ export async function updateFromProviderList(client: {
 
     writeConnectedProviders(connected);
 
+    if (!Array.isArray(payload.all)) {
+      log(
+        "[connected-providers-cache] Skipping provider-models update; payload has no provider list",
+      );
+      return;
+    }
+
     const modelsByProvider: Record<string, string[]> = {};
-    for (const provider of result.data?.all ?? []) {
+    for (const provider of payload.all) {
       if (provider.models) {
         const modelIds = Object.keys(provider.models);
         if (modelIds.length > 0) {
@@ -181,7 +206,11 @@ export async function updateFromProviderList(client: {
       }
     }
 
-    writeProviderModels({ models: modelsByProvider, connected });
+    if (Object.keys(modelsByProvider).length > 0) {
+      writeProviderModels({ models: modelsByProvider, connected });
+    } else {
+      log("[connected-providers-cache] Skipping provider-models update; no provider models found");
+    }
   } catch (err) {
     log("[connected-providers-cache] Error updating from provider list", { error: String(err) });
   }

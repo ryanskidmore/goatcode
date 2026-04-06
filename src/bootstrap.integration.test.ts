@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const BOOTSTRAP_TEST_DIRECTORY = "/tmp/bootstrap-integration-test-project";
 
@@ -118,6 +121,9 @@ describe("bootstrap", () => {
 
       it("#then resolves agent models using connected providers from disk cache", async () => {
         // Write a mock connected-providers cache so the config hook can resolve models.
+        const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+        const tempCacheHome = await mkdtemp(join(tmpdir(), "goatcode-bootstrap-cache-"));
+        process.env.XDG_CACHE_HOME = tempCacheHome;
         const { writeConnectedProviders, resetConnectedProvidersCache } =
           await import("./shared/connected-providers-cache");
         writeConnectedProviders(["opencode"]);
@@ -140,7 +146,13 @@ describe("bootstrap", () => {
           expect(input.agent?.orchestrator?.model).toBe("opencode/claude-opus-4-6");
           expect(input.agent?.worker?.model).toBe("opencode/claude-sonnet-4-6");
         } finally {
+          if (previousXdgCacheHome === undefined) {
+            delete process.env.XDG_CACHE_HOME;
+          } else {
+            process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+          }
           resetConnectedProvidersCache();
+          await rm(tempCacheHome, { recursive: true, force: true });
         }
       });
 
