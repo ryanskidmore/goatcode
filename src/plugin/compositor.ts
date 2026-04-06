@@ -1,94 +1,11 @@
 import type { Hooks } from "@opencode-ai/plugin";
 import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
-import { getDiscovery } from "../shared/provider-discovery";
-import {
-  getDefaultPreferredProvider,
-  getProviderPriority,
-  qualifyModel,
-} from "../shared/provider-registry";
-import { toPlatformModel, type PlatformId } from "../shared/model-prefix-map";
+import { readConnectedProviders } from "../shared/connected-providers-cache";
+import { resolveModel } from "../shared/model-resolution-pipeline";
+import { getFallbackChain } from "../agents/fallback-chains";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
-
-/**
- * Detect the deployment platform from available signals.
- *
- * Priority:
- * 1. Provider discovery connected providers (most reliable when ready)
- * 2. Config input's default model prefix
- * 3. Config input's provider keys
- * 4. Config input's existing agent model prefixes
- *
- * Returns "zen" if any zen-prefixed provider/model is detected, "direct" otherwise.
- */
-function detectPlatform(input: Record<string, unknown>): PlatformId {
-  // 1. Check provider discovery (most reliable if available)
-  const discovery = getDiscovery();
-  if (discovery) {
-    for (const providerId of discovery.connectedProviders) {
-      if (providerId.startsWith("zen-")) return "zen";
-    }
-    // Discovery is ready and shows no zen providers → direct
-    return "direct";
-  }
-
-  // 2. Check the config's default model
-  const model = input["model"] as string | undefined;
-  if (model && model.startsWith("zen-")) return "zen";
-
-  // 3. Check provider configuration keys
-  const provider = input["provider"] as Record<string, unknown> | undefined;
-  if (provider) {
-    for (const key of Object.keys(provider)) {
-      if (key.startsWith("zen-")) return "zen";
-    }
-  }
-
-  // 4. Check existing agent models (OpenCode may have pre-set these)
-  const agents = input["agent"] as Record<string, { model?: string }> | undefined;
-  if (agents) {
-    for (const agent of Object.values(agents)) {
-      if (agent?.model?.startsWith("zen-")) return "zen";
-    }
-  }
-
-  return "direct";
-}
-
-function providerFromModel(model: unknown): string | undefined {
-  if (typeof model !== "string") return undefined;
-  const normalized = model.trim().toLowerCase();
-  const separator = normalized.indexOf("/");
-  if (separator <= 0) return undefined;
-  return normalized.slice(0, separator);
-}
-
-function inferProviderFromOpenCodeAgentModels(
-  inputAgents: Record<string, { model?: string } | undefined>,
-): string | undefined {
-  // Prefer OpenCode primary agents first when present.
-  for (const agentName of [
-    "build",
-    "plan",
-    "general",
-    "explore",
-    "title",
-    "summary",
-    "compaction",
-  ]) {
-    const provider = providerFromModel(inputAgents[agentName]?.model);
-    if (provider) return provider;
-  }
-
-  // Fall back to any existing configured agent model.
-  for (const agent of Object.values(inputAgents)) {
-    const provider = providerFromModel(agent?.model);
-    if (provider) return provider;
-  }
-
-  return undefined;
-}
 
 const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
   (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
@@ -126,10 +43,14 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
   const configHandlers = aggregated.hooks.get("config") ?? [];
   hooks.config = async (input) => {
     configCallCount++;
-    const discoveryReady = !!getDiscovery();
     const inputRecord = input as Record<string, unknown>;
+
+    // Read connected providers from disk cache (synchronous).
+    // On first run this is null — we skip model assignment and let
+    // OpenCode handle routing with its system defaults.
+    const connected = readConnectedProviders();
     log(`[compositor] config hook call #${configCallCount}`, {
-      discoveryReady,
+      connectedProviders: connected,
       inputKeys: Object.keys(input),
       mode: inputRecord["mode"],
     });
@@ -138,19 +59,7 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       input.agent = {};
     }
 
-    // Detect the provider to use for qualifying bare model names.
-    // Priority: discovery data > config default_provider > "opencode" fallback.
-    // Cannot await discovery here (deadlocks OpenCode's event loop), so we
-    // use a synchronous fallback when discovery hasn't completed yet.
-    const discoveredProvider = inferProviderFromOpenCodeAgentModels(input.agent);
-    const fallbackProvider =
-      getDefaultPreferredProvider() ?? discoveredProvider ?? getProviderPriority()[0] ?? "opencode";
-    log("[compositor] model provider selection", {
-      configuredDefault: getDefaultPreferredProvider(),
-      discoveredFromAgents: discoveredProvider,
-      selectedFallback: fallbackProvider,
-    });
-
+    // Register agent entries (without model — model is set below).
     for (const [name, agentConfig] of Object.entries(aggregated.agents)) {
       if (!input.agent[name]) {
         const { model: _bareModel, ...configWithoutModel } = agentConfig;
@@ -161,38 +70,38 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
       }
     }
 
-    // Detect platform so qualified canonical models (e.g. "anthropic/claude-opus-4-6")
-    // are translated to the correct platform-specific form (e.g. "zen-anthropic/claude-opus-4-6").
-    const platform = detectPlatform(inputRecord);
-    if (platform !== "direct") {
-      log(`[compositor] Detected platform: ${platform}`);
-    }
+    // Resolve agent models using the new provider-aware pipeline.
+    // Each agent has a fallback chain that names which providers serve
+    // each model. We pick the first entry whose provider is connected.
+    if (connected !== null) {
+      for (const [name] of Object.entries(aggregated.agents)) {
+        const agentConfig = input.agent[name];
+        if (!agentConfig) continue;
 
-    // Set agent models from our config.
-    // Primary path: use provider discovery to resolve bare model names.
-    // Fallback: use the detected/configured provider prefix directly.
-    // Finally, apply platform mapping so models use the correct provider prefix
-    // (e.g. on zen: "anthropic/X" → "zen-anthropic/X").
-    for (const [name, agentDef] of Object.entries(aggregated.agents)) {
-      const agentConfig = input.agent[name];
-      if (!agentConfig) continue;
-      const desiredModel = agentDef.model;
-      if (!desiredModel) continue;
-      const qualified = qualifyModel(desiredModel, fallbackProvider);
-      if (qualified.includes("/")) {
-        const platformModel = toPlatformModel(qualified, platform);
-        log(
-          `[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${platformModel}"${platformModel !== qualified ? ` (canonical: ${qualified})` : ""}`,
-        );
-        agentConfig.model = platformModel;
-      } else {
-        // Discovery not ready — use fallback provider
-        const fallbackModel = toPlatformModel(`${fallbackProvider}/${desiredModel}`, platform);
-        log(
-          `[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${fallbackModel}" (fallback provider: ${fallbackProvider})`,
-        );
-        agentConfig.model = fallbackModel;
+        const chain = getFallbackChain(name);
+        const resolved = resolveModel({
+          fallbackChain: chain,
+          connectedProviders: connected,
+        });
+
+        if (resolved) {
+          log(
+            `[compositor] Agent "${name}": "${agentConfig.model ?? "(none)"}" → "${resolved.model}"${resolved.variant ? ` (variant: ${resolved.variant})` : ""}`,
+          );
+          agentConfig.model = resolved.model;
+          if (resolved.variant) {
+            agentConfig["variant"] = resolved.variant;
+          }
+        } else {
+          log(
+            `[compositor] Agent "${name}": no connected provider matched fallback chain, keeping "${agentConfig.model ?? "(none)"}"`,
+          );
+        }
       }
+    } else {
+      log(
+        "[compositor] No connected providers cache (first run), skipping model assignment — OpenCode will use system defaults",
+      );
     }
 
     if (input.agent.build === undefined) {

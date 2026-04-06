@@ -2,7 +2,7 @@ import type { OpenCodeContext } from "../../types/plugin";
 
 import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
-import { qualifyModel } from "../../shared/provider-registry";
+import { resolveModel } from "../../shared/model-resolution-pipeline";
 import type { LaunchInput } from "./types";
 
 export type SpawnResult = {
@@ -34,7 +34,18 @@ export async function spawnBackgroundSession(
 
   const sessionId = createResult.data.id;
 
-  const parsed = parseModelId(qualifyModel(input.model));
+  // Resolve the model using the provider-aware pipeline.
+  // If the model is already qualified ("provider/model"), pass it as override.
+  // Otherwise, use the fallback chain from the launch input.
+  const isQualified = input.model?.includes("/");
+  const resolved = resolveModel({
+    override: isQualified ? input.model : undefined,
+    fallbackChain: input.fallbackChain,
+  });
+
+  const modelString = resolved?.model ?? input.model;
+  const parsed = modelString ? parseModelId(modelString) : undefined;
+
   const promptResult = await ctx.client.session.promptAsync({
     path: { id: sessionId },
     body: {

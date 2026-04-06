@@ -41,7 +41,8 @@ export function resolveModel(input: ModelResolutionInput): ModelResolutionResult
   }
 
   // 2. Determine connected providers
-  const connected = input.connectedProviders ?? readConnectedProviders();
+  const connected =
+    input.connectedProviders !== undefined ? input.connectedProviders : readConnectedProviders();
 
   // First run — no cache, no discovery. Let OpenCode handle routing.
   if (connected === null) {

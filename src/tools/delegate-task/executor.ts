@@ -3,7 +3,7 @@ import type { BackgroundAgentManager } from "../../runtime";
 import type { TaskInput, CategoryConfig } from "./types";
 import { log } from "../../shared/logger";
 import { parseModelId } from "../../shared/model-normalization";
-import { qualifyModel } from "../../shared/provider-registry";
+import { resolveModel } from "../../shared/model-resolution-pipeline";
 
 export type MetadataCallback = (input: {
   title?: string;
@@ -84,6 +84,7 @@ export async function executeBackground(
     model: config.model,
     parentSessionID: deps.sessionID,
     title: `${sanitiseValue(input.description)} (@${subagent} subagent)`,
+    fallbackChain: config.fallback_chain,
   });
 
   // Wait briefly for the session to be created so we can update metadata
@@ -223,9 +224,13 @@ export async function executeSync(
     });
   }
 
-  // Await discovery so qualifyModel has real provider data before routing.
+  // Resolve model using the provider-aware pipeline.
   const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
-  const parsed = parseModelId(qualifyModel(config.model));
+  const resolved = resolveModel({
+    override: config.model.includes("/") ? config.model : undefined,
+    fallbackChain: config.fallback_chain,
+  });
+  const parsed = parseModelId(resolved?.model ?? config.model);
   const promptResult = await client.session.promptAsync({
     path: { id: sessionId },
     body: {

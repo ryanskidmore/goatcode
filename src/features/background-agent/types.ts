@@ -19,4 +19,5 @@ export interface LaunchInput {
   model: string;
   parentSessionID?: string;
   title?: string;
+  fallbackChain?: Array<{ providers: string[]; model: string; variant?: string }>;
 }
