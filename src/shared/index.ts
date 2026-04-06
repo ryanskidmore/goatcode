@@ -3,6 +3,15 @@ export { deepMerge, isPlainObject } from "./deep-merge";
 export { toSnakeCase } from "./snake-case";
 export { truncateDescription } from "./truncate-description";
 export { getDataDir, getCacheDir, getOpenCodeStorageDir, getGoatCodeCacheDir } from "./data-path";
+export {
+  readConnectedProviders,
+  writeConnectedProviders,
+  hasConnectedProvidersCache,
+  readProviderModels,
+  writeProviderModels,
+  updateFromProviderList,
+  resetConnectedProvidersCache,
+} from "./connected-providers-cache";
 export { safeCreateHook } from "./safe-create-hook";
 export { normalizeModel, parseModelId, normalizeAndQualifyModel } from "./model-normalization";
 export { isModelAvailable } from "./model-availability";
