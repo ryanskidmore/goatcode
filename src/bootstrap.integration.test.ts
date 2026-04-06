@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const BOOTSTRAP_TEST_DIRECTORY = "/tmp/bootstrap-integration-test-project";
 
@@ -116,26 +119,41 @@ describe("bootstrap", () => {
         expect(configuredAgentNames.length).toBeGreaterThanOrEqual(EXPECTED_AGENT_NAMES.length);
       });
 
-      it("#then infers fallback provider from existing OpenCode agent models", async () => {
-        globalThis.structuredClone = passthroughStructuredClone;
-        const hooks = await bootstrap(createBootstrapContext());
-        expect(hooks.config).toBeDefined();
+      it("#then resolves agent models using connected providers from disk cache", async () => {
+        // Write a mock connected-providers cache so the config hook can resolve models.
+        const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+        const tempCacheHome = await mkdtemp(join(tmpdir(), "goatcode-bootstrap-cache-"));
+        process.env.XDG_CACHE_HOME = tempCacheHome;
+        const { writeConnectedProviders, resetConnectedProvidersCache } =
+          await import("./shared/connected-providers-cache");
+        writeConnectedProviders(["opencode"]);
 
-        if (!hooks.config) {
-          throw new Error("Expected hooks.config to be defined");
+        try {
+          globalThis.structuredClone = passthroughStructuredClone;
+          const hooks = await bootstrap(createBootstrapContext());
+          expect(hooks.config).toBeDefined();
+
+          if (!hooks.config) {
+            throw new Error("Expected hooks.config to be defined");
+          }
+
+          type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
+          const input = { agent: {} } as ConfigInput;
+
+          await hooks.config(input);
+
+          // With only "opencode" connected, all models should use the opencode provider.
+          expect(input.agent?.orchestrator?.model).toBe("opencode/claude-opus-4-6");
+          expect(input.agent?.worker?.model).toBe("opencode/claude-sonnet-4-6");
+        } finally {
+          if (previousXdgCacheHome === undefined) {
+            delete process.env.XDG_CACHE_HOME;
+          } else {
+            process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+          }
+          resetConnectedProvidersCache();
+          await rm(tempCacheHome, { recursive: true, force: true });
         }
-
-        type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
-        const input = {
-          agent: {
-            build: { model: "opencode/gpt-5.4" },
-          },
-        } as ConfigInput;
-
-        await hooks.config(input);
-
-        expect(input.agent?.orchestrator?.model).toBe("opencode/claude-opus-4-6");
-        expect(input.agent?.worker?.model).toBe("opencode/claude-sonnet-4.6");
       });
 
       it("#then exposes key hook event slots as callable functions", async () => {

@@ -59,7 +59,6 @@ export function buildDiscoveryIndex(response: ProviderListResponse): DiscoveryRe
 }
 
 let cachedDiscovery: DiscoveryResult | undefined;
-let discoveryPromise: Promise<void> | undefined;
 
 export function initializeDiscovery(result: DiscoveryResult): void {
   cachedDiscovery = result;
@@ -69,25 +68,6 @@ export function getDiscovery(): DiscoveryResult | undefined {
   return cachedDiscovery;
 }
 
-/**
- * Store the in-flight discovery promise so callers (e.g. the config hook)
- * can await it without blocking bootstrap.
- */
-export function setDiscoveryPromise(promise: Promise<void>): void {
-  discoveryPromise = promise;
-}
-
-/**
- * Wait for the in-flight discovery to settle (resolve or reject).
- * Returns immediately if discovery already completed or was never started.
- */
-export async function awaitDiscovery(): Promise<void> {
-  if (discoveryPromise) {
-    await discoveryPromise;
-  }
-}
-
 export function resetDiscovery(): void {
   cachedDiscovery = undefined;
-  discoveryPromise = undefined;
 }

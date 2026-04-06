@@ -1,93 +1,73 @@
 import { describe, expect, it } from "bun:test";
-import { resolveModel } from "./model-resolution-pipeline";
+import { resolveModel, resolveQualifiedModel } from "./model-resolution-pipeline";
 
-describe("resolveModel", () => {
+describe("resolveModel (provider-aware pipeline)", () => {
   describe("given an override", () => {
     it("returns override regardless of other inputs", () => {
       const result = resolveModel({
         override: "openai/gpt-4",
-        categoryDefault: "anthropic/claude-3",
-        fallbackChain: ["google/gemini-pro"],
-        systemDefault: "openai/gpt-3.5-turbo",
+        fallbackChain: [{ providers: ["anthropic"], model: "claude-3" }],
+        connectedProviders: ["anthropic"],
       });
       expect(result).toEqual({ model: "openai/gpt-4", source: "override" });
     });
 
     it("normalizes the override model", () => {
-      const result = resolveModel({ override: "  OpenAI/GPT-4  " });
+      const result = resolveModel({
+        override: "  OpenAI/GPT-4  ",
+        connectedProviders: [],
+      });
       expect(result).toEqual({ model: "openai/gpt-4", source: "override" });
     });
   });
 
-  describe("given no override but a category default", () => {
-    it("returns category default when available", () => {
+  describe("given a fallback chain with connected providers", () => {
+    it("returns first entry matching a connected provider", () => {
       const result = resolveModel({
-        categoryDefault: "anthropic/claude-3",
-        availableModels: new Set(["anthropic/claude-3"]),
+        fallbackChain: [
+          { providers: ["anthropic", "opencode"], model: "claude-opus-4-6", variant: "max" },
+          { providers: ["openai"], model: "gpt-5.4" },
+        ],
+        connectedProviders: ["opencode"],
       });
-      expect(result).toEqual({ model: "anthropic/claude-3", source: "category-default" });
+      expect(result).toEqual({
+        model: "opencode/claude-opus-4-6",
+        source: "fallback",
+        variant: "max",
+      });
     });
 
-    it("skips category default when not available", () => {
+    it("skips entries with no matching connected provider", () => {
       const result = resolveModel({
-        categoryDefault: "anthropic/claude-3",
-        fallbackChain: ["openai/gpt-4"],
-        availableModels: new Set(["openai/gpt-4"]),
+        fallbackChain: [
+          { providers: ["google"], model: "gemini-pro" },
+          { providers: ["openai", "opencode"], model: "gpt-5.4" },
+        ],
+        connectedProviders: ["opencode"],
       });
-      expect(result).toEqual({ model: "openai/gpt-4", source: "fallback" });
+      expect(result).toEqual({
+        model: "opencode/gpt-5.4",
+        source: "fallback",
+      });
     });
 
-    it("returns category default when no availability constraint", () => {
+    it("prefers earlier provider in the entry's providers list", () => {
       const result = resolveModel({
-        categoryDefault: "anthropic/claude-3",
-        availableModels: new Set(),
+        fallbackChain: [{ providers: ["anthropic", "opencode"], model: "claude-opus-4-6" }],
+        connectedProviders: ["anthropic", "opencode"],
       });
-      expect(result).toEqual({ model: "anthropic/claude-3", source: "category-default" });
-    });
-  });
-
-  describe("given no override and no category default, but a fallback chain", () => {
-    it("returns first available fallback", () => {
-      const result = resolveModel({
-        fallbackChain: ["unavailable/model", "openai/gpt-4", "google/gemini-pro"],
-        availableModels: new Set(["openai/gpt-4", "google/gemini-pro"]),
+      expect(result).toEqual({
+        model: "anthropic/claude-opus-4-6",
+        source: "fallback",
       });
-      expect(result).toEqual({ model: "openai/gpt-4", source: "fallback" });
-    });
-
-    it("skips unavailable fallbacks", () => {
-      const result = resolveModel({
-        fallbackChain: ["unavailable/model-a", "unavailable/model-b", "openai/gpt-4"],
-        availableModels: new Set(["openai/gpt-4"]),
-      });
-      expect(result).toEqual({ model: "openai/gpt-4", source: "fallback" });
     });
   });
 
-  describe("given only a system default", () => {
-    it("returns system default as last resort", () => {
+  describe("given null connected providers (first run)", () => {
+    it("returns undefined to let OpenCode handle routing", () => {
       const result = resolveModel({
-        systemDefault: "openai/gpt-3.5-turbo",
-      });
-      expect(result).toEqual({ model: "openai/gpt-3.5-turbo", source: "system-default" });
-    });
-
-    it("returns system default when it is in available models", () => {
-      const result = resolveModel({
-        categoryDefault: "anthropic/claude-3",
-        fallbackChain: ["google/gemini-pro"],
-        systemDefault: "openai/gpt-3.5-turbo",
-        availableModels: new Set(["openai/gpt-3.5-turbo"]),
-      });
-      expect(result).toEqual({ model: "openai/gpt-3.5-turbo", source: "system-default" });
-    });
-
-    it("returns undefined when system default is not available", () => {
-      const result = resolveModel({
-        categoryDefault: "anthropic/claude-3",
-        fallbackChain: ["google/gemini-pro"],
-        systemDefault: "openai/gpt-3.5-turbo",
-        availableModels: new Set(["openai/gpt-4"]),
+        fallbackChain: [{ providers: ["openai"], model: "gpt-5.4" }],
+        connectedProviders: null,
       });
       expect(result).toBeUndefined();
     });
@@ -95,17 +75,62 @@ describe("resolveModel", () => {
 
   describe("given no inputs", () => {
     it("returns undefined", () => {
-      expect(resolveModel({})).toBeUndefined();
+      expect(resolveModel({ connectedProviders: null })).toBeUndefined();
     });
   });
 
   describe("given empty override string", () => {
-    it("falls through to next step", () => {
+    it("falls through to fallback chain", () => {
       const result = resolveModel({
         override: "   ",
-        systemDefault: "openai/gpt-3.5-turbo",
+        fallbackChain: [{ providers: ["opencode"], model: "gpt-5.4" }],
+        connectedProviders: ["opencode"],
       });
-      expect(result).toEqual({ model: "openai/gpt-3.5-turbo", source: "system-default" });
+      expect(result).toEqual({
+        model: "opencode/gpt-5.4",
+        source: "fallback",
+      });
+    });
+  });
+});
+
+describe("resolveQualifiedModel (runtime fallback hooks)", () => {
+  describe("given an override", () => {
+    it("returns override directly", () => {
+      const result = resolveQualifiedModel({
+        override: "openai/gpt-4",
+        fallbackChain: ["anthropic/claude-3"],
+        availableModels: new Set(["anthropic/claude-3"]),
+      });
+      expect(result).toEqual({ model: "openai/gpt-4", source: "override" });
+    });
+  });
+
+  describe("given a fallback chain with available models", () => {
+    it("returns first available model", () => {
+      const result = resolveQualifiedModel({
+        fallbackChain: ["unavailable/model", "openai/gpt-4", "google/gemini-pro"],
+        availableModels: new Set(["openai/gpt-4", "google/gemini-pro"]),
+      });
+      expect(result).toEqual({ model: "openai/gpt-4", source: "fallback" });
+    });
+
+    it("skips unavailable models", () => {
+      const result = resolveQualifiedModel({
+        fallbackChain: ["unavailable/a", "unavailable/b", "openai/gpt-4"],
+        availableModels: new Set(["openai/gpt-4"]),
+      });
+      expect(result).toEqual({ model: "openai/gpt-4", source: "fallback" });
+    });
+  });
+
+  describe("given no available matches", () => {
+    it("returns undefined", () => {
+      const result = resolveQualifiedModel({
+        fallbackChain: ["unavailable/a", "unavailable/b"],
+        availableModels: new Set(["something/else"]),
+      });
+      expect(result).toBeUndefined();
     });
   });
 });

@@ -1,5 +1,3 @@
-import { qualifyModel } from "./provider-registry";
-
 export function normalizeModel(model: string | undefined): string | undefined {
   if (!model) return undefined;
   const trimmed = model.trim();
@@ -16,13 +14,4 @@ export function parseModelId(model: string): { provider: string; modelId: string
     provider: normalized.slice(0, slashIndex),
     modelId: normalized.slice(slashIndex + 1),
   };
-}
-
-export function normalizeAndQualifyModel(
-  model: string | undefined,
-  preferredProvider?: string,
-): string | undefined {
-  const normalized = normalizeModel(model);
-  if (!normalized) return undefined;
-  return qualifyModel(normalized, preferredProvider);
 }

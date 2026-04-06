@@ -14,17 +14,13 @@ import { initSessionManagerContext } from "./tools/session-manager";
 import { initLspClientContext } from "./tools/lsp/client";
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features";
 import { registerProjectSkillLoader } from "./features/skills";
+import { updateFromProviderList } from "./shared/connected-providers-cache";
 import {
   buildDiscoveryIndex,
   initializeDiscovery,
   resetDiscovery,
   type ProviderListResponse,
 } from "./shared/provider-discovery";
-import {
-  resetProviderRegistry,
-  setDefaultPreferredProvider,
-  setProviderPriority,
-} from "./shared/provider-registry";
 import { ensureUserConfig } from "./config/ensure-user-config";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -94,14 +90,11 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     config = fallback.config;
   }
 
-  resetProviderRegistry();
   resetDiscovery();
-  setProviderPriority(config.provider_priority ?? []);
-  setDefaultPreferredProvider(config.default_provider);
   // Fire provider discovery in the background — don't block plugin init.
-  // Cannot await here or in the config hook (deadlocks OpenCode's event loop).
-  // The config hook will use discovery data if ready, or fall back to
-  // inferring the provider from OpenCode's default model assignment.
+  // The config hook reads connected providers from the disk cache (written
+  // on prior runs). On first run, no cache exists and the config hook skips
+  // model assignment, letting OpenCode handle routing with its defaults.
   if (ctx.client?.provider?.list) {
     const DISCOVERY_TIMEOUT_MS = 15_000;
     const providerListWithTimeout = new Promise<
@@ -125,14 +118,18 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     });
 
     void providerListWithTimeout
-      .then((providerResponse) => {
+      .then(async (providerResponse) => {
         const providerData = (
           providerResponse as Awaited<ReturnType<typeof ctx.client.provider.list>>
         )?.data as ProviderListResponse | undefined;
         if (providerData?.all && providerData?.connected) {
+          // Update in-memory discovery index (used by provider-registry)
           const discovery = buildDiscoveryIndex(providerData);
           initializeDiscovery(discovery);
-          log("[bootstrap] Provider discovery completed");
+
+          // Write disk cache so the next config hook call has sync access
+          await updateFromProviderList(ctx.client);
+          log("[bootstrap] Provider discovery completed and disk cache updated");
         } else {
           log("[bootstrap] Provider discovery response missing required fields", {
             hasAll: !!providerData?.all,
@@ -142,9 +139,12 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
       })
       .catch((error: unknown) => {
         const msg = error instanceof Error ? error.message : String(error);
-        log("[bootstrap] Provider discovery failed; models will use OpenCode defaults", {
-          message: msg,
-        });
+        log(
+          "[bootstrap] Provider discovery failed; models will use disk cache or OpenCode defaults",
+          {
+            message: msg,
+          },
+        );
       });
   } else {
     log("[bootstrap] client.provider.list not available; skipping provider discovery");
