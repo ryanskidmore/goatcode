@@ -50,3 +50,13 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryConfig> = {
 };
 
 export const CATEGORY_NAMES = Object.keys(DEFAULT_CATEGORIES);
+
+/**
+ * Maximum allowed delegation depth. Prevents recursive delegation chains
+ * where agents delegate to sub-agents that delegate further.
+ *
+ * Level 0: User → Orchestrator (can delegate)
+ * Level 1: Orchestrator → Specialist (can delegate)
+ * Level 2: Specialist → Sub-agent (CANNOT delegate further)
+ */
+export const MAX_DELEGATION_DEPTH = 2;

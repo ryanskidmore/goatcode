@@ -9,8 +9,38 @@ import { buildTool } from "../tool-builder";
 import { getClientFromToolContext } from "../lsp/client";
 import { resolveCategory } from "./category-resolver";
 import { executeBackground, executeSync } from "./executor";
-import { CATEGORY_NAMES } from "./constants";
+import { CATEGORY_NAMES, MAX_DELEGATION_DEPTH } from "./constants";
 import { log } from "../../shared/logger";
+
+/**
+ * Pattern injected by the executor into child session prompts.
+ * @see executor.ts injectDelegationDepth
+ */
+const DEPTH_MARKER_PATTERN = /<!-- goatcode:delegation_depth=(\d+) -->/;
+
+/**
+ * Reads the current session's messages to find the delegation depth marker.
+ * Returns 0 if no marker is found (top-level session) or on any error (fail-open).
+ */
+async function extractDelegationDepth(
+  client: OpenCodeContext["client"],
+  sessionID: string | undefined,
+): Promise<number> {
+  if (!sessionID) return 0;
+
+  try {
+    const result = await client.session.messages({ path: { id: sessionID } });
+    const messages = (result.data ?? []) as Array<Record<string, unknown>>;
+    // Depth marker is in the initial prompt — only check first 3 messages
+    const raw = JSON.stringify(messages.slice(0, 3));
+    const match = raw.match(DEPTH_MARKER_PATTERN);
+    if (match) return parseInt(match[1], 10);
+  } catch {
+    log("[delegate-task] Could not determine delegation depth, allowing delegation", { sessionID });
+  }
+
+  return 0;
+}
 
 const categoryListForDescription = CATEGORY_NAMES.map((name) => `"${name}"`).join(", ");
 
@@ -116,20 +146,39 @@ export function createTaskTool(
       }
 
       const client = resolveClient(toolContext, contextGetter);
+      const currentSessionID = resolveParentSessionID(toolContext);
+
+      // --- Delegation depth enforcement ---
+      const currentDepth = await extractDelegationDepth(client, currentSessionID);
+      if (currentDepth >= MAX_DELEGATION_DEPTH) {
+        log("[delegate-task] Blocked: delegation depth limit reached", {
+          currentDepth,
+          maxDepth: MAX_DELEGATION_DEPTH,
+          category: input.category,
+        });
+        return (
+          `Delegation blocked: maximum depth (${MAX_DELEGATION_DEPTH}) reached. ` +
+          `Current depth: ${currentDepth}. ` +
+          `Execute the work directly using your available tools instead of delegating.`
+        );
+      }
+
       const manager = getManager();
       const deps: ExecutorDeps = {
         manager,
         client,
         directory: toolContext.directory,
-        sessionID: resolveParentSessionID(toolContext),
+        sessionID: currentSessionID,
         messageID: resolveParentMessageID(toolContext),
         metadata: (input) => toolContext.metadata(input),
+        delegationDepth: currentDepth,
       };
 
       log("[delegate-task] Routing task", {
         category: input.category,
         model: config.model,
         background: input.run_in_background,
+        delegationDepth: currentDepth,
       });
 
       if (input.run_in_background) {

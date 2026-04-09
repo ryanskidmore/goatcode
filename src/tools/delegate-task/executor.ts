@@ -17,6 +17,8 @@ export interface ExecutorDeps {
   sessionID?: string;
   messageID?: string;
   metadata?: MetadataCallback;
+  /** Current delegation depth of the calling agent. Injected as depth+1 into child prompts. */
+  delegationDepth?: number;
 }
 
 /**
@@ -27,6 +29,16 @@ export interface ExecutorDeps {
 function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig): string {
   if (!config.prompt_append) return prompt;
   return `${prompt}\n\n${config.prompt_append}`;
+}
+
+/**
+ * Injects an invisible delegation depth marker into the child prompt.
+ * The delegate-task handler reads this marker from session messages to
+ * enforce {@link MAX_DELEGATION_DEPTH} and prevent runaway recursion.
+ */
+function injectDelegationDepth(prompt: string, currentDepth: number): string {
+  const childDepth = currentDepth + 1;
+  return `${prompt}\n\n<!-- goatcode:delegation_depth=${childDepth} -->`;
 }
 
 function sanitiseValue(value: string): string {
@@ -76,7 +88,8 @@ export async function executeBackground(
     });
   }
 
-  const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
+  const basePrompt = buildPromptWithCategoryContext(input.prompt, config);
+  const fullPrompt = injectDelegationDepth(basePrompt, deps.delegationDepth ?? 0);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
     id: taskId,
@@ -225,7 +238,8 @@ export async function executeSync(
   }
 
   // Resolve model using the provider-aware pipeline.
-  const fullPrompt = buildPromptWithCategoryContext(input.prompt, config);
+  const basePrompt = buildPromptWithCategoryContext(input.prompt, config);
+  const fullPrompt = injectDelegationDepth(basePrompt, deps.delegationDepth ?? 0);
   const resolved = resolveModel({
     override: config.model.includes("/") ? config.model : undefined,
     fallbackChain: config.fallback_chain,
