@@ -58,6 +58,19 @@ export const AGENT_TOOL_RESTRICTIONS: Record<string, ToolRestriction> = {
       "task_update",
     ],
   },
+  explorer: {
+    denied: [
+      "write",
+      "edit",
+      "bash",
+      "interactive_bash",
+      "delegate_task",
+      "background_output",
+      "background_cancel",
+      "task_create",
+      "task_update",
+    ],
+  },
 };
 
 export function getToolRestrictions(agentName: string): ToolRestriction {
