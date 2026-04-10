@@ -21,7 +21,9 @@ const backgroundOutputTool = tool({
     timeout: tool.schema
       .number()
       .optional()
-      .describe("Max wait time in ms (default: 10000, max: 10000). Keep short — prefer non-blocking checks."),
+      .describe(
+        "Max wait time in ms (default: 10000, max: 10000). Keep short — prefer non-blocking checks.",
+      ),
     full_session: tool.schema
       .boolean()
       .optional()

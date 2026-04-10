@@ -20,12 +20,12 @@ const DEPTH_MARKER_PATTERN = /<!-- goatcode:delegation_depth=(\d+) -->/;
 
 /**
  * Reads the current session's messages to find the delegation depth marker.
- * Returns 0 if no marker is found (top-level session) or on any error (fail-open).
+ * Returns null on any error (fail-closed — blocks delegation when depth is unknown).
  */
 async function extractDelegationDepth(
   client: OpenCodeContext["client"],
   sessionID: string | undefined,
-): Promise<number> {
+): Promise<number | null> {
   if (!sessionID) return 0;
 
   try {
@@ -36,7 +36,8 @@ async function extractDelegationDepth(
     const match = raw.match(DEPTH_MARKER_PATTERN);
     if (match) return parseInt(match[1], 10);
   } catch {
-    log("[delegate-task] Could not determine delegation depth, allowing delegation", { sessionID });
+    log("[delegate-task] Could not determine delegation depth, blocking delegation", { sessionID });
+    return null;
   }
 
   return 0;
@@ -150,6 +151,12 @@ export function createTaskTool(
 
       // --- Delegation depth enforcement ---
       const currentDepth = await extractDelegationDepth(client, currentSessionID);
+      if (currentDepth === null) {
+        log("[delegate-task] Blocked: unable to determine delegation depth", {
+          category: input.category,
+        });
+        return "Delegation blocked: unable to determine current delegation depth. Please retry or execute directly.";
+      }
       if (currentDepth >= MAX_DELEGATION_DEPTH) {
         log("[delegate-task] Blocked: delegation depth limit reached", {
           currentDepth,

@@ -26,15 +26,31 @@ const MAX_BLOCK_TIMEOUT_MS = 10_000;
 // execute directly.
 // ---------------------------------------------------------------------------
 
+/** Shape stored per-task for poll tracking with TTL-based cleanup. */
+type PollEntry = { count: number; lastPollAt: number };
+
 /** Per-task poll count tracking (module-level state). */
-const pollCounts = new Map<string, number>();
+const pollCounts = new Map<string, PollEntry>();
 
 /** Maximum polls before warning the agent to stop. */
 const MAX_POLL_ATTEMPTS = 3;
 
+/** Stale poll entries are cleaned up after 1 hour. */
+const POLL_ENTRY_TTL_MS = 60 * 60 * 1000;
+
 function trackPoll(taskId: string): number {
-  const count = (pollCounts.get(taskId) ?? 0) + 1;
-  pollCounts.set(taskId, count);
+  const now = Date.now();
+
+  // Opportunistic cleanup of stale entries
+  for (const [id, entry] of pollCounts) {
+    if (now - entry.lastPollAt > POLL_ENTRY_TTL_MS) {
+      pollCounts.delete(id);
+    }
+  }
+
+  const existing = pollCounts.get(taskId);
+  const count = (existing?.count ?? 0) + 1;
+  pollCounts.set(taskId, { count, lastPollAt: now });
   return count;
 }
 

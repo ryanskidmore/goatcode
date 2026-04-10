@@ -38,7 +38,8 @@ function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig):
  */
 function injectDelegationDepth(prompt: string, currentDepth: number): string {
   const childDepth = currentDepth + 1;
-  return `${prompt}\n\n<!-- goatcode:delegation_depth=${childDepth} -->`;
+  const cleanedPrompt = prompt.replace(/<!--\s*goatcode:delegation_depth=\d+\s*-->/g, "").trim();
+  return `<!-- goatcode:delegation_depth=${childDepth} -->\n\n${cleanedPrompt}`;
 }
 
 function sanitiseValue(value: string): string {
