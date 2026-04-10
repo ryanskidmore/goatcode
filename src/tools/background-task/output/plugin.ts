@@ -16,12 +16,14 @@ const backgroundOutputTool = tool({
       .boolean()
       .optional()
       .describe(
-        "Wait for completion (default: false). Capped at 55s to avoid tool-execution timeouts.",
+        "Brief wait for completion (default: false). Capped at 10s — this is a status check, not a sync wait.",
       ),
     timeout: tool.schema
       .number()
       .optional()
-      .describe("Max wait time in ms (default: 55000, max: 55000)"),
+      .describe(
+        "Max wait time in ms (default: 10000, max: 10000). Keep short — prefer non-blocking checks.",
+      ),
     full_session: tool.schema
       .boolean()
       .optional()

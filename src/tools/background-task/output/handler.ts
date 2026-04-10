@@ -5,11 +5,75 @@ import type { BackgroundOutputArgs } from "./types";
 
 /**
  * Maximum time (ms) the handler will block waiting for task completion.
- * Must be well below the OpenCode tool-execution timeout (~120s) so the
- * handler can return a meaningful "still running" message instead of
- * being forcibly aborted by the runtime.
+ *
+ * This is intentionally short. `background_output` is a *status check*,
+ * not a synchronous execution mechanism. The brief blocking window exists
+ * only to catch tasks that complete within a few seconds, avoiding an
+ * unnecessary extra round-trip. For longer-running tasks the handler
+ * returns "still running" quickly so the calling agent can do other work
+ * instead of burning its entire inference turn waiting.
+ *
+ * NOTE: This caps the *polling wait* per call, NOT the subagent's total
+ * execution time. The subagent continues running in the background
+ * regardless of this limit.
  */
-const MAX_BLOCK_TIMEOUT_MS = 55_000;
+const MAX_BLOCK_TIMEOUT_MS = 10_000;
+
+// ---------------------------------------------------------------------------
+// Polling budget — prevents agents from burning infinite inference turns
+// polling a stuck task. After MAX_POLL_ATTEMPTS "still running" responses,
+// the output includes a strong warning directing the agent to cancel and
+// execute directly.
+// ---------------------------------------------------------------------------
+
+/** Shape stored per-task for poll tracking with TTL-based cleanup. */
+type PollEntry = { count: number; lastPollAt: number };
+
+/** Per-task poll count tracking (module-level state). */
+const pollCounts = new Map<string, PollEntry>();
+
+/** Maximum polls before warning the agent to stop. */
+const MAX_POLL_ATTEMPTS = 3;
+
+/** Stale poll entries are cleaned up after 1 hour. */
+const POLL_ENTRY_TTL_MS = 60 * 60 * 1000;
+
+function trackPoll(taskId: string): number {
+  const now = Date.now();
+
+  // Opportunistic cleanup of stale entries
+  for (const [id, entry] of pollCounts) {
+    if (now - entry.lastPollAt > POLL_ENTRY_TTL_MS) {
+      pollCounts.delete(id);
+    }
+  }
+
+  const existing = pollCounts.get(taskId);
+  const count = (existing?.count ?? 0) + 1;
+  pollCounts.set(taskId, { count, lastPollAt: now });
+  return count;
+}
+
+function clearPollCount(taskId: string): void {
+  pollCounts.delete(taskId);
+}
+
+function buildPollBudgetWarning(pollCount: number): string {
+  if (pollCount < MAX_POLL_ATTEMPTS) return "";
+  return (
+    `\n\n⚠️ POLLING BUDGET EXHAUSTED (${pollCount}/${MAX_POLL_ATTEMPTS} attempts). ` +
+    `This task is still running after ${pollCount} polls. ` +
+    `To avoid wasting further inference cycles:\n` +
+    `1. Cancel this task with background_cancel\n` +
+    `2. Execute the work directly using your own tools\n` +
+    `Do NOT continue polling.`
+  );
+}
+
+function buildTimeoutCapNote(requestedMs: number | undefined): string {
+  if (requestedMs === undefined || requestedMs <= MAX_BLOCK_TIMEOUT_MS) return "";
+  return `\n> Note: requested timeout (${requestedMs}ms) was capped to ${MAX_BLOCK_TIMEOUT_MS}ms to stay within tool-execution limits.`;
+}
 
 type SessionMessage = {
   id?: string;
@@ -143,34 +207,60 @@ export async function handleBackgroundOutput(
 
   const task = manager.get(args.task_id);
   if (!task) {
+    clearPollCount(args.task_id);
     return `Task not found: ${args.task_id}`;
   }
 
   const isActive = task.status === "queued" || task.status === "running";
 
+  // Task reached a terminal state — clear poll tracking
+  if (!isActive) {
+    clearPollCount(args.task_id);
+  }
+
   if (args.block === true && isActive) {
     const timeoutMs = Math.min(args.timeout ?? MAX_BLOCK_TIMEOUT_MS, MAX_BLOCK_TIMEOUT_MS);
+    const capNote = buildTimeoutCapNote(args.timeout);
     const resolved = await waitForCompletion(manager, args.task_id, timeoutMs);
     if (!resolved) {
+      clearPollCount(args.task_id);
       return `Task ${args.task_id} was deleted while waiting.`;
     }
     if (resolved.status === "queued" || resolved.status === "running") {
+      // Still running after blocking wait — count as a poll attempt
+      const pollCount = trackPoll(args.task_id);
+      const budgetWarning = buildPollBudgetWarning(pollCount);
       const output = formatTaskOutput(resolved);
       // If full_session requested, append session messages before the timeout note
       if (args.full_session && client && resolved.sessionId) {
         const sessionOutput = await fetchSessionMessages(client, resolved, args);
-        return `${output}\n\n${sessionOutput}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running.`;
+        return `${output}\n\n${sessionOutput}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running.${capNote}${budgetWarning}`;
       }
-      return `${output}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running.`;
+      return `${output}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running.${capNote}${budgetWarning}`;
     }
-    // Task completed — return full_session output if requested
+    // Task completed — clear poll tracking, return result
+    clearPollCount(args.task_id);
     if (args.full_session && client && resolved.sessionId) {
       return await fetchSessionMessages(client, resolved, args);
     }
     return await formatTaskOutputWithFallback(resolved, args, client);
   }
 
-  // Non-blocking path: return full session output if requested and available
+  // Non-blocking path: track polls for active tasks
+  if (isActive) {
+    const pollCount = trackPoll(args.task_id);
+    const budgetWarning = buildPollBudgetWarning(pollCount);
+
+    if (args.full_session && client && task.sessionId) {
+      const sessionOutput = await fetchSessionMessages(client, task, args);
+      return `${sessionOutput}${budgetWarning}`;
+    }
+
+    const output = await formatTaskOutputWithFallback(task, args, client);
+    return `${output}${budgetWarning}`;
+  }
+
+  // Non-blocking path: terminal task
   if (args.full_session && client && task.sessionId) {
     return await fetchSessionMessages(client, task, args);
   }

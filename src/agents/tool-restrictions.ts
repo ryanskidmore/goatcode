@@ -58,6 +58,22 @@ export const AGENT_TOOL_RESTRICTIONS: Record<string, ToolRestriction> = {
       "task_update",
     ],
   },
+  explorer: {
+    allowed: [
+      "read",
+      "glob",
+      "grep",
+      "lsp_goto_definition",
+      "lsp_find_references",
+      "lsp_symbols",
+      "lsp_diagnostics",
+      "lsp_prepare_rename",
+      "lsp_rename",
+      "ast_grep_search",
+      "look_at",
+      "todowrite",
+    ],
+  },
 };
 
 export function getToolRestrictions(agentName: string): ToolRestriction {

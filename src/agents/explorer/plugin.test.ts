@@ -27,9 +27,15 @@ describe("explorerPlugin", () => {
         expect(agent.prompt!.length).toBeGreaterThan(0);
       });
 
-      it("#then does not define tool restrictions", () => {
+      it("#then denies delegation and mutation tools", () => {
         const agent = explorerPlugin.agents!.explorer;
-        expect(agent.tools).toBeUndefined();
+        expect(agent.tools).toBeDefined();
+        expect(agent.tools!.delegate_task).toBe(false);
+        expect(agent.tools!.background_output).toBe(false);
+        expect(agent.tools!.background_cancel).toBe(false);
+        expect(agent.tools!.write).toBe(false);
+        expect(agent.tools!.edit).toBe(false);
+        expect(agent.tools!.bash).toBe(false);
       });
     });
   });
