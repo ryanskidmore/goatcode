@@ -11,7 +11,6 @@ Returns a formatted view of session messages with role, timestamp, and content. 
 Arguments:
 - session_id (required): Session ID to read
 - include_todos (optional): Include todo list if available (default: false)
-- include_todos (optional): Include todo list if available (default: false)
 - limit (optional): Maximum number of messages to return (default: all)
 
 Example output:

@@ -7,8 +7,11 @@ import { log } from "../../../shared/logger";
 
 const MAX_SESSIONS_TO_SCAN = 50;
 export const SEARCH_TIMEOUT_MS = 60_000;
-const TIMEOUT_MESSAGE =
-  "Search timed out after 60s. Try narrowing your query or using a smaller session list.";
+function timeoutMessage(timeoutMs: number): string {
+  const normalized = timeoutMs > 0 ? timeoutMs : SEARCH_TIMEOUT_MS;
+  const display = normalized % 1_000 === 0 ? `${normalized / 1_000}s` : `${normalized}ms`;
+  return `Search timed out after ${display}. Try narrowing your query or using a smaller session list.`;
+}
 
 async function searchInSession(
   ctx: OpenCodeContext,
@@ -66,7 +69,7 @@ export async function handleSessionSearch(
     };
 
     const timeoutPromise = new Promise<string>((resolve) =>
-      setTimeout(() => resolve(TIMEOUT_MESSAGE), timeoutMs),
+      setTimeout(() => resolve(timeoutMessage(timeoutMs)), timeoutMs),
     );
 
     return await Promise.race([searchOperation(), timeoutPromise]);

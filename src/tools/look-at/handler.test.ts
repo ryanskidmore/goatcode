@@ -220,19 +220,19 @@ describe("T151 — look_at text file size limit", () => {
     expect(result).toMatch(/1 MB/i);
   });
 
-  it("allows text files at or below 1 MB through to the session client", async () => {
-    const { createLookAtTool } = await import("./handler");
-    const { createMockToolContext } = await import("../../test-utils");
+  it("allows text files exactly at 1 MB and forwards to session client", async () => {
+    const exactBoundaryFile = join(tempDir, "exactly-1mb.ts");
+    await writeFile(exactBoundaryFile, "x".repeat(1024 * 1024));
 
-    const okFile = join(tempDir, "small.ts");
-    await writeFile(okFile, "const x = 1;\n");
+    const client = makeClient();
+    const ctx = makeContext(client);
+    const tool = createLookAtTool(noopPoller);
 
-    const tool = createLookAtTool(async () => ({ messageCount: 0, isIdle: true }));
-    const ctx = createMockToolContext() as never;
+    const result = await tool.execute({ file_path: exactBoundaryFile, goal: "summarise" }, ctx);
 
-    const result = await tool.execute({ file_path: okFile, goal: "summarise" }, ctx);
-
-    expect(result).not.toMatch(/too large/i);
+    expect(result).toBe("Extracted info from the file.");
+    expect(client.session.create).toHaveBeenCalledTimes(1);
+    expect(client.session.promptAsync).toHaveBeenCalledTimes(1);
   });
 });
 

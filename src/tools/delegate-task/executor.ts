@@ -54,7 +54,7 @@ function injectConcurrencyGuidance(prompt: string, delegationDepth: number): str
     "\n" +
     "\nDo the work directly unless ALL of these are true:" +
     "\n- The work splits into genuinely independent parallel streams." +
-    `\n- You have ${MAX_CHILDREN_PER_PARENT} or fewer sub-tasks.` +
+    `\n- You currently have fewer than ${MAX_CHILDREN_PER_PARENT} sub-tasks.` +
     "\n- Each sub-task requires 5+ minutes of tool work." +
     "\n- You can make meaningful progress on other work while waiting." +
     "\n" +

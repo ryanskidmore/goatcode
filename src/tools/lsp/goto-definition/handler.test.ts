@@ -94,6 +94,18 @@ describe("T62 — LSP goto-definition rejects float line/character", () => {
     expect(result.success).toBe(false);
   });
 
+  it("goto_definition: character: 2.9 rejected", async () => {
+    const { lspGotoDefinitionArgsSchema } = await import("./types");
+
+    const result = lspGotoDefinitionArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 1,
+      character: 2.9,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("integer line numbers are still accepted", async () => {
     const { lspGotoDefinitionArgsSchema } = await import("./types");
 

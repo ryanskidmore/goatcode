@@ -134,7 +134,7 @@ describe("handleSessionSearch", () => {
 
         // Pass a small timeoutMs to avoid waiting 60s in tests
         const result = await handleSessionSearch({ query: "anything" }, ctx, 50);
-        expect(result).toContain("Search timed out after 60s");
+        expect(result).toContain("Search timed out after 50ms");
         expect(result).toContain("Try narrowing your query");
       });
     });

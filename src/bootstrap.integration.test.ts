@@ -241,7 +241,9 @@ describe("bootstrap — agent fallback_models override (A22)", () => {
 
           type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
           const input = { agent: {} } as ConfigInput;
-          await hooks.config!(input);
+          expect(hooks.config).toBeDefined();
+          if (!hooks.config) throw new Error("Expected hooks.config to be defined");
+          await hooks.config(input);
 
           // openai is connected → custom chain [openai/gpt-5.4] resolves to openai/gpt-5.4.
           // The default chain entry also resolves to openai/gpt-5.4 with variant:medium, but
@@ -287,7 +289,9 @@ describe("bootstrap — agent fallback_models override (A22)", () => {
 
           type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
           const input = { agent: {} } as ConfigInput;
-          await hooks.config!(input);
+          expect(hooks.config).toBeDefined();
+          if (!hooks.config) throw new Error("Expected hooks.config to be defined");
+          await hooks.config(input);
 
           // Unqualified → providers:["opencode"]; opencode is connected → resolves to opencode/my-custom-model.
           expect(input.agent?.orchestrator?.model).toBe("opencode/my-custom-model");
