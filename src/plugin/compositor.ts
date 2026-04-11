@@ -3,9 +3,10 @@ import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
 import { readConnectedProviders } from "../shared/connected-providers-cache";
 import { resolveModel } from "../shared/model-resolution-pipeline";
-import { getFallbackChain } from "../agents/fallback-chains";
+import { getFallbackChain, buildCustomFallbackChain } from "../agents/fallback-chains";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
+import type { GoatCodeConfig } from "../types/config";
 
 const FUNCTION_HOOK_SLOTS = HOOK_EVENT_NAMES.filter(
   (name): name is Exclude<(typeof HOOK_EVENT_NAMES)[number], "tool"> => name !== "tool",
@@ -32,7 +33,10 @@ function buildSlotHandler(handlers: PluginHookHandler[]): PluginHookHandler {
  * The `config` slot injects agents before delegating to registered hooks.
  * Slots without registered handlers are defined as no-ops.
  */
-export function compose(aggregated: AggregatedPlugins): Hooks {
+export function compose(
+  aggregated: AggregatedPlugins,
+  agentOverrides?: GoatCodeConfig["agents"],
+): Hooks {
   const hooks: Hooks = {};
 
   // Shallow-copy the tools record. structuredClone cannot clone the execute
@@ -78,7 +82,10 @@ export function compose(aggregated: AggregatedPlugins): Hooks {
         const agentConfig = input.agent[name];
         if (!agentConfig) continue;
 
-        const chain = getFallbackChain(name);
+        const customModels = agentOverrides?.[name as keyof typeof agentOverrides]?.fallback_models;
+        const chain = customModels
+          ? buildCustomFallbackChain(customModels)
+          : getFallbackChain(name);
         const resolved = resolveModel({
           fallbackChain: chain,
           connectedProviders: connected,
