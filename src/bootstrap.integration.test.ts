@@ -304,3 +304,96 @@ describe("bootstrap — agent fallback_models override (A22)", () => {
     });
   });
 });
+
+describe("bootstrap — subagent model resolution independence (A7)", () => {
+  afterEach(() => {
+    loadConfigImpl = async () => undefined;
+    globalThis.structuredClone = originalStructuredClone;
+  });
+
+  describe("#given anthropic as the only connected provider", () => {
+    describe("#when bootstrap runs and config hook fires", () => {
+      it("#then subagent agents resolve models from their own fallback chain to anthropic-backed models", async () => {
+        const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+        const tempCacheHome = await mkdtemp(join(tmpdir(), "goatcode-bootstrap-subagent-mode-"));
+        process.env.XDG_CACHE_HOME = tempCacheHome;
+        const { writeConnectedProviders, resetConnectedProvidersCache } =
+          await import("./shared/connected-providers-cache");
+        writeConnectedProviders(["anthropic"]);
+
+        try {
+          globalThis.structuredClone = passthroughStructuredClone;
+          const hooks = await bootstrap(createBootstrapContext());
+          expect(hooks.config).toBeDefined();
+
+          if (!hooks.config) {
+            throw new Error("Expected hooks.config to be defined");
+          }
+
+          type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
+          const input = { agent: {} } as ConfigInput;
+          await hooks.config(input);
+
+          // All three subagent-mode agents must resolve to anthropic-backed models,
+          // confirming their model resolution path is independent of UI model selection.
+          expect(input.agent?.advisor?.model).toBeDefined();
+          expect(typeof input.agent?.advisor?.model).toBe("string");
+          expect(input.agent?.advisor?.model).toMatch(/^anthropic\//);
+
+          expect(input.agent?.explorer?.model).toBeDefined();
+          expect(typeof input.agent?.explorer?.model).toBe("string");
+          expect(input.agent?.explorer?.model).toMatch(/^anthropic\//);
+
+          expect(input.agent?.worker?.model).toBeDefined();
+          expect(typeof input.agent?.worker?.model).toBe("string");
+          expect(input.agent?.worker?.model).toMatch(/^anthropic\//);
+        } finally {
+          if (previousXdgCacheHome === undefined) {
+            delete process.env.XDG_CACHE_HOME;
+          } else {
+            process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+          }
+          resetConnectedProvidersCache();
+          await rm(tempCacheHome, { recursive: true, force: true });
+        }
+      });
+
+      it("#then all-mode agents also resolve to anthropic-backed models from their own chains", async () => {
+        const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+        const tempCacheHome = await mkdtemp(
+          join(tmpdir(), "goatcode-bootstrap-allmode-anthropic-"),
+        );
+        process.env.XDG_CACHE_HOME = tempCacheHome;
+        const { writeConnectedProviders, resetConnectedProvidersCache } =
+          await import("./shared/connected-providers-cache");
+        writeConnectedProviders(["anthropic"]);
+
+        try {
+          globalThis.structuredClone = passthroughStructuredClone;
+          const hooks = await bootstrap(createBootstrapContext());
+          expect(hooks.config).toBeDefined();
+
+          if (!hooks.config) {
+            throw new Error("Expected hooks.config to be defined");
+          }
+
+          type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
+          const input = { agent: {} } as ConfigInput;
+          await hooks.config(input);
+
+          // Orchestrator and planner have claude-opus-4-6 in their chains → anthropic-backed.
+          expect(input.agent?.orchestrator?.model).toMatch(/^anthropic\//);
+          expect(input.agent?.planner?.model).toMatch(/^anthropic\//);
+        } finally {
+          if (previousXdgCacheHome === undefined) {
+            delete process.env.XDG_CACHE_HOME;
+          } else {
+            process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+          }
+          resetConnectedProvidersCache();
+          await rm(tempCacheHome, { recursive: true, force: true });
+        }
+      });
+    });
+  });
+});
