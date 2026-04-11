@@ -37,5 +37,4 @@ export interface SessionDetail {
   hasTodos: boolean;
   todoCount: number;
   completedTodoCount: number;
-  hasTranscript: boolean;
 }

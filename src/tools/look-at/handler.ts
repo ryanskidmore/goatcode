@@ -160,6 +160,11 @@ export function createLookAtTool(poller: Poller = pollUntilStable): ToolDefiniti
           };
           promptText = buildPrompt(goal, mime.startsWith("image/"));
         } else {
+          const TEXT_FILE_SIZE_LIMIT = 1024 * 1024; // 1 MB
+          const fileSize = file.size;
+          if (fileSize > TEXT_FILE_SIZE_LIMIT) {
+            return `Error: File '${filePath}' is too large for text analysis (${Math.round(fileSize / 1024)} KB). Maximum is 1 MB. For large files, consider referencing specific sections instead.`;
+          }
           promptText = `${buildPrompt(goal, false)}\n\nFile contents:\n\`\`\`\n${await file.text()}\n\`\`\``;
         }
       } else {
