@@ -171,7 +171,7 @@ describe("createTaskResumeInfoHandler", () => {
       };
       const output = {
         title: "task",
-        output: "Task timed out after 55s. Session: ses_header_777",
+        output: "Task timed out after 60s. Session: ses_header_777",
         metadata: {},
       };
 

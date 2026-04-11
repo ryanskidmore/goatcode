@@ -237,12 +237,20 @@ function buildTaskMetadataLines(sessionId: string, taskId: string, subagent: str
   ];
 }
 
+/**
+ * Maximum time (ms) to wait for a sync task to complete via event-based
+ * notification. No longer constrained by a poll loop, so we can afford a
+ * generous ceiling. The underlying session.idle event fires as soon as the
+ * agent finishes, so in practice this timeout is rarely reached.
+ */
+const SYNC_TASK_TIMEOUT_MS = 5 * 60 * 1_000; // 5 minutes
+
 export async function executeSync(
   input: TaskInput,
   config: CategoryConfig,
   deps: ExecutorDeps,
 ): Promise<string> {
-  const { client, directory } = deps;
+  const { manager, client, directory } = deps;
 
   log("[delegate-task] Executing sync task", {
     category: input.category,
@@ -272,10 +280,11 @@ export async function executeSync(
     sessionId = createResult.data.id;
   }
 
-  // Emit metadata with sessionId so the TUI can make the tool card
-  // clickable and navigate to the subagent session.
+  const taskId = `sync_${sessionId.slice(0, 8)}`;
+  const subagent = deriveSubagent(input);
+
+  // Emit metadata so the TUI can make the tool card clickable.
   if (deps.metadata) {
-    const subagent = deriveSubagent(input);
     deps.metadata({
       title: input.description,
       metadata: {
@@ -292,7 +301,13 @@ export async function executeSync(
     });
   }
 
-  // Resolve model using the provider-aware pipeline.
+  // Register with the manager BEFORE sending the prompt so that the
+  // session.idle event fired on completion is caught and resolves the
+  // waitForCompletion() promise below.
+  const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
+  manager.trackSyncSession(sessionId, taskId, ctx, config.model, deps.delegationDepth ?? 0);
+
+  // Resolve model and send prompt.
   const basePrompt = buildPromptWithCategoryContext(input.prompt, config);
   const fullPrompt = injectDelegationDepth(basePrompt, deps.delegationDepth ?? 0);
   const resolved = resolveModel({
@@ -314,71 +329,23 @@ export async function executeSync(
     return errorMsg;
   }
 
-  const result = await pollForResult(client, directory, sessionId);
-  const subagent = deriveSubagent(input);
-  const taskId = `sync_${sessionId.slice(0, 8)}`;
-  return `${result}\n\n${buildTaskMetadataLines(sessionId, taskId, subagent).join("\n")}`;
-}
+  // Block until the session.idle event fires (event-driven, no polling).
+  const task = await manager.waitForCompletion(taskId, SYNC_TASK_TIMEOUT_MS);
 
-const POLL_INTERVAL_MS = 2_000;
-/**
- * Maximum time (ms) for sync task polling. Capped at 55s to stay well
- * within the OpenCode tool-execution timeout (~120s), leaving headroom
- * for the response to be assembled and returned.
- */
-const MAX_POLL_DURATION_MS = 55_000;
+  const meta = buildTaskMetadataLines(sessionId, taskId, subagent).join("\n");
 
-async function pollForResult(
-  client: OpenCodeContext["client"],
-  directory: string,
-  sessionId: string,
-): Promise<string> {
-  const start = Date.now();
-  let lastMessageCount = -1;
-  let stablePolls = 0;
-  // This threshold is intentionally higher than poller.ts STABILITY_REQUIRED_POLLS=2.
-  // The sync executor has no status API fallback once it returns, so we require
-  // extra stability before treating the session as complete.
-  const STABLE_THRESHOLD = 3;
-
-  while (Date.now() - start < MAX_POLL_DURATION_MS) {
-    const [statusResult, messagesResult] = await Promise.all([
-      client.session.status({ query: { directory } }),
-      client.session.messages({ path: { id: sessionId } }),
-    ]);
-
-    const sessionStatus = statusResult.data?.[sessionId]?.type;
-    const messages = (messagesResult.data ?? []) as SessionMessage[];
-    const messageCount = messages.length;
-
-    if (sessionStatus === "idle") {
-      return await fetchLastAssistantMessage(client, sessionId);
-    }
-    // any known terminal status other than active running states
-    if (sessionStatus !== undefined && sessionStatus !== "busy" && sessionStatus !== "retry") {
-      return await fetchLastAssistantMessage(client, sessionId);
-    }
-
-    // Status API may not return data for this session (undefined).
-    // Fall back to message-count stability detection.
-    // Keep waiting until the session has more than the initial prompt; otherwise
-    // a single user message can look stable before the assistant replies.
-    if (sessionStatus === undefined && messageCount > 1) {
-      if (messageCount === lastMessageCount) {
-        stablePolls += 1;
-        if (stablePolls >= STABLE_THRESHOLD) {
-          return await fetchLastAssistantMessage(client, sessionId);
-        }
-      } else {
-        stablePolls = 0;
-      }
-    }
-    lastMessageCount = messageCount;
-
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  if (!task || task.status === "running") {
+    return `Task timed out after ${SYNC_TASK_TIMEOUT_MS / 1_000}s. Session: ${sessionId}\n\n${meta}`;
   }
 
-  return `Task timed out after ${MAX_POLL_DURATION_MS / 1_000}s. Session: ${sessionId}`;
+  if (task.status === "failed") {
+    return `Task failed: ${task.error ?? "unknown error"}\n\n${meta}`;
+  }
+
+  // task.result is set by manager.complete() via handleSessionIdle().
+  // Fall back to fetching directly only if somehow empty.
+  const result = task.result ?? (await fetchLastAssistantMessage(client, sessionId));
+  return `${result}\n\n${meta}`;
 }
 
 /**

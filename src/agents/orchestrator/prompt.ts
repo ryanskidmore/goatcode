@@ -112,6 +112,19 @@ Default to \`run_in_background: false\` or direct execution when:
 - The task is fast (< 2 minutes of work).
 - You have nothing productive to do while waiting.
 
+## Sync Task Timeouts — CRITICAL
+A sync \`task()\` that returns "Task timed out after 60s" does NOT mean the agent failed or is stuck.
+The underlying session is still live and the agent is actively working.
+
+**NEVER blindly inject "Continue" after a timeout.** That interrupts an agent mid-flight.
+Instead, always check state first:
+1. Call \`session_read(session_id, limit=3)\` to see the latest messages.
+2. If the agent's last message shows recent tool calls or thinking → it is still working. Do not intervene.
+3. Only send a corrective prompt if the last message is stale (minutes old) or shows a clear error/block.
+
+For any task expected to take >2 minutes (multi-file edits, full test runs, broad codebase rewrites):
+use \`run_in_background: true\` so you are never blocked by the 60s sync limit in the first place.
+
 # Parallel Execution Mandate
 If tasks are independent, launch them simultaneously.
 
@@ -142,10 +155,11 @@ Once you delegate exploration, do not re-run the same search yourself.
 For follow-ups, reuse delegated session context when available.
 
 ## Continuation Policy
-- Same subproblem -> continue existing agent session.
-- Failed attempt -> continue same session with corrective instruction.
-- Related follow-up question -> continue same session.
-- New unrelated problem -> start a new session.
+- Same subproblem → continue existing agent session.
+- Sync timeout → **check \`session_read\` first** before sending anything; agent is likely still running.
+- Genuine failure (agent errored or is stuck) → continue same session with corrective instruction.
+- Related follow-up question → continue same session.
+- New unrelated problem → start a new session.
 
 # Planning and Task Discipline
 If work has 2+ meaningful steps, maintain a structured todo list.

@@ -16,6 +16,13 @@ function makeMockManager(existingTasks: BackgroundTask[] = []) {
   }> = [];
   const tasks = new Map<string, BackgroundTask>();
   for (const t of existingTasks) tasks.set(t.id, t);
+
+  // State captured during trackSyncSession, used by waitForCompletion.
+  let syncSessionId: string | undefined;
+  let syncClient:
+    | { session: { messages: (args: { path: { id: string } }) => Promise<{ data?: unknown }> } }
+    | undefined;
+
   return {
     launched,
     launch: mock(
@@ -49,6 +56,50 @@ function makeMockManager(existingTasks: BackgroundTask[] = []) {
     complete: mock(() => {}),
     fail: mock(() => {}),
     cancel: mock(async () => {}),
+    /** Capture ctx so waitForCompletion can read the mock session messages. */
+    trackSyncSession: mock(
+      (sessionId: string, _taskId: string, ctx: { client: typeof syncClient }) => {
+        syncSessionId = sessionId;
+        syncClient = ctx.client as typeof syncClient;
+      },
+    ),
+    /**
+     * Simulate event-driven completion: read the last assistant message from
+     * the mock session messages, mirroring what handleSessionIdle() does in
+     * the real BackgroundAgentManager.
+     */
+    waitForCompletion: mock(async (taskId: string, _timeoutMs: number) => {
+      if (!syncSessionId || !syncClient) return undefined;
+      const res = await syncClient.session.messages({ path: { id: syncSessionId } });
+      type Msg = {
+        role?: string;
+        content?: string;
+        info?: { role?: string };
+        parts?: Array<{ type?: string; text?: string }>;
+      };
+      const messages = (res?.data ?? []) as Msg[];
+      const lastMsg = messages[messages.length - 1];
+      const role = lastMsg?.role ?? lastMsg?.info?.role;
+      let result = "";
+      if (role === "assistant") {
+        if (typeof lastMsg?.content === "string") {
+          result = lastMsg.content;
+        } else if (Array.isArray(lastMsg?.parts)) {
+          result = lastMsg.parts
+            .filter((p) => p.type === "text" && typeof p.text === "string")
+            .map((p) => p.text!)
+            .join("\n\n");
+        }
+      }
+      return {
+        id: taskId,
+        status: "completed" as BackgroundTask["status"],
+        result,
+        prompt: "",
+        model: "",
+        createdAt: Date.now(),
+      } satisfies BackgroundTask;
+    }),
   };
 }
 
