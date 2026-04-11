@@ -20,7 +20,11 @@ export const lspPrepareRenameTool: ToolDefinition = buildTool({
       const client = getClientFromToolContext(ctx);
       const result = await callLspClient(client, TOOL_NAME, "lspPrepareRename", parsedArgs);
 
-      if (result === null || result === undefined) {
+      if (
+        result === null ||
+        result === undefined ||
+        (Array.isArray(result) && result.length === 0)
+      ) {
         return "Rename is not valid at this position";
       }
 

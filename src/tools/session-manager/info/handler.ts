@@ -18,7 +18,7 @@ export async function handleSessionInfo(
     const todoResponse = await ctx.client.session.todo({ path: { id: args.session_id } });
     const todos: Todo[] = todoResponse.data ?? [];
 
-    const detail = buildSessionDetail(args.session_id, messages, todos, false);
+    const detail = buildSessionDetail(args.session_id, messages, todos);
     return formatSessionDetail(detail);
   } catch (e) {
     log("session_info error", e);

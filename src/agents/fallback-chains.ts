@@ -100,3 +100,32 @@ export const CATEGORY_FALLBACK_CHAINS: Record<string, FallbackEntry[]> = {
 export function getCategoryFallbackChain(categoryName: string): FallbackEntry[] {
   return CATEGORY_FALLBACK_CHAINS[categoryName] ?? [];
 }
+
+/**
+ * Convert a user-supplied `fallback_models` config value into a `FallbackEntry[]`
+ * suitable for the model resolution pipeline.
+ *
+ * Qualified strings ("provider/model-id") extract the provider prefix and include
+ * "opencode" as a universal fallback alongside it.
+ * Unqualified strings ("model-id") are served by "opencode" only.
+ *
+ * @example
+ *   buildCustomFallbackChain("anthropic/claude-opus-4-6")
+ *   // => [{ providers: ["anthropic", "opencode"], model: "claude-opus-4-6" }]
+ *
+ *   buildCustomFallbackChain(["openai/gpt-5.4", "claude-sonnet-4-6"])
+ *   // => [
+ *   //   { providers: ["openai", "opencode"], model: "gpt-5.4" },
+ *   //   { providers: ["opencode"], model: "claude-sonnet-4-6" },
+ *   // ]
+ */
+export function buildCustomFallbackChain(models: string | string[]): FallbackEntry[] {
+  const list = Array.isArray(models) ? models : [models];
+  return list.map((m): FallbackEntry => {
+    const slash = m.indexOf("/");
+    if (slash > 0) {
+      return { providers: [m.slice(0, slash), "opencode"], model: m.slice(slash + 1) };
+    }
+    return { providers: ["opencode"], model: m };
+  });
+}

@@ -15,9 +15,15 @@ export function executeSkill(args: SkillArgs): string {
   log("skill.execute", { name: args.name });
 
   if (registeredLoader) {
-    const content = registeredLoader.load(args.name, args.user_message);
-    if (content !== undefined) {
-      return content;
+    try {
+      const content = registeredLoader.load(args.name, args.user_message);
+      if (content !== undefined) {
+        return content;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log("skill.execute error", { name: args.name, message });
+      return `Error loading skill '${args.name}': ${message}`;
     }
   }
 

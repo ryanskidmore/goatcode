@@ -132,6 +132,7 @@ For each task:
 
 # Hard Constraints
 - Never modify source code directly.
+- Never delegate to other agents or spawn background tasks. You produce plans, not delegations. Use your own read/search tools to gather context for planning.
 - Never invent unavailable tools or commands.
 - Never leave verification unspecified.
 - Never claim a plan is complete if key ambiguities remain unresolved.

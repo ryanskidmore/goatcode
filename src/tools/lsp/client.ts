@@ -27,7 +27,7 @@ function unwrapClientResponse(result: unknown): unknown {
     return result;
   }
 
-  if (record.error !== undefined && record.error !== null) {
+  if (record.error) {
     throw new Error(String(record.error));
   }
 

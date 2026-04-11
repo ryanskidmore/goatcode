@@ -79,3 +79,42 @@ describe("lspPrepareRenameTool", () => {
     });
   });
 });
+
+// ─── T62: LSP prepare-rename rejects float line/character ────────────────────
+
+describe("T62 — LSP prepare-rename rejects float line", () => {
+  it("prepare_rename: line: 0.5 rejected", async () => {
+    const { lspPrepareRenameArgsSchema } = await import("./types");
+
+    const result = lspPrepareRenameArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 0.5,
+      character: 0,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+// ─── T64: prepare_rename returns [] → "Rename is not valid" ─────────────────
+
+describe("T64 — lsp_prepare_rename normalises empty array to not-valid message", () => {
+  it("returns 'Rename is not valid' when LSP returns empty array", async () => {
+    const { lspPrepareRenameTool } = await import("./handler");
+    const { createMockToolContext } = await import("../../../test-utils");
+
+    const ctx = createMockToolContext({
+      client: {
+        lspPrepareRename: mock(async () => ({ data: [] })),
+      },
+    } as never);
+
+    const result = await lspPrepareRenameTool.execute(
+      { filePath: "/src/foo.ts", line: 1, character: 0 },
+      ctx,
+    );
+
+    expect(result).toBe("Rename is not valid at this position");
+    expect(result).not.toBe("[]");
+  });
+});

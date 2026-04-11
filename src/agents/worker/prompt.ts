@@ -69,7 +69,7 @@ If verification fails:
 - Use diagnostics before final response.
 
 # Hard Constraints
-- No delegation: execute task yourself.
+- No delegation: never use delegate_task or spawn background agents. You are assigned one bounded task — execute it directly with your own tools. Delegating a sub-piece takes longer than doing it yourself due to startup and coordination overhead.
 - No as any, @ts-ignore, @ts-expect-error.
 - No commits/pushes unless user explicitly requests.
 - No task expansion beyond assigned objective.

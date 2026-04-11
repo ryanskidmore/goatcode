@@ -6,12 +6,11 @@ import type { SessionReadArgs } from "./types";
 
 const SESSION_READ_DESCRIPTION = `Read messages and history from an OpenCode session.
 
-Returns a formatted view of session messages with role, timestamp, and content. Optionally includes todos and transcript data.
+Returns a formatted view of session messages with role, timestamp, and content. Optionally includes todos.
 
 Arguments:
 - session_id (required): Session ID to read
 - include_todos (optional): Include todo list if available (default: false)
-- include_transcript (optional): Include transcript log if available (default: false)
 - limit (optional): Maximum number of messages to return (default: all)
 
 Example output:
@@ -33,10 +32,6 @@ const sessionReadTool = tool({
       .boolean()
       .optional()
       .describe("Include todo list if available (default: false)"),
-    include_transcript: tool.schema
-      .boolean()
-      .optional()
-      .describe("Include transcript log if available (default: false)"),
     limit: tool.schema
       .number()
       .optional()

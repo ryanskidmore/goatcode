@@ -1,7 +1,10 @@
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { createLookAtTool, extractLatestAssistantText } from "./handler";
 import type { ToolDefinition } from "@opencode-ai/plugin";
 import type { PollSnapshot } from "../../runtime";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 type ToolContext = Parameters<ToolDefinition["execute"]>[1];
 
@@ -183,6 +186,122 @@ describe("extractLatestAssistantText", () => {
       it("#then returns null", () => {
         const messages = [{ role: "user", content: "hello" }];
         expect(extractLatestAssistantText(messages)).toBeNull();
+      });
+    });
+  });
+});
+
+// ─── T151: look_at rejects text files over 1 MB ──────────────────────────────
+
+describe("T151 — look_at text file size limit", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "look-at-size-test-"));
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("returns error for text file exceeding 1 MB", async () => {
+    const { createLookAtTool } = await import("./handler");
+    const { createMockToolContext } = await import("../../test-utils");
+
+    const overSizeFile = join(tempDir, "big.ts");
+    await writeFile(overSizeFile, "x".repeat(1024 * 1024 + 1));
+
+    const tool = createLookAtTool(async () => ({ messageCount: 0, isIdle: true }));
+    const ctx = createMockToolContext() as never;
+
+    const result = await tool.execute({ file_path: overSizeFile, goal: "summarise" }, ctx);
+
+    expect(result).toMatch(/too large/i);
+    expect(result).toMatch(/1 MB/i);
+  });
+
+  it("allows text files exactly at 1 MB and forwards to session client", async () => {
+    const exactBoundaryFile = join(tempDir, "exactly-1mb.ts");
+    await writeFile(exactBoundaryFile, "x".repeat(1024 * 1024));
+
+    const client = makeClient();
+    const ctx = makeContext(client);
+    const tool = createLookAtTool(noopPoller);
+
+    const result = await tool.execute({ file_path: exactBoundaryFile, goal: "summarise" }, ctx);
+
+    expect(result).toBe("Extracted info from the file.");
+    expect(client.session.create).toHaveBeenCalledTimes(1);
+    expect(client.session.promptAsync).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("lookAtTool — additional scenarios", () => {
+  describe("#given base64 image_data", () => {
+    describe("#when execute is called with a valid base64 image", () => {
+      it("#then creates a session and returns the analysis", async () => {
+        const client = makeClient();
+        const ctx = makeContext(client);
+        const tool = createLookAtTool(noopPoller);
+        const fakeBase64 =
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+        const result = await tool.execute(
+          { image_data: fakeBase64, goal: "describe the image" },
+          ctx,
+        );
+
+        expect(result).toBe("Extracted info from the file.");
+        expect(client.session.create).toHaveBeenCalledTimes(1);
+        expect(client.session.promptAsync).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe("#given session creation fails", () => {
+    describe("#when execute is called", () => {
+      it("#then returns a session creation error", async () => {
+        const client = makeClient({
+          create: mock(async () => ({ data: null, error: "Unauthorized" })),
+          promptAsync: mock(async () => ({ data: null, error: null })),
+          messages: mock(async () => ({ data: [], error: null })),
+          status: mock(async () => ({ data: {}, error: null })),
+        });
+        const ctx = makeContext(client);
+        const tool = createLookAtTool(noopPoller);
+
+        await Bun.write("/tmp/look-at-session-fail-test.txt", "content");
+
+        const result = await tool.execute(
+          { file_path: "/tmp/look-at-session-fail-test.txt", goal: "find something" },
+          ctx,
+        );
+
+        expect(result).toContain("Error: Failed to create session");
+      });
+    });
+  });
+
+  describe("#given the Inspector agent returns no assistant message", () => {
+    describe("#when execute is called", () => {
+      it("#then returns a no response error", async () => {
+        const client = makeClient({
+          messages: mock(async () => ({
+            data: [{ role: "user", content: "analyze this" }],
+            error: null,
+          })),
+        });
+        const ctx = makeContext(client);
+        const tool = createLookAtTool(noopPoller);
+
+        await Bun.write("/tmp/look-at-no-response-test.txt", "content");
+
+        const result = await tool.execute(
+          { file_path: "/tmp/look-at-no-response-test.txt", goal: "find something" },
+          ctx,
+        );
+
+        expect(result).toContain("Error: No response from Inspector agent");
       });
     });
   });

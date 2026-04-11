@@ -98,3 +98,16 @@ describe("handleSessionInfo", () => {
     });
   });
 });
+
+// ─── T121: session_info no longer emits "Has Transcript" ────────────────────
+
+describe("T121 — session_info output no longer contains 'Has Transcript'", () => {
+  it("formatted session detail does not contain 'Has Transcript'", async () => {
+    const { buildSessionDetail, formatSessionDetail } = await import("../session-formatter");
+
+    const detail = buildSessionDetail("ses_test", [], []);
+    const output = formatSessionDetail(detail);
+
+    expect(output).not.toContain("Has Transcript");
+  });
+});

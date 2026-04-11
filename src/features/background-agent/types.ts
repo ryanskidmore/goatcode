@@ -17,6 +17,12 @@ export interface BackgroundTask {
   parentSessionID?: string;
   /** Delegation depth of this task. Used for hierarchical concurrency pooling. */
   delegationDepth?: number;
+  /**
+   * True for sync delegate-task invocations that bypass the normal concurrency
+   * queue. These tasks must not release a concurrency slot on completion because
+   * they never acquired one.
+   */
+  syncTask?: boolean;
 }
 
 export interface LaunchInput {

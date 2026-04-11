@@ -78,3 +78,43 @@ describe("lspGotoDefinitionTool", () => {
     });
   });
 });
+
+// ─── T62: LSP goto-definition rejects float line/character ───────────────────
+
+describe("T62 — LSP goto-definition rejects float line/character", () => {
+  it("goto_definition: line: 1.5 rejected", async () => {
+    const { lspGotoDefinitionArgsSchema } = await import("./types");
+
+    const result = lspGotoDefinitionArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 1.5,
+      character: 0,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("goto_definition: character: 2.9 rejected", async () => {
+    const { lspGotoDefinitionArgsSchema } = await import("./types");
+
+    const result = lspGotoDefinitionArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 1,
+      character: 2.9,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("integer line numbers are still accepted", async () => {
+    const { lspGotoDefinitionArgsSchema } = await import("./types");
+
+    const result = lspGotoDefinitionArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 10,
+      character: 5,
+    });
+
+    expect(result.success).toBe(true);
+  });
+});

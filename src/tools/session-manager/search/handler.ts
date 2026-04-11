@@ -6,7 +6,12 @@ import { searchMessages, formatSearchResults } from "../session-formatter";
 import { log } from "../../../shared/logger";
 
 const MAX_SESSIONS_TO_SCAN = 50;
-const SEARCH_TIMEOUT_MS = 60_000;
+export const SEARCH_TIMEOUT_MS = 60_000;
+function timeoutMessage(timeoutMs: number): string {
+  const normalized = timeoutMs > 0 ? timeoutMs : SEARCH_TIMEOUT_MS;
+  const display = normalized % 1_000 === 0 ? `${normalized / 1_000}s` : `${normalized}ms`;
+  return `Search timed out after ${display}. Try narrowing your query or using a smaller session list.`;
+}
 
 async function searchInSession(
   ctx: OpenCodeContext,
@@ -20,51 +25,54 @@ async function searchInSession(
   return searchMessages(sessionId, messages, query, caseSensitive, maxResults);
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Search timed out after ${ms}ms`)), ms),
-    ),
-  ]);
-}
-
 export async function handleSessionSearch(
   args: SessionSearchArgs,
   ctx: OpenCodeContext,
+  timeoutMs: number = SEARCH_TIMEOUT_MS,
 ): Promise<string> {
   try {
     const resultLimit = args.limit && args.limit > 0 ? args.limit : 20;
     const caseSensitive = args.case_sensitive ?? false;
 
-    const searchOperation = async (): Promise<SearchMatch[]> => {
+    const searchOperation = async (): Promise<string> => {
+      let results: SearchMatch[];
       if (args.session_id) {
-        return searchInSession(ctx, args.session_id, args.query, caseSensitive, resultLimit);
-      }
-
-      const listResponse = await ctx.client.session.list({ query: { directory: ctx.directory } });
-      const sessions: Session[] = listResponse.data ?? [];
-      const sessionsToScan = sessions.slice(0, MAX_SESSIONS_TO_SCAN);
-
-      const allResults: SearchMatch[] = [];
-      for (const session of sessionsToScan) {
-        if (allResults.length >= resultLimit) break;
-        const remaining = resultLimit - allResults.length;
-        const results = await searchInSession(
+        results = await searchInSession(
           ctx,
-          session.id,
+          args.session_id,
           args.query,
           caseSensitive,
-          remaining,
+          resultLimit,
         );
-        allResults.push(...results);
-      }
+      } else {
+        const listResponse = await ctx.client.session.list({ query: { directory: ctx.directory } });
+        const sessions: Session[] = listResponse.data ?? [];
+        const sessionsToScan = sessions.slice(0, MAX_SESSIONS_TO_SCAN);
 
-      return allResults.slice(0, resultLimit);
+        const allResults: SearchMatch[] = [];
+        for (const session of sessionsToScan) {
+          if (allResults.length >= resultLimit) break;
+          const remaining = resultLimit - allResults.length;
+          const sessionResults = await searchInSession(
+            ctx,
+            session.id,
+            args.query,
+            caseSensitive,
+            remaining,
+          );
+          allResults.push(...sessionResults);
+        }
+
+        results = allResults.slice(0, resultLimit);
+      }
+      return formatSearchResults(results);
     };
 
-    const results = await withTimeout(searchOperation(), SEARCH_TIMEOUT_MS);
-    return formatSearchResults(results);
+    const timeoutPromise = new Promise<string>((resolve) =>
+      setTimeout(() => resolve(timeoutMessage(timeoutMs)), timeoutMs),
+    );
+
+    return await Promise.race([searchOperation(), timeoutPromise]);
   } catch (e) {
     log("session_search error", e);
     return `Error: ${e instanceof Error ? e.message : String(e)}`;

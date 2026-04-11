@@ -205,5 +205,5 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     disabledHooks: config.disabled_hooks,
     disabledTools: config.disabled_tools,
   });
-  return compose(aggregated);
+  return compose(aggregated, config.agents);
 }

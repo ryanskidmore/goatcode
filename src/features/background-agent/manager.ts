@@ -68,7 +68,7 @@ export class BackgroundAgentManager {
   /** Promise resolvers for callers blocking on task completion. */
   private readonly completionResolvers = new Map<string, CompletionResolver[]>();
 
-  constructor(concurrencyLimit = 5) {
+  constructor(concurrencyLimit = 10) {
     this.concurrency = new ConcurrencyManager(concurrencyLimit);
   }
 
@@ -314,7 +314,7 @@ export class BackgroundAgentManager {
     task.status = "completed";
     task.result = result;
     task.completedAt = Date.now();
-    this.concurrency.release(this.concurrencyKey(task));
+    if (!task.syncTask) this.concurrency.release(this.concurrencyKey(task));
     this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
     this.notifyResolvers(task);
@@ -329,7 +329,7 @@ export class BackgroundAgentManager {
     task.status = "failed";
     task.error = error;
     task.completedAt = Date.now();
-    this.concurrency.release(this.concurrencyKey(task));
+    if (!task.syncTask) this.concurrency.release(this.concurrencyKey(task));
     this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
     this.notifyResolvers(task);
@@ -346,7 +346,7 @@ export class BackgroundAgentManager {
     task.completedAt = Date.now();
 
     if (wasRunning) {
-      this.concurrency.release(this.concurrencyKey(task));
+      if (!task.syncTask) this.concurrency.release(this.concurrencyKey(task));
       if (task.sessionId) {
         try {
           await ctx.client.session.delete({ path: { id: task.sessionId } });
@@ -361,6 +361,39 @@ export class BackgroundAgentManager {
     this.notifyResolvers(task);
     this.evictStaleTasks();
     log("[manager] Task cancelled", { id });
+  }
+
+  /**
+   * Register a session that was already created by the sync delegate-task path.
+   * Wires the session into the event-routing and waitForCompletion() machinery
+   * without going through the normal concurrency queue.
+   *
+   * Must be called BEFORE sending the prompt so that the session.idle event
+   * fired on completion is caught and resolves the waiting promise.
+   */
+  trackSyncSession(
+    sessionId: string,
+    taskId: string,
+    ctx: OpenCodeContext,
+    model: string,
+    delegationDepth: number,
+  ): void {
+    const task: BackgroundTask = {
+      id: taskId,
+      status: "running",
+      prompt: "",
+      model,
+      createdAt: Date.now(),
+      startedAt: Date.now(),
+      sessionStartedAt: Date.now(),
+      sessionId,
+      delegationDepth,
+      syncTask: true,
+    };
+    this.tasks.set(taskId, task);
+    this.tasksBySessionId.set(sessionId, taskId);
+    this.ctxBySessionId.set(sessionId, ctx);
+    log("[manager] Sync session tracked", { taskId, sessionId });
   }
 
   // ---------------------------------------------------------------------------

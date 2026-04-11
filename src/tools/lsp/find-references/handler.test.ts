@@ -77,3 +77,19 @@ describe("lspFindReferencesTool", () => {
     });
   });
 });
+
+// ─── T62: LSP find-references rejects float line/character ───────────────────
+
+describe("T62 — LSP find-references rejects float character", () => {
+  it("find_references: character: 2.9 rejected", async () => {
+    const { lspFindReferencesArgsSchema } = await import("./types");
+
+    const result = lspFindReferencesArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 1,
+      character: 2.9,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});

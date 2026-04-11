@@ -112,3 +112,18 @@ describe("handleSessionRead", () => {
     });
   });
 });
+
+// ─── T112: include_transcript removed from session_read schema ───────────────
+
+describe("T112 — include_transcript parameter removed from session_read", () => {
+  it("include_transcript is no longer in SessionReadArgs type", async () => {
+    await import("./types");
+    const pluginModule = await import("./plugin");
+    const plugin = pluginModule.sessionReadPlugin;
+    const toolDef = plugin.tools?.session_read;
+
+    expect(toolDef).toBeDefined();
+    const argsKeys = Object.keys((toolDef as { args?: Record<string, unknown> })?.args ?? {});
+    expect(argsKeys).not.toContain("include_transcript");
+  });
+});

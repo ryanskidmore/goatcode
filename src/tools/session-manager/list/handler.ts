@@ -6,11 +6,13 @@ import { log } from "../../../shared/logger";
 
 function isAfterDate(session: Session, fromDate: string): boolean {
   const from = new Date(fromDate).getTime();
+  if (Number.isNaN(from)) return true; // invalid date string — keep session rather than silently dropping it
   return session.time.updated >= from;
 }
 
 function isBeforeDate(session: Session, toDate: string): boolean {
   const to = new Date(toDate).getTime();
+  if (Number.isNaN(to)) return true; // invalid date string — keep session
   return session.time.updated <= to;
 }
 

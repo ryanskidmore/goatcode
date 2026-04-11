@@ -112,4 +112,31 @@ describe("handleSessionSearch", () => {
       });
     });
   });
+
+  describe("#given 51 sessions with slow responses", () => {
+    describe("#when the search exceeds the timeout", () => {
+      it("#then returns the timeout message", async () => {
+        const slowSessions = Array.from({ length: 51 }, (_, i) => ({
+          id: `ses_slow_${i}`,
+          time: { created: NOW, updated: NOW },
+        }));
+
+        const ctx = {
+          directory: "/tmp/test",
+          client: {
+            session: {
+              list: mock(async () => ({ data: slowSessions })),
+              // Never-resolving promise simulates a hung session scan
+              messages: mock(async () => new Promise(() => {})),
+            },
+          },
+        } as unknown as OpenCodeContext;
+
+        // Pass a small timeoutMs to avoid waiting 60s in tests
+        const result = await handleSessionSearch({ query: "anything" }, ctx, 50);
+        expect(result).toContain("Search timed out after 50ms");
+        expect(result).toContain("Try narrowing your query");
+      });
+    });
+  });
 });

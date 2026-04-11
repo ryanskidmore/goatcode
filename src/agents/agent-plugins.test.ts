@@ -84,6 +84,58 @@ describe("agent plugins", () => {
       });
     });
 
+    describe("#when checking agent mode assignments (A7)", () => {
+      const EXPECTED_MODES: Record<string, string> = {
+        orchestrator: "all",
+        deepworker: "all",
+        planner: "all",
+        researcher: "all",
+        advisor: "subagent",
+        explorer: "subagent",
+        worker: "subagent",
+      };
+
+      it("#then all-mode agents have mode set to 'all'", () => {
+        const allModeAgents = ["orchestrator", "deepworker", "planner", "researcher"];
+        for (const name of allModeAgents) {
+          const plugin = ALL_PLUGINS.find((p) => p.name === name);
+          expect(plugin).toBeDefined();
+          const agent = plugin!.agents![name];
+          expect(agent.mode).toBe("all");
+        }
+      });
+
+      it("#then subagent-mode agents have mode set to 'subagent'", () => {
+        const subagentModeAgents = ["advisor", "explorer", "worker"];
+        for (const name of subagentModeAgents) {
+          const plugin = ALL_PLUGINS.find((p) => p.name === name);
+          expect(plugin).toBeDefined();
+          const agent = plugin!.agents![name];
+          expect(agent.mode).toBe("subagent");
+        }
+      });
+
+      it("#then every agent has the correct mode per the expected mapping", () => {
+        for (const plugin of ALL_PLUGINS) {
+          const agentName = plugin.name;
+          const agent = plugin.agents![agentName];
+          const expectedMode = EXPECTED_MODES[agentName];
+          expect(expectedMode).toBeDefined();
+          expect(agent.mode).toBe(expectedMode);
+        }
+      });
+
+      it("#then BUILTIN_AGENT_PLUGINS barrel preserves mode values", () => {
+        for (const plugin of BUILTIN_AGENT_PLUGINS) {
+          const agentName = plugin.name;
+          const agent = plugin.agents![agentName];
+          const expectedMode = EXPECTED_MODES[agentName];
+          expect(expectedMode).toBeDefined();
+          expect(agent.mode).toBe(expectedMode);
+        }
+      });
+    });
+
     describe("#when checking BUILTIN_AGENT_PLUGINS barrel", () => {
       it("#then it contains exactly 7 plugins", () => {
         expect(BUILTIN_AGENT_PLUGINS).toHaveLength(7);

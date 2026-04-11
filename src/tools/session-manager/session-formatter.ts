@@ -226,8 +226,6 @@ export function formatSessionDetail(detail: SessionDetail): string {
     lines.push("Has Todos: No");
   }
 
-  lines.push(`Has Transcript: ${detail.hasTranscript ? "Yes" : "No"}`);
-
   return lines.join("\n");
 }
 
@@ -235,7 +233,6 @@ export function buildSessionDetail(
   id: string,
   messages: Array<{ info: Message; parts: Part[] }>,
   todos: Todo[],
-  hasTranscript: boolean,
 ): SessionDetail {
   const timestamps = messages
     .map((m) => m.info.time.created)
@@ -261,7 +258,6 @@ export function buildSessionDetail(
     hasTodos: todos.length > 0,
     todoCount: todos.length,
     completedTodoCount,
-    hasTranscript,
   };
 }
 
