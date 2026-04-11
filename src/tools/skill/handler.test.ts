@@ -55,3 +55,20 @@ describe("executeSkill", () => {
     });
   });
 });
+
+// ─── T143: skill loader exceptions are caught ────────────────────────────────
+
+describe("T143 — skill loader exceptions return error string", () => {
+  it("returns error string instead of propagating when loader throws", async () => {
+    const handlerModule = await import("./handler");
+    handlerModule.registerSkillLoader({
+      list: () => [],
+      load: (_name: string) => {
+        throw new Error("loader exploded");
+      },
+    });
+
+    const result = handlerModule.executeSkill({ name: "anything" });
+    expect(result).toMatch(/^Error loading skill 'anything': loader exploded/);
+  });
+});

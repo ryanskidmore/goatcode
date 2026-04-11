@@ -86,3 +86,28 @@ describe("buildCustomFallbackChain", () => {
     });
   });
 });
+
+// ─── A22: fallback_models config field consumed by compositor ────────────────
+
+describe("A22 — fallback_models override reaches compositor", () => {
+  it("uses custom chain instead of built-in chain when fallback_models is set", async () => {
+    const { buildCustomFallbackChain } = await import("./fallback-chains");
+    const { resolveModel } = await import("../shared/model-resolution-pipeline");
+
+    const customChain = buildCustomFallbackChain(["openai/gpt-5.4"]);
+    const result = resolveModel({ fallbackChain: customChain, connectedProviders: ["openai"] });
+
+    expect(result?.model).toBe("openai/gpt-5.4");
+    expect(result?.variant).toBeUndefined();
+  });
+
+  it("uses opencode/ prefix for unqualified model in custom chain", async () => {
+    const { buildCustomFallbackChain } = await import("./fallback-chains");
+    const { resolveModel } = await import("../shared/model-resolution-pipeline");
+
+    const customChain = buildCustomFallbackChain("my-custom-model");
+    const result = resolveModel({ fallbackChain: customChain, connectedProviders: ["opencode"] });
+
+    expect(result?.model).toBe("opencode/my-custom-model");
+  });
+});

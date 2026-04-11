@@ -120,3 +120,35 @@ describe("handleSessionList", () => {
     });
   });
 });
+
+// ─── T106: session_list with invalid date returns all sessions ───────────────
+
+describe("T106 — session_list with invalid from_date keeps all sessions", () => {
+  it("returns all sessions when from_date is 'not-a-date' (NaN guard)", async () => {
+    const { handleSessionList } = await import("./handler");
+    const { createMockPluginContext } = await import("../../../test-utils");
+
+    const sessions = [
+      { id: "ses_1", parentID: null, time: { updated: Date.now() } },
+      { id: "ses_2", parentID: null, time: { updated: Date.now() - 1000 } },
+    ];
+
+    const ctx = {
+      ...createMockPluginContext(),
+      client: {
+        session: {
+          list: mock(async () => ({ data: sessions })),
+          messages: mock(async () => ({ data: [] })),
+        },
+      },
+    } as never;
+
+    const result = await handleSessionList(
+      { from_date: "not-a-date", session_id: undefined } as never,
+      ctx,
+    );
+
+    expect(result).toContain("ses_1");
+    expect(result).toContain("ses_2");
+  });
+});

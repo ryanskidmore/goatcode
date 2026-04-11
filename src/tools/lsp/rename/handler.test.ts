@@ -85,3 +85,53 @@ describe("lspRenameTool", () => {
     });
   });
 });
+
+// ─── T60: lsp_rename rejects empty newName ───────────────────────────────────
+
+describe("T60 — lsp_rename empty newName rejected", () => {
+  it("rejects newName: '' with a Zod validation error", async () => {
+    const { lspRenameArgsSchema } = await import("./types");
+
+    const result = lspRenameArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 1,
+      character: 0,
+      newName: "",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.path).toContain("newName");
+    }
+  });
+
+  it("accepts a non-empty newName", async () => {
+    const { lspRenameArgsSchema } = await import("./types");
+
+    const result = lspRenameArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 1,
+      character: 0,
+      newName: "myNewName",
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+// ─── T62: LSP rename rejects float line/character numbers ────────────────────
+
+describe("T62 — lsp_rename rejects float line/character", () => {
+  it("rename: line: 3.14 rejected", async () => {
+    const { lspRenameArgsSchema } = await import("./types");
+
+    const result = lspRenameArgsSchema.safeParse({
+      filePath: "/src/foo.ts",
+      line: 3.14,
+      character: 0,
+      newName: "foo",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
