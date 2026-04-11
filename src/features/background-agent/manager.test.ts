@@ -27,11 +27,12 @@ function createMockCtx(opts?: { messages?: unknown[] }): OpenCodeContext {
   } as unknown as OpenCodeContext;
 }
 
-async function waitForSessionId(task: BackgroundTask, maxAttempts = 20): Promise<void> {
+async function waitForSessionId(task: BackgroundTask, maxAttempts = 20): Promise<string> {
   for (let i = 0; i < maxAttempts; i += 1) {
-    if (task.sessionId) return;
+    if (task.sessionId) return task.sessionId;
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
+  throw new Error(`Timed out waiting for sessionId on task ${task.id}`);
 }
 
 describe("BackgroundAgentManager", () => {
@@ -61,9 +62,8 @@ describe("BackgroundAgentManager", () => {
     expect(task.sessionId).toBe("ses_child_123");
     expect(task.status).toBe("running");
 
-    // Simulate session.idle event (with enough elapsed time)
-    // Override sessionStartedAt to bypass MIN_IDLE_TIME_MS guard
-    task.sessionStartedAt = Date.now() - 10_000;
+    // Simulate session.idle event — no need to backdate since time guard
+    // only applies to empty transcripts and this one has content.
     await manager.handleSessionIdle("ses_child_123");
 
     //#then
@@ -97,7 +97,6 @@ describe("BackgroundAgentManager", () => {
     await waitForSessionId(task);
 
     // Simulate session.idle event
-    task.sessionStartedAt = Date.now() - 10_000;
     await manager.handleSessionIdle("ses_child_123");
 
     //#then
@@ -109,16 +108,9 @@ describe("BackgroundAgentManager", () => {
     ).toBeGreaterThan(0);
   });
 
-  test("#when session.idle fires too early #then task remains running", async () => {
-    //#given
-    const ctx = createMockCtx({
-      messages: [
-        {
-          role: "assistant",
-          parts: [{ type: "text", text: "some content" }],
-        },
-      ],
-    });
+  test("#when session.idle fires with empty transcript within MIN_IDLE_TIME_MS #then task remains running", async () => {
+    //#given — empty messages, so the time guard applies
+    const ctx = createMockCtx({ messages: [] });
 
     const manager = new BackgroundAgentManager();
 
@@ -134,8 +126,38 @@ describe("BackgroundAgentManager", () => {
     // Do NOT override sessionStartedAt — idle fires within MIN_IDLE_TIME_MS
     await manager.handleSessionIdle("ses_child_123");
 
-    //#then — should still be running (early idle ignored)
+    //#then — should still be running (early empty idle ignored)
     expect(task.status).toBe("running");
+  });
+
+  test("#when session.idle fires early but transcript has assistant content #then task completes immediately", async () => {
+    //#given — assistant content present, so time guard does NOT apply
+    const ctx = createMockCtx({
+      messages: [
+        {
+          role: "assistant",
+          parts: [{ type: "text", text: "fast result" }],
+        },
+      ],
+    });
+
+    const manager = new BackgroundAgentManager();
+
+    //#when
+    const task = await manager.launch(ctx, {
+      id: "task_fast_completion",
+      prompt: "investigate",
+      model: "gpt-5.4-mini",
+    });
+
+    await waitForSessionId(task);
+
+    // Do NOT override sessionStartedAt — the task just started but has content
+    await manager.handleSessionIdle("ses_child_123");
+
+    //#then — should complete even though it's early, because there's content
+    expect(task.status).toBe("completed");
+    expect(task.result).toBe("fast result");
   });
 
   test("#when waitForCompletion is used #then it resolves when task completes", async () => {
@@ -163,8 +185,7 @@ describe("BackgroundAgentManager", () => {
     // Start waiting (will resolve when event fires)
     const waitPromise = manager.waitForCompletion("task_wait_completion", 5_000);
 
-    // Simulate session.idle after enough time
-    task.sessionStartedAt = Date.now() - 10_000;
+    // Simulate session.idle — no need to backdate, transcript has content
     await manager.handleSessionIdle("ses_child_123");
 
     //#then

@@ -49,15 +49,6 @@ function extractAssistantContent(message: SessionMessage): string | undefined {
   return content.length > 0 ? content : undefined;
 }
 
-function getLastAssistantContent(messages: SessionMessage[]): string | undefined {
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const content = extractAssistantContent(messages[i]);
-    if (content) return content;
-  }
-
-  return undefined;
-}
-
 function isTerminalStatus(status: BackgroundTask["status"]): boolean {
   return status === "completed" || status === "failed" || status === "cancelled";
 }
@@ -165,37 +156,45 @@ export class BackgroundAgentManager {
     const ctx = this.ctxBySessionId.get(sessionId);
     if (!ctx) return;
 
-    // Guard against premature idle events (session init, brief pauses).
-    // Measure from session creation (not pre-spawn) to avoid counting
-    // spawn latency against the idle timer.
-    const anchor = task.sessionStartedAt ?? task.startedAt ?? 0;
-    const elapsed = anchor > 0 ? Date.now() - anchor : 0;
-    if (elapsed < MIN_IDLE_TIME_MS) {
-      log("[manager] Ignoring early session.idle", { id: task.id, elapsed });
-      return;
-    }
-
     try {
       const messagesResult = await ctx.client.session.messages({
         path: { id: sessionId },
       });
 
       const messages = (messagesResult.data ?? []) as SessionMessage[];
-      const lastAssistantContent = getLastAssistantContent(messages);
 
-      if (lastAssistantContent && lastAssistantContent.trim().length > 0) {
-        this.complete(task.id, lastAssistantContent);
-      } else if (messages.length === 0) {
-        // Session went idle with no messages — agent never started.
+      // Suppress genuinely empty start-up idles (no messages yet).
+      // Once messages exist, evaluate completion immediately so fast
+      // tasks aren't stranded by the time guard.
+      if (messages.length === 0) {
+        const anchor = task.sessionStartedAt ?? task.startedAt ?? 0;
+        const elapsed = anchor > 0 ? Date.now() - anchor : 0;
+        if (elapsed < MIN_IDLE_TIME_MS) {
+          log("[manager] Ignoring early empty session.idle", { id: task.id, elapsed });
+          return;
+        }
+        // Empty transcript after the guard period — agent never started.
         this.fail(
           task.id,
           "Background agent produced no output (0 messages). " +
             "This may indicate rate limiting or a session creation failure.",
         );
+        return;
       }
-      // Otherwise: idle with messages but no assistant content yet.
-      // The agent may still be working (tool calls without final response).
-      // We'll catch completion on the next idle event.
+
+      // Base completion on the final message only. Using
+      // getLastAssistantContent() would scan the entire history and
+      // could promote stale earlier text (e.g. "Let me check...") as
+      // the result while the agent is still mid-tool-call.
+      const lastMessage = messages[messages.length - 1];
+      const lastContent = extractAssistantContent(lastMessage);
+
+      if (lastContent && lastContent.trim().length > 0) {
+        this.complete(task.id, lastContent);
+      }
+      // Otherwise: last message isn't assistant content (e.g. tool
+      // result). The agent may still be working — we'll catch
+      // completion on the next idle event.
     } catch (error) {
       log("[manager] Failed to check session on idle", {
         id: task.id,
