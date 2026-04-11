@@ -8,6 +8,8 @@ export interface BackgroundTask {
   model: string;
   createdAt: number;
   startedAt?: number;
+  /** Timestamp when the background session was actually created (after spawn). */
+  sessionStartedAt?: number;
   completedAt?: number;
   result?: string;
   error?: string;

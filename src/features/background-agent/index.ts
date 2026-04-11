@@ -10,3 +10,4 @@ export {
 export { spawnBackgroundSession } from "./spawner";
 export { BackgroundAgentManager } from "./manager";
 export { initBackgroundAgent, getBackgroundAgent, resetBackgroundAgent } from "./singleton";
+export { createBackgroundAgentEventHook } from "./event-hook";
