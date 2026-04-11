@@ -4,76 +4,12 @@ import { log } from "../../../shared/logger";
 import type { BackgroundOutputArgs } from "./types";
 
 /**
- * Maximum time (ms) the handler will block waiting for task completion.
- *
- * This is intentionally short. `background_output` is a *status check*,
- * not a synchronous execution mechanism. The brief blocking window exists
- * only to catch tasks that complete within a few seconds, avoiding an
- * unnecessary extra round-trip. For longer-running tasks the handler
- * returns "still running" quickly so the calling agent can do other work
- * instead of burning its entire inference turn waiting.
- *
- * NOTE: This caps the *polling wait* per call, NOT the subagent's total
- * execution time. The subagent continues running in the background
- * regardless of this limit.
+ * Default timeout (ms) when the caller requests blocking but doesn't
+ * specify a value. The manager resolves the Promise as soon as the
+ * session.idle event fires, so this is just a safety ceiling — not a
+ * polling interval.
  */
-const MAX_BLOCK_TIMEOUT_MS = 10_000;
-
-// ---------------------------------------------------------------------------
-// Polling budget — prevents agents from burning infinite inference turns
-// polling a stuck task. After MAX_POLL_ATTEMPTS "still running" responses,
-// the output includes a strong warning directing the agent to cancel and
-// execute directly.
-// ---------------------------------------------------------------------------
-
-/** Shape stored per-task for poll tracking with TTL-based cleanup. */
-type PollEntry = { count: number; lastPollAt: number };
-
-/** Per-task poll count tracking (module-level state). */
-const pollCounts = new Map<string, PollEntry>();
-
-/** Maximum polls before warning the agent to stop. */
-const MAX_POLL_ATTEMPTS = 3;
-
-/** Stale poll entries are cleaned up after 1 hour. */
-const POLL_ENTRY_TTL_MS = 60 * 60 * 1000;
-
-function trackPoll(taskId: string): number {
-  const now = Date.now();
-
-  // Opportunistic cleanup of stale entries
-  for (const [id, entry] of pollCounts) {
-    if (now - entry.lastPollAt > POLL_ENTRY_TTL_MS) {
-      pollCounts.delete(id);
-    }
-  }
-
-  const existing = pollCounts.get(taskId);
-  const count = (existing?.count ?? 0) + 1;
-  pollCounts.set(taskId, { count, lastPollAt: now });
-  return count;
-}
-
-function clearPollCount(taskId: string): void {
-  pollCounts.delete(taskId);
-}
-
-function buildPollBudgetWarning(pollCount: number): string {
-  if (pollCount < MAX_POLL_ATTEMPTS) return "";
-  return (
-    `\n\n⚠️ POLLING BUDGET EXHAUSTED (${pollCount}/${MAX_POLL_ATTEMPTS} attempts). ` +
-    `This task is still running after ${pollCount} polls. ` +
-    `To avoid wasting further inference cycles:\n` +
-    `1. Cancel this task with background_cancel\n` +
-    `2. Execute the work directly using your own tools\n` +
-    `Do NOT continue polling.`
-  );
-}
-
-function buildTimeoutCapNote(requestedMs: number | undefined): string {
-  if (requestedMs === undefined || requestedMs <= MAX_BLOCK_TIMEOUT_MS) return "";
-  return `\n> Note: requested timeout (${requestedMs}ms) was capped to ${MAX_BLOCK_TIMEOUT_MS}ms to stay within tool-execution limits.`;
-}
+const DEFAULT_BLOCK_TIMEOUT_MS = 120_000;
 
 type SessionMessage = {
   id?: string;
@@ -136,7 +72,7 @@ function formatElapsed(startedAt: number): string {
 
 function formatRunningStatus(task: BackgroundTask): string {
   const elapsed = task.startedAt ? formatElapsed(task.startedAt) : "unknown";
-  return `Task ${task.id} is ${task.status} (elapsed: ${elapsed}). Check back later or use block=true to wait.`;
+  return `Task ${task.id} is ${task.status} (elapsed: ${elapsed}). The system will notify you on completion, or use block=true to wait.`;
 }
 
 function formatCompletedResult(task: BackgroundTask): string {
@@ -172,32 +108,6 @@ function formatTaskOutput(task: BackgroundTask): string {
   }
 }
 
-async function waitForCompletion(
-  manager: BackgroundAgentManager,
-  taskId: string,
-  timeoutMs: number,
-): Promise<BackgroundTask | undefined> {
-  const safeTimeout = Math.min(timeoutMs, MAX_BLOCK_TIMEOUT_MS);
-  const startedAt = Date.now();
-  const deadline = startedAt + safeTimeout;
-  const pollIntervalMs = 100;
-
-  while (true) {
-    const current = manager.get(taskId);
-    if (!current) return undefined;
-    if (current.status !== "queued" && current.status !== "running") return current;
-
-    const remainingMs = deadline - Date.now();
-    if (remainingMs <= 0) {
-      return current;
-    }
-
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, Math.min(pollIntervalMs, remainingMs)),
-    );
-  }
-}
-
 export async function handleBackgroundOutput(
   manager: BackgroundAgentManager,
   args: BackgroundOutputArgs,
@@ -207,64 +117,49 @@ export async function handleBackgroundOutput(
 
   const task = manager.get(args.task_id);
   if (!task) {
-    clearPollCount(args.task_id);
     return `Task not found: ${args.task_id}`;
   }
 
   const isActive = task.status === "queued" || task.status === "running";
 
-  // Task reached a terminal state — clear poll tracking
-  if (!isActive) {
-    clearPollCount(args.task_id);
-  }
-
+  // ---- Blocking path: wait for event-driven completion ----
   if (args.block === true && isActive) {
-    const timeoutMs = Math.min(args.timeout ?? MAX_BLOCK_TIMEOUT_MS, MAX_BLOCK_TIMEOUT_MS);
-    const capNote = buildTimeoutCapNote(args.timeout);
-    const resolved = await waitForCompletion(manager, args.task_id, timeoutMs);
+    const timeoutMs = args.timeout ?? DEFAULT_BLOCK_TIMEOUT_MS;
+    const resolved = await manager.waitForCompletion(args.task_id, timeoutMs);
+
     if (!resolved) {
-      clearPollCount(args.task_id);
       return `Task ${args.task_id} was deleted while waiting.`;
     }
+
     if (resolved.status === "queued" || resolved.status === "running") {
-      // Still running after blocking wait — count as a poll attempt
-      const pollCount = trackPoll(args.task_id);
-      const budgetWarning = buildPollBudgetWarning(pollCount);
+      // Still active after timeout — return current status (no budget penalty).
       const output = formatTaskOutput(resolved);
-      // If full_session requested, append session messages before the timeout note
       if (args.full_session && client && resolved.sessionId) {
         const sessionOutput = await fetchSessionMessages(client, resolved, args);
-        return `${output}\n\n${sessionOutput}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running.${capNote}${budgetWarning}`;
+        return `${output}\n\n${sessionOutput}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running and will complete in the background.`;
       }
-      return `${output}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running.${capNote}${budgetWarning}`;
+      return `${output}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running and will complete in the background.`;
     }
-    // Task completed — clear poll tracking, return result
-    clearPollCount(args.task_id);
+
+    // Task reached terminal state.
     if (args.full_session && client && resolved.sessionId) {
       return await fetchSessionMessages(client, resolved, args);
     }
     return await formatTaskOutputWithFallback(resolved, args, client);
   }
 
-  // Non-blocking path: track polls for active tasks
+  // ---- Non-blocking path: return current status ----
   if (isActive) {
-    const pollCount = trackPoll(args.task_id);
-    const budgetWarning = buildPollBudgetWarning(pollCount);
-
     if (args.full_session && client && task.sessionId) {
-      const sessionOutput = await fetchSessionMessages(client, task, args);
-      return `${sessionOutput}${budgetWarning}`;
+      return await fetchSessionMessages(client, task, args);
     }
-
-    const output = await formatTaskOutputWithFallback(task, args, client);
-    return `${output}${budgetWarning}`;
+    return await formatTaskOutputWithFallback(task, args, client);
   }
 
-  // Non-blocking path: terminal task
+  // ---- Terminal state ----
   if (args.full_session && client && task.sessionId) {
     return await fetchSessionMessages(client, task, args);
   }
-
   return await formatTaskOutputWithFallback(task, args, client);
 }
 

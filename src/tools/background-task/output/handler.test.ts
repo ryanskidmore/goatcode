@@ -23,6 +23,7 @@ function makeManager(task: BackgroundTask | undefined): BackgroundAgentManager {
     launch: mock(async () => task!),
     complete: mock(() => {}),
     fail: mock(() => {}),
+    waitForCompletion: mock(async (_id: string, _timeout: number) => task),
   } as unknown as BackgroundAgentManager;
 }
 
@@ -149,58 +150,18 @@ describe("handleBackgroundOutput", () => {
     });
   });
 
-  describe("#given timeout capping", () => {
-    describe("#when timeout exceeds 55000ms", () => {
-      it("#then caps at 55000ms and still returns a result", async () => {
-        let callCount = 0;
-        const task = makeTask({ status: "running" });
-
-        const manager = {
-          get: mock((_id: string) => {
-            callCount++;
-            if (callCount >= 2) {
-              return makeTask({ status: "completed", result: "done" });
-            }
-            return task;
-          }),
-          getAll: mock(() => [task]),
-          cancel: mock(async () => {}),
-          launch: mock(async () => task),
-          complete: mock(() => {}),
-          fail: mock(() => {}),
-        } as unknown as BackgroundAgentManager;
-
-        const result = await handleBackgroundOutput(manager, {
-          task_id: "task-42",
-          block: true,
-          timeout: 999_999_999,
-        });
-
-        expect(result).toContain("completed");
-        expect(result).toContain("done");
-      });
-    });
-  });
-
   describe("#given block=true waiting behavior", () => {
-    describe("#when task completes before timeout", () => {
-      it("#then returns promptly without waiting full timeout", async () => {
-        let callCount = 0;
-        const runningTask = makeTask({ status: "running" });
-
+    describe("#when task completes via event before timeout", () => {
+      it("#then returns completed result promptly", async () => {
+        const completedTask = makeTask({ status: "completed", result: "done quickly" });
         const manager = {
-          get: mock((_id: string) => {
-            callCount += 1;
-            if (callCount >= 3) {
-              return makeTask({ status: "completed", result: "done quickly" });
-            }
-            return runningTask;
-          }),
-          getAll: mock(() => [runningTask]),
+          get: mock((_id: string) => completedTask),
+          getAll: mock(() => [completedTask]),
           cancel: mock(async () => {}),
-          launch: mock(async () => runningTask),
+          launch: mock(async () => completedTask),
           complete: mock(() => {}),
           fail: mock(() => {}),
+          waitForCompletion: mock(async (_id: string, _timeout: number) => completedTask),
         } as unknown as BackgroundAgentManager;
 
         const start = Date.now();
@@ -218,7 +179,7 @@ describe("handleBackgroundOutput", () => {
     });
 
     describe("#when task is still running after timeout", () => {
-      it("#then returns timeout message", async () => {
+      it("#then returns timeout message without poll budget warning", async () => {
         const runningTask = makeTask({ status: "running" });
         const manager = makeManager(runningTask);
 
@@ -230,6 +191,42 @@ describe("handleBackgroundOutput", () => {
 
         expect(result).toContain("Timed out waiting after 300ms");
         expect(result).toContain("still running");
+        // No poll budget exhaustion warning — event-driven model
+        expect(result).not.toContain("POLLING BUDGET");
+        expect(result).not.toContain("Cancel this task");
+      });
+    });
+
+    describe("#when large timeout is requested", () => {
+      it("#then respects the full timeout without silent capping", async () => {
+        // First get() returns running (so handler enters blocking path),
+        // then waitForCompletion resolves with completed.
+        const runningTask = makeTask({ status: "running" });
+        const completedTask = makeTask({ status: "completed", result: "done" });
+        let waitCalledWithTimeout: number | undefined;
+        const manager = {
+          get: mock((_id: string) => runningTask),
+          getAll: mock(() => [runningTask]),
+          cancel: mock(async () => {}),
+          launch: mock(async () => runningTask),
+          complete: mock(() => {}),
+          fail: mock(() => {}),
+          waitForCompletion: mock(async (_id: string, timeout: number) => {
+            waitCalledWithTimeout = timeout;
+            return completedTask;
+          }),
+        } as unknown as BackgroundAgentManager;
+
+        const result = await handleBackgroundOutput(manager, {
+          task_id: "task-42",
+          block: true,
+          timeout: 999_999_999,
+        });
+
+        expect(result).toContain("completed");
+        expect(result).toContain("done");
+        // Verify waitForCompletion was called with the FULL timeout (no capping)
+        expect(waitCalledWithTimeout).toBe(999_999_999);
       });
     });
   });

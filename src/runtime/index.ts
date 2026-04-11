@@ -8,6 +8,7 @@ export {
   getBackgroundAgent,
   resetBackgroundAgent,
   BackgroundAgentManager,
+  createBackgroundAgentEventHook,
 } from "../features/background-agent";
 
 export type {

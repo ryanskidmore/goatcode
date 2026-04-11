@@ -5,11 +5,17 @@ import { resetMessageCursor } from "../session-state/session-cursor";
 import { deleteSessionTools } from "../session-state/session-tools-store";
 
 import { ConcurrencyManager } from "./concurrency";
-import { pollUntilStable } from "./poller";
 import { spawnBackgroundSession } from "./spawner";
 import type { BackgroundTask, LaunchInput } from "./types";
 
 const TASK_TTL_MS = 5 * 60 * 1_000;
+
+/**
+ * Minimum elapsed time (ms) before accepting a session.idle event as
+ * completion. Prevents premature completion when idle fires before the
+ * agent has produced any output (e.g. during session initialisation).
+ */
+const MIN_IDLE_TIME_MS = 5_000;
 
 type SessionMessage = {
   role?: string;
@@ -56,16 +62,28 @@ function isTerminalStatus(status: BackgroundTask["status"]): boolean {
   return status === "completed" || status === "failed" || status === "cancelled";
 }
 
+type CompletionResolver = {
+  resolve: (task: BackgroundTask) => void;
+  timer: ReturnType<typeof setTimeout>;
+};
+
 export class BackgroundAgentManager {
   private readonly tasks = new Map<string, BackgroundTask>();
   private readonly concurrency: ConcurrencyManager;
-  private readonly abortControllers = new Map<string, AbortController>();
+  /** O(1) lookup from session ID to task ID for event routing. */
+  private readonly tasksBySessionId = new Map<string, string>();
+  /** Promise resolvers for callers blocking on task completion. */
+  private readonly completionResolvers = new Map<string, CompletionResolver[]>();
+  /** Stored context for fetching session data during event handling. */
+  private ctx: OpenCodeContext | undefined;
 
   constructor(concurrencyLimit = 5) {
     this.concurrency = new ConcurrencyManager(concurrencyLimit);
   }
 
   async launch(ctx: OpenCodeContext, input: LaunchInput): Promise<BackgroundTask> {
+    this.ctx = ctx;
+
     const task: BackgroundTask = {
       id: input.id,
       status: "queued",
@@ -77,11 +95,15 @@ export class BackgroundAgentManager {
     this.tasks.set(input.id, task);
     log("[manager] Task queued", { id: input.id });
 
-    void this.runLifecycle(ctx, task, input);
+    void this.startTask(ctx, task, input);
     return task;
   }
 
-  private async runLifecycle(
+  /**
+   * Phase B: acquire concurrency slot, spawn background session, then
+   * wait for event-driven completion (via handleSessionIdle / handleSessionError).
+   */
+  private async startTask(
     ctx: OpenCodeContext,
     task: BackgroundTask,
     input: LaunchInput,
@@ -100,9 +122,11 @@ export class BackgroundAgentManager {
 
       const { sessionId } = await spawnBackgroundSession(ctx, input);
       task.sessionId = sessionId;
+      this.tasksBySessionId.set(sessionId, task.id);
 
       // cancel() may have mutated status concurrently while spawn was in-flight
       if ((task as BackgroundTask).status === "cancelled") {
+        this.tasksBySessionId.delete(sessionId);
         try {
           await ctx.client.session.delete({ path: { id: sessionId } });
         } catch (error) {
@@ -111,111 +135,162 @@ export class BackgroundAgentManager {
         return;
       }
 
-      const controller = new AbortController();
-      this.abortControllers.set(task.id, controller);
+      // No polling loop — completion is now driven by session events
+      // routed through handleSessionIdle() and handleSessionError().
+    } catch (error) {
+      if (task.status === "cancelled") return;
+      this.fail(task.id, error instanceof Error ? error.message : String(error));
+    }
+  }
 
-      const finalSnapshot = await pollUntilStable(
-        async () => {
-          const [messagesResult, statusResult] = await Promise.all([
-            ctx.client.session.messages({ path: { id: sessionId } }),
-            ctx.client.session.status({ query: { directory: ctx.directory } }),
-          ]);
+  // ---------------------------------------------------------------------------
+  // Event-driven completion handlers
+  // ---------------------------------------------------------------------------
 
-          const messages = (messagesResult.data ?? []) as SessionMessage[];
-          const statusType = statusResult.data?.[sessionId]?.type;
-          // Background sessions may not appear in the status map
-          // (statusType === undefined). Fall back to message-based
-          // completion detection — message-count stability prevents
-          // false positives during brief thinking pauses.
-          const isIdle = statusType === "idle" || statusType === undefined;
-          const lastAssistantContent = getLastAssistantContent(messages);
+  /**
+   * Handle a session.idle event. Called from the plugin event hook when
+   * a background session goes idle (agent finished its turn).
+   *
+   * If the session has produced meaningful assistant output and enough
+   * time has elapsed, the task is marked as completed.
+   */
+  async handleSessionIdle(sessionId: string): Promise<void> {
+    const taskId = this.tasksBySessionId.get(sessionId);
+    if (!taskId) return;
 
-          return {
-            messageCount: messages.length,
-            isIdle,
-            result: lastAssistantContent,
-          };
-        },
-        120,
-        controller.signal,
-      );
+    const task = this.tasks.get(taskId);
+    if (!task || isTerminalStatus(task.status)) return;
+    if (!this.ctx) return;
 
-      this.abortControllers.delete(task.id);
+    // Guard against premature idle events (session init, brief pauses).
+    const elapsed = task.startedAt ? Date.now() - task.startedAt : 0;
+    if (elapsed < MIN_IDLE_TIME_MS) {
+      log("[manager] Ignoring early session.idle", { id: task.id, elapsed });
+      return;
+    }
 
-      const hasMessages = finalSnapshot.messageCount > 0;
-      const pollerResult = finalSnapshot.result?.trim();
-      const hasPollerResult = pollerResult != null && pollerResult.length > 0;
+    try {
+      const messagesResult = await this.ctx.client.session.messages({
+        path: { id: sessionId },
+      });
 
-      if (!hasMessages) {
-        // Session stabilised with zero messages — the agent never started or
-        // all messages were lost (e.g. rate limiting prevented the provider
-        // from returning any response).
+      const messages = (messagesResult.data ?? []) as SessionMessage[];
+      const lastAssistantContent = getLastAssistantContent(messages);
+
+      if (lastAssistantContent && lastAssistantContent.trim().length > 0) {
+        this.complete(task.id, lastAssistantContent);
+      } else if (messages.length === 0) {
+        // Session went idle with no messages — agent never started.
         this.fail(
           task.id,
           "Background agent produced no output (0 messages). " +
             "This may indicate rate limiting or a session creation failure.",
         );
-      } else if (hasPollerResult) {
-        this.complete(task.id, finalSnapshot.result!);
-      } else {
-        // Messages were recorded but the poller did not capture assistant
-        // content. Try one final direct fetch before giving up.
-        let recovered = false;
-        if (task.sessionId) {
-          try {
-            const messagesResult = await ctx.client.session.messages({
-              path: { id: task.sessionId },
-            });
-            const messages = (messagesResult.data ?? []) as SessionMessage[];
-            const lastAssistantContent = getLastAssistantContent(messages);
-            if (lastAssistantContent && lastAssistantContent.trim().length > 0) {
-              this.complete(task.id, lastAssistantContent);
-              recovered = true;
-            }
-          } catch (fetchError) {
-            log("[manager] Failed to recover assistant result from session", {
-              id: task.id,
-              error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-            });
-          }
-        }
-        if (!recovered) {
-          this.fail(
-            task.id,
-            `Background agent session ended without usable output ` +
-              `(${finalSnapshot.messageCount} messages recorded, no assistant content found).`,
-          );
-        }
       }
-
-      // Terminate the background session to prevent continued execution
-      // after the orchestrator has consumed the result. Without this,
-      // OpenCode continuation hooks can re-activate the session and make
-      // unwanted changes after we consider the task finished.
-      // Keep session alive for post-completion navigation from task cards.
+      // Otherwise: idle with messages but no assistant content yet.
+      // The agent may still be working (tool calls without final response).
+      // We'll catch completion on the next idle event.
     } catch (error) {
-      const isCancelledTask = task.status === "cancelled";
-      const isCancelledError = error instanceof Error && error.message === "Polling cancelled";
-      if (isCancelledTask || isCancelledError) {
-        if (!isCancelledTask) {
-          task.status = "cancelled";
-          task.completedAt = Date.now();
-          this.concurrency.release(task.model);
-          this.cleanupSession(task.sessionId);
-          this.evictStaleTasks();
-        }
-        return;
-      }
-      this.fail(task.id, error instanceof Error ? error.message : String(error));
+      log("[manager] Failed to check session on idle", {
+        id: task.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
-  dispose(): void {
-    for (const [id, controller] of this.abortControllers) {
-      controller.abort();
-      log("[manager] Aborted pending task on dispose", { id });
+  /**
+   * Handle a session.error event for a background session.
+   */
+  async handleSessionError(sessionId: string, errorMessage: string): Promise<void> {
+    const taskId = this.tasksBySessionId.get(sessionId);
+    if (!taskId) return;
+
+    const task = this.tasks.get(taskId);
+    if (!task || isTerminalStatus(task.status)) return;
+
+    // Try to salvage output before marking as failed.
+    if (this.ctx && task.sessionId) {
+      try {
+        const messagesResult = await this.ctx.client.session.messages({
+          path: { id: task.sessionId },
+        });
+        const messages = (messagesResult.data ?? []) as SessionMessage[];
+        const lastContent = getLastAssistantContent(messages);
+        if (lastContent && lastContent.trim().length > 0) {
+          this.complete(task.id, lastContent);
+          return;
+        }
+      } catch {
+        // Fall through to fail.
+      }
     }
-    this.abortControllers.clear();
+
+    this.fail(task.id, errorMessage);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Promise-based waiting for background_output tool
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Wait for a task to reach a terminal state.
+   * Returns immediately if already complete. Otherwise blocks until
+   * the completion event fires or the timeout expires.
+   */
+  waitForCompletion(taskId: string, timeoutMs: number): Promise<BackgroundTask | undefined> {
+    const task = this.tasks.get(taskId);
+    if (!task) return Promise.resolve(undefined);
+    if (isTerminalStatus(task.status)) return Promise.resolve(task);
+
+    return new Promise<BackgroundTask | undefined>((resolve) => {
+      const timer = setTimeout(() => {
+        this.removeResolver(taskId, resolver);
+        resolve(this.tasks.get(taskId));
+      }, timeoutMs);
+
+      const resolver: CompletionResolver = {
+        resolve: (completed: BackgroundTask) => {
+          clearTimeout(timer);
+          resolve(completed);
+        },
+        timer,
+      };
+
+      const existing = this.completionResolvers.get(taskId) ?? [];
+      existing.push(resolver);
+      this.completionResolvers.set(taskId, existing);
+    });
+  }
+
+  private removeResolver(taskId: string, resolver: CompletionResolver): void {
+    const resolvers = this.completionResolvers.get(taskId);
+    if (!resolvers) return;
+    const idx = resolvers.indexOf(resolver);
+    if (idx !== -1) resolvers.splice(idx, 1);
+    if (resolvers.length === 0) this.completionResolvers.delete(taskId);
+  }
+
+  private notifyResolvers(task: BackgroundTask): void {
+    const resolvers = this.completionResolvers.get(task.id);
+    if (!resolvers || resolvers.length === 0) return;
+    for (const resolver of resolvers) {
+      clearTimeout(resolver.timer);
+      resolver.resolve(task);
+    }
+    this.completionResolvers.delete(task.id);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Terminal state transitions
+  // ---------------------------------------------------------------------------
+
+  dispose(): void {
+    // Resolve any waiting callers with current state.
+    for (const [taskId] of this.completionResolvers) {
+      const task = this.tasks.get(taskId);
+      if (task) this.notifyResolvers(task);
+    }
+    this.completionResolvers.clear();
   }
 
   complete(id: string, result: string): void {
@@ -225,9 +300,10 @@ export class BackgroundAgentManager {
     task.status = "completed";
     task.result = result;
     task.completedAt = Date.now();
-    this.abortControllers.delete(id);
     this.concurrency.release(task.model);
+    this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
+    this.notifyResolvers(task);
     this.evictStaleTasks();
     log("[manager] Task completed", { id });
   }
@@ -239,9 +315,10 @@ export class BackgroundAgentManager {
     task.status = "failed";
     task.error = error;
     task.completedAt = Date.now();
-    this.abortControllers.delete(id);
     this.concurrency.release(task.model);
+    this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
+    this.notifyResolvers(task);
     this.evictStaleTasks();
     log("[manager] Task failed", { id, error });
   }
@@ -254,9 +331,6 @@ export class BackgroundAgentManager {
     task.status = "cancelled";
     task.completedAt = Date.now();
 
-    this.abortControllers.get(id)?.abort();
-    this.abortControllers.delete(id);
-
     if (wasRunning) {
       this.concurrency.release(task.model);
       if (task.sessionId) {
@@ -268,9 +342,19 @@ export class BackgroundAgentManager {
       }
     }
 
+    this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
+    this.notifyResolvers(task);
     this.evictStaleTasks();
     log("[manager] Task cancelled", { id });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Internals
+  // ---------------------------------------------------------------------------
+
+  private cleanupSessionIndex(sessionId: string | undefined): void {
+    if (sessionId) this.tasksBySessionId.delete(sessionId);
   }
 
   private cleanupSession(sessionId: string | undefined): void {
