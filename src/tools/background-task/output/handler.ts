@@ -134,11 +134,12 @@ export async function handleBackgroundOutput(
     if (resolved.status === "queued" || resolved.status === "running") {
       // Still active after timeout — return current status (no budget penalty).
       const output = formatTaskOutput(resolved);
+      const statusLabel = resolved.status === "queued" ? "queued" : "running";
       if (args.full_session && client && resolved.sessionId) {
         const sessionOutput = await fetchSessionMessages(client, resolved, args);
-        return `${output}\n\n${sessionOutput}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running and will complete in the background.`;
+        return `${output}\n\n${sessionOutput}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still ${statusLabel} and will complete in the background.`;
       }
-      return `${output}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still running and will complete in the background.`;
+      return `${output}\n\n> Timed out waiting after ${timeoutMs}ms. Task is still ${statusLabel} and will complete in the background.`;
     }
 
     // Task reached terminal state.

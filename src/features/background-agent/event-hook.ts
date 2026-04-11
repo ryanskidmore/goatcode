@@ -50,8 +50,12 @@ export function createBackgroundAgentEventHook(): EventHook {
     let manager: ReturnType<typeof getBackgroundAgent>["manager"];
     try {
       manager = getBackgroundAgent().manager;
-    } catch {
-      // Background agent not initialised yet — nothing to route.
+    } catch (err) {
+      // Expected when background agent hasn't been initialised yet.
+      if (err instanceof Error && err.message.includes("not initialized")) {
+        return;
+      }
+      log("[bg-event-hook] Unexpected error getting background agent", { error: err });
       return;
     }
 

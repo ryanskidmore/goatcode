@@ -1,5 +1,6 @@
 import { describe, expect, test, mock, afterAll } from "bun:test";
 import type { OpenCodeContext } from "../../types/plugin";
+import type { BackgroundTask } from "./types";
 
 mock.module("./spawner", () => ({
   spawnBackgroundSession: mock(async () => ({ sessionId: "ses_child_123" })),
@@ -26,6 +27,13 @@ function createMockCtx(opts?: { messages?: unknown[] }): OpenCodeContext {
   } as unknown as OpenCodeContext;
 }
 
+async function waitForSessionId(task: BackgroundTask, maxAttempts = 20): Promise<void> {
+  for (let i = 0; i < maxAttempts; i += 1) {
+    if (task.sessionId) return;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 describe("BackgroundAgentManager", () => {
   test("#when session.idle fires with assistant content #then task completes via event", async () => {
     //#given
@@ -49,17 +57,13 @@ describe("BackgroundAgentManager", () => {
       title: "Investigate summary (@deepworker subagent)",
     });
 
-    // Wait for startTask to register the session
-    for (let i = 0; i < 20; i += 1) {
-      if (task.sessionId) break;
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitForSessionId(task);
     expect(task.sessionId).toBe("ses_child_123");
     expect(task.status).toBe("running");
 
     // Simulate session.idle event (with enough elapsed time)
-    // Override startedAt to bypass MIN_IDLE_TIME_MS guard
-    task.startedAt = Date.now() - 10_000;
+    // Override sessionStartedAt to bypass MIN_IDLE_TIME_MS guard
+    task.sessionStartedAt = Date.now() - 10_000;
     await manager.handleSessionIdle("ses_child_123");
 
     //#then
@@ -90,14 +94,10 @@ describe("BackgroundAgentManager", () => {
       title: "Investigate summary (@deepworker subagent)",
     });
 
-    // Wait for startTask to register the session
-    for (let i = 0; i < 20; i += 1) {
-      if (task.sessionId) break;
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitForSessionId(task);
 
     // Simulate session.idle event
-    task.startedAt = Date.now() - 10_000;
+    task.sessionStartedAt = Date.now() - 10_000;
     await manager.handleSessionIdle("ses_child_123");
 
     //#then
@@ -129,12 +129,9 @@ describe("BackgroundAgentManager", () => {
       model: "gpt-5.4-mini",
     });
 
-    for (let i = 0; i < 20; i += 1) {
-      if (task.sessionId) break;
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitForSessionId(task);
 
-    // Do NOT override startedAt — idle fires within MIN_IDLE_TIME_MS
+    // Do NOT override sessionStartedAt — idle fires within MIN_IDLE_TIME_MS
     await manager.handleSessionIdle("ses_child_123");
 
     //#then — should still be running (early idle ignored)
@@ -161,16 +158,13 @@ describe("BackgroundAgentManager", () => {
       model: "gpt-5.4-mini",
     });
 
-    for (let i = 0; i < 20; i += 1) {
-      if (task.sessionId) break;
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitForSessionId(task);
 
     // Start waiting (will resolve when event fires)
     const waitPromise = manager.waitForCompletion("task_wait_completion", 5_000);
 
     // Simulate session.idle after enough time
-    task.startedAt = Date.now() - 10_000;
+    task.sessionStartedAt = Date.now() - 10_000;
     await manager.handleSessionIdle("ses_child_123");
 
     //#then
@@ -190,10 +184,7 @@ describe("BackgroundAgentManager", () => {
       model: "gpt-5.4-mini",
     });
 
-    for (let i = 0; i < 20; i += 1) {
-      if (task.sessionId) break;
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitForSessionId(task);
 
     //#when — very short timeout, no idle event
     const resolved = await manager.waitForCompletion("task_wait_timeout", 50);
@@ -213,10 +204,7 @@ describe("BackgroundAgentManager", () => {
       model: "gpt-5.4-mini",
     });
 
-    for (let i = 0; i < 20; i += 1) {
-      if (task.sessionId) break;
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitForSessionId(task);
 
     //#when
     await manager.handleSessionError("ses_child_123", "Rate limit exceeded");
@@ -229,7 +217,6 @@ describe("BackgroundAgentManager", () => {
 
   test("#when handleSessionIdle receives unknown session #then it is ignored", async () => {
     //#given
-    createMockCtx();
     const manager = new BackgroundAgentManager();
 
     //#when — no tasks launched, unknown session

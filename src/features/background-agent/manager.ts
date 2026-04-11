@@ -72,18 +72,16 @@ export class BackgroundAgentManager {
   private readonly concurrency: ConcurrencyManager;
   /** O(1) lookup from session ID to task ID for event routing. */
   private readonly tasksBySessionId = new Map<string, string>();
+  /** Per-session context so concurrent tasks never share a stale client. */
+  private readonly ctxBySessionId = new Map<string, OpenCodeContext>();
   /** Promise resolvers for callers blocking on task completion. */
   private readonly completionResolvers = new Map<string, CompletionResolver[]>();
-  /** Stored context for fetching session data during event handling. */
-  private ctx: OpenCodeContext | undefined;
 
   constructor(concurrencyLimit = 5) {
     this.concurrency = new ConcurrencyManager(concurrencyLimit);
   }
 
   async launch(ctx: OpenCodeContext, input: LaunchInput): Promise<BackgroundTask> {
-    this.ctx = ctx;
-
     const task: BackgroundTask = {
       id: input.id,
       status: "queued",
@@ -122,11 +120,14 @@ export class BackgroundAgentManager {
 
       const { sessionId } = await spawnBackgroundSession(ctx, input);
       task.sessionId = sessionId;
+      task.sessionStartedAt = Date.now();
       this.tasksBySessionId.set(sessionId, task.id);
+      this.ctxBySessionId.set(sessionId, ctx);
 
       // cancel() may have mutated status concurrently while spawn was in-flight
       if ((task as BackgroundTask).status === "cancelled") {
         this.tasksBySessionId.delete(sessionId);
+        this.ctxBySessionId.delete(sessionId);
         try {
           await ctx.client.session.delete({ path: { id: sessionId } });
         } catch (error) {
@@ -160,17 +161,22 @@ export class BackgroundAgentManager {
 
     const task = this.tasks.get(taskId);
     if (!task || isTerminalStatus(task.status)) return;
-    if (!this.ctx) return;
+
+    const ctx = this.ctxBySessionId.get(sessionId);
+    if (!ctx) return;
 
     // Guard against premature idle events (session init, brief pauses).
-    const elapsed = task.startedAt ? Date.now() - task.startedAt : 0;
+    // Measure from session creation (not pre-spawn) to avoid counting
+    // spawn latency against the idle timer.
+    const anchor = task.sessionStartedAt ?? task.startedAt ?? 0;
+    const elapsed = anchor > 0 ? Date.now() - anchor : 0;
     if (elapsed < MIN_IDLE_TIME_MS) {
       log("[manager] Ignoring early session.idle", { id: task.id, elapsed });
       return;
     }
 
     try {
-      const messagesResult = await this.ctx.client.session.messages({
+      const messagesResult = await ctx.client.session.messages({
         path: { id: sessionId },
       });
 
@@ -208,17 +214,24 @@ export class BackgroundAgentManager {
     const task = this.tasks.get(taskId);
     if (!task || isTerminalStatus(task.status)) return;
 
-    // Try to salvage output before marking as failed.
-    if (this.ctx && task.sessionId) {
+    const ctx = this.ctxBySessionId.get(sessionId);
+
+    // Only salvage output if the very last message is from the assistant.
+    // Using getLastAssistantContent() here would scan the entire history
+    // and could promote stale earlier text as a "success" result.
+    if (ctx && task.sessionId) {
       try {
-        const messagesResult = await this.ctx.client.session.messages({
+        const messagesResult = await ctx.client.session.messages({
           path: { id: task.sessionId },
         });
         const messages = (messagesResult.data ?? []) as SessionMessage[];
-        const lastContent = getLastAssistantContent(messages);
-        if (lastContent && lastContent.trim().length > 0) {
-          this.complete(task.id, lastContent);
-          return;
+        if (messages.length > 0) {
+          const lastMessage = messages[messages.length - 1];
+          const lastContent = extractAssistantContent(lastMessage);
+          if (lastContent && lastContent.trim().length > 0) {
+            this.complete(task.id, lastContent);
+            return;
+          }
         }
       } catch {
         // Fall through to fail.
@@ -354,7 +367,9 @@ export class BackgroundAgentManager {
   // ---------------------------------------------------------------------------
 
   private cleanupSessionIndex(sessionId: string | undefined): void {
-    if (sessionId) this.tasksBySessionId.delete(sessionId);
+    if (!sessionId) return;
+    this.tasksBySessionId.delete(sessionId);
+    this.ctxBySessionId.delete(sessionId);
   }
 
   private cleanupSession(sessionId: string | undefined): void {

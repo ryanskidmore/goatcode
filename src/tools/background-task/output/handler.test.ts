@@ -153,12 +153,15 @@ describe("handleBackgroundOutput", () => {
   describe("#given block=true waiting behavior", () => {
     describe("#when task completes via event before timeout", () => {
       it("#then returns completed result promptly", async () => {
+        // get() returns running so the handler enters the blocking path;
+        // waitForCompletion resolves with completed to simulate event.
+        const runningTask = makeTask({ status: "running" });
         const completedTask = makeTask({ status: "completed", result: "done quickly" });
         const manager = {
-          get: mock((_id: string) => completedTask),
-          getAll: mock(() => [completedTask]),
+          get: mock((_id: string) => runningTask),
+          getAll: mock(() => [runningTask]),
           cancel: mock(async () => {}),
-          launch: mock(async () => completedTask),
+          launch: mock(async () => runningTask),
           complete: mock(() => {}),
           fail: mock(() => {}),
           waitForCompletion: mock(async (_id: string, _timeout: number) => completedTask),
