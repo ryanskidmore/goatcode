@@ -68,7 +68,7 @@ export class BackgroundAgentManager {
   /** Promise resolvers for callers blocking on task completion. */
   private readonly completionResolvers = new Map<string, CompletionResolver[]>();
 
-  constructor(concurrencyLimit = 5) {
+  constructor(concurrencyLimit = 10) {
     this.concurrency = new ConcurrencyManager(concurrencyLimit);
   }
 

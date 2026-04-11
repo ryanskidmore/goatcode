@@ -3,7 +3,7 @@ export class ConcurrencyManager {
   private counts = new Map<string, number>();
   private queues = new Map<string, Array<() => void>>();
 
-  constructor(limit = 5) {
+  constructor(limit = 10) {
     this.limit = limit;
   }
 

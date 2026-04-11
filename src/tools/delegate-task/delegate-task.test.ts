@@ -529,6 +529,22 @@ describe("createTaskTool", () => {
           createdAt: 0,
           parentSessionID: "test-session",
         },
+        {
+          id: "child-5",
+          status: "running",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+        {
+          id: "child-6",
+          status: "queued",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
       ];
       const bgManager = makeMockManager(existingChildren);
       const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
@@ -538,7 +554,7 @@ describe("createTaskTool", () => {
         {
           category: "quick",
           subagent_type: "quick",
-          description: "fifth task",
+          description: "seventh task",
           prompt: "this should fail",
           run_in_background: true,
         },
@@ -546,7 +562,7 @@ describe("createTaskTool", () => {
       );
 
       expect(result).toContain("per-parent limit");
-      expect(result).toContain("4");
+      expect(result).toContain("6");
       expect(bgManager.launch).not.toHaveBeenCalled();
     });
   });

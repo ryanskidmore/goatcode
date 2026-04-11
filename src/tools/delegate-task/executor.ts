@@ -30,7 +30,7 @@ export interface ExecutorDeps {
  * Maximum number of background sub-tasks a single parent agent can launch.
  * Prevents explosive fan-out that saturates concurrency pools.
  */
-const MAX_CHILDREN_PER_PARENT = 4;
+const MAX_CHILDREN_PER_PARENT = 6;
 
 function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig): string {
   if (!config.prompt_append) return prompt;
@@ -45,9 +45,21 @@ function injectConcurrencyGuidance(prompt: string, delegationDepth: number): str
   if (delegationDepth < 1) return prompt;
   return (
     prompt +
-    "\n\nIMPORTANT: Background task concurrency is limited. " +
-    "Prefer doing work directly rather than sub-delegating to many background tasks. " +
-    `Only sub-delegate if the work is truly parallelizable and you have ${MAX_CHILDREN_PER_PARENT} or fewer sub-tasks.`
+    "\n\n# Sub-Delegation Constraints (You Are a Sub-Agent)" +
+    "\nYou are running as a delegated sub-agent. Further sub-delegation has real costs:" +
+    "\n- **Latency**: Each delegation adds 10-30s startup overhead before any work begins." +
+    "\n- **Concurrency slots**: Background tasks consume limited pool slots, starving other work." +
+    "\n- **Context loss**: Sub-agents start cold and must re-discover context you already have." +
+    "\n- **Coordination tax**: You must poll for results, parse output, and handle failures." +
+    "\n" +
+    "\nDo the work directly unless ALL of these are true:" +
+    "\n- The work splits into genuinely independent parallel streams." +
+    `\n- You have ${MAX_CHILDREN_PER_PARENT} or fewer sub-tasks.` +
+    "\n- Each sub-task requires 5+ minutes of tool work." +
+    "\n- You can make meaningful progress on other work while waiting." +
+    "\n" +
+    "\nFor any task completable in ≤5 tool calls, execute it yourself. " +
+    "The delegation overhead alone exceeds the work."
   );
 }
 
