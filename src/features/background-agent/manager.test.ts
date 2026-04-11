@@ -246,4 +246,85 @@ describe("BackgroundAgentManager", () => {
     //#then — no crash, no state change
     expect(manager.getAll()).toHaveLength(0);
   });
+
+  test("#when tasks share model but differ in depth #then both run concurrently under limit=1", async () => {
+    //#given — concurrency limit of 1: a flat pool would queue the second task
+    const ctx = createMockCtx({
+      messages: [
+        {
+          role: "assistant",
+          parts: [{ type: "text", text: "result" }],
+        },
+      ],
+    });
+    const manager = new BackgroundAgentManager(1);
+
+    //#when — launch two tasks on the same model at DIFFERENT depths
+    const depth1Task = await manager.launch(ctx, {
+      id: "task_depth1",
+      prompt: "depth-1 work",
+      model: "gpt-5.4-mini",
+      delegationDepth: 1,
+    });
+
+    // Wait for first task to acquire its slot and start running
+    await waitForSessionId(depth1Task);
+    expect(depth1Task.status).toBe("running");
+
+    const depth2Task = await manager.launch(ctx, {
+      id: "task_depth2",
+      prompt: "depth-2 work",
+      model: "gpt-5.4-mini",
+      delegationDepth: 2,
+    });
+
+    // Wait for second task — if pools are depth-keyed, it gets its own slot
+    await waitForSessionId(depth2Task);
+
+    //#then — both tasks are running concurrently (not queued)
+    // With a flat pool (limit=1, same model), the second would be stuck in "queued".
+    // Depth-keyed pools give each depth its own limit=1 slot.
+    expect(depth1Task.status).toBe("running");
+    expect(depth2Task.status).toBe("running");
+    expect(depth1Task.delegationDepth).toBe(1);
+    expect(depth2Task.delegationDepth).toBe(2);
+  });
+
+  test("#when getQueuePosition is called for a queued task #then returns positive queue length", async () => {
+    //#given — limit=1 on the SAME depth, so the second task must queue
+    const manager = new BackgroundAgentManager(1);
+    const ctx = createMockCtx({
+      messages: [
+        {
+          role: "assistant",
+          parts: [{ type: "text", text: "result" }],
+        },
+      ],
+    });
+
+    //#when — first task takes the only slot at depth-0
+    const holder = await manager.launch(ctx, {
+      id: "task_slot_holder",
+      prompt: "hold slot",
+      model: "test-model",
+      delegationDepth: 0,
+    });
+
+    // Wait for it to be running (holding the slot)
+    await waitForSessionId(holder);
+    expect(holder.status).toBe("running");
+
+    // Second task at same depth must queue behind the first
+    const queued = await manager.launch(ctx, {
+      id: "task_queued",
+      prompt: "waiting",
+      model: "test-model",
+      delegationDepth: 0,
+    });
+
+    //#then — verify the task is actually queued and has a positive queue position
+    expect(queued.status).toBe("queued");
+    const pos = manager.getQueuePosition("task_queued");
+    expect(pos).toBeGreaterThan(0);
+  });
 });

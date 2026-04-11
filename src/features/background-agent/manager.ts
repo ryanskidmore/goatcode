@@ -79,6 +79,8 @@ export class BackgroundAgentManager {
       prompt: input.prompt,
       model: input.model,
       createdAt: Date.now(),
+      parentSessionID: input.parentSessionID,
+      delegationDepth: input.delegationDepth ?? 0,
     };
 
     this.tasks.set(input.id, task);
@@ -98,10 +100,10 @@ export class BackgroundAgentManager {
     input: LaunchInput,
   ): Promise<void> {
     try {
-      await this.concurrency.acquire(task.model);
+      await this.concurrency.acquire(this.concurrencyKey(task));
 
       if (task.status === "cancelled") {
-        this.concurrency.release(task.model);
+        this.concurrency.release(this.concurrencyKey(task));
         return;
       }
 
@@ -312,7 +314,7 @@ export class BackgroundAgentManager {
     task.status = "completed";
     task.result = result;
     task.completedAt = Date.now();
-    this.concurrency.release(task.model);
+    this.concurrency.release(this.concurrencyKey(task));
     this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
     this.notifyResolvers(task);
@@ -327,7 +329,7 @@ export class BackgroundAgentManager {
     task.status = "failed";
     task.error = error;
     task.completedAt = Date.now();
-    this.concurrency.release(task.model);
+    this.concurrency.release(this.concurrencyKey(task));
     this.cleanupSessionIndex(task.sessionId);
     this.cleanupSession(task.sessionId);
     this.notifyResolvers(task);
@@ -344,7 +346,7 @@ export class BackgroundAgentManager {
     task.completedAt = Date.now();
 
     if (wasRunning) {
-      this.concurrency.release(task.model);
+      this.concurrency.release(this.concurrencyKey(task));
       if (task.sessionId) {
         try {
           await ctx.client.session.delete({ path: { id: task.sessionId } });
@@ -364,6 +366,15 @@ export class BackgroundAgentManager {
   // ---------------------------------------------------------------------------
   // Internals
   // ---------------------------------------------------------------------------
+
+  /**
+   * Build a concurrency key that includes delegation depth.
+   * Each depth level gets its own concurrency pool, preventing parent tasks
+   * from starving their children when sharing the same model.
+   */
+  private concurrencyKey(task: BackgroundTask): string {
+    return `${task.model}:depth-${task.delegationDepth ?? 0}`;
+  }
 
   private cleanupSessionIndex(sessionId: string | undefined): void {
     if (!sessionId) return;
@@ -396,5 +407,16 @@ export class BackgroundAgentManager {
 
   getAll(): BackgroundTask[] {
     return [...this.tasks.values()];
+  }
+
+  /**
+   * Returns the approximate queue position for a task.
+   * Returns the total number of tasks waiting in the same concurrency pool,
+   * or 0 if the task is not queued.
+   */
+  getQueuePosition(taskId: string): number {
+    const task = this.tasks.get(taskId);
+    if (!task || task.status !== "queued") return 0;
+    return this.concurrency.getQueueLength(this.concurrencyKey(task));
   }
 }
