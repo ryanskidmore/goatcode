@@ -22,7 +22,7 @@ const DEPTH_MARKER_PATTERN = /<!-- goatcode:delegation_depth=(\d+) -->/;
  * Reads the current session's messages to find the delegation depth marker.
  * Returns null on any error (fail-closed — blocks delegation when depth is unknown).
  */
-async function extractDelegationDepth(
+export async function extractDelegationDepth(
   client: OpenCodeContext["client"],
   sessionID: string | undefined,
 ): Promise<number | null> {
@@ -90,7 +90,7 @@ function resolveClient(
   }
 }
 
-function resolveParentSessionID(
+export function resolveParentSessionID(
   toolContext: Parameters<ToolDefinition["execute"]>[1],
 ): string | undefined {
   const legacy = Reflect.get(toolContext as Record<string, unknown>, "sessionID");

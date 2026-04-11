@@ -138,4 +138,130 @@ describe("handleBackgroundCancel", () => {
       });
     });
   });
+
+  describe("#given scoped cancellation with caller context", () => {
+    describe("#when root agent (depth=0) calls cancel all", () => {
+      it("#then cancels ALL running/queued tasks globally", async () => {
+        const taskA = makeTask({
+          id: "task-a",
+          status: "running",
+          parentSessionID: "ses-parent-1",
+        });
+        const taskB = makeTask({
+          id: "task-b",
+          status: "running",
+          parentSessionID: "ses-parent-2",
+        });
+        const manager = {
+          get: mock((_id: string) => taskA),
+          getAll: mock(() => [taskA, taskB]),
+          cancel: mock(async () => {}),
+          launch: mock(async () => taskA),
+          complete: mock(() => {}),
+          fail: mock(() => {}),
+        } as unknown as BackgroundAgentManager;
+
+        const result = await handleBackgroundCancel(
+          manager,
+          mockCtx,
+          { all: true },
+          {
+            callerSessionID: "ses-root",
+            delegationDepth: 0,
+          },
+        );
+
+        expect(result).toContain("Cancelled 2");
+        expect(manager.cancel).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe("#when depth-1 agent calls cancel all", () => {
+      it("#then only cancels tasks spawned by that agent", async () => {
+        const ownChild = makeTask({
+          id: "task-own",
+          status: "running",
+          parentSessionID: "ses-depth1",
+        });
+        const siblingChild = makeTask({
+          id: "task-sibling",
+          status: "running",
+          parentSessionID: "ses-other",
+        });
+        const manager = {
+          get: mock((_id: string) => ownChild),
+          getAll: mock(() => [ownChild, siblingChild]),
+          cancel: mock(async () => {}),
+          launch: mock(async () => ownChild),
+          complete: mock(() => {}),
+          fail: mock(() => {}),
+        } as unknown as BackgroundAgentManager;
+
+        const result = await handleBackgroundCancel(
+          manager,
+          mockCtx,
+          { all: true },
+          {
+            callerSessionID: "ses-depth1",
+            delegationDepth: 1,
+          },
+        );
+
+        expect(result).toContain("Cancelled 1");
+        expect(manager.cancel).toHaveBeenCalledTimes(1);
+        expect(manager.cancel).toHaveBeenCalledWith(mockCtx, "task-own");
+      });
+    });
+
+    describe("#when depth-1 agent has no children to cancel", () => {
+      it("#then returns no cancellable tasks message", async () => {
+        const siblingChild = makeTask({
+          id: "task-sibling",
+          status: "running",
+          parentSessionID: "ses-other",
+        });
+        const manager = {
+          get: mock((_id: string) => siblingChild),
+          getAll: mock(() => [siblingChild]),
+          cancel: mock(async () => {}),
+          launch: mock(async () => siblingChild),
+          complete: mock(() => {}),
+          fail: mock(() => {}),
+        } as unknown as BackgroundAgentManager;
+
+        const result = await handleBackgroundCancel(
+          manager,
+          mockCtx,
+          { all: true },
+          {
+            callerSessionID: "ses-lonely",
+            delegationDepth: 1,
+          },
+        );
+
+        expect(result).toContain("No cancellable background tasks found for this agent");
+        expect(manager.cancel).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("#when no caller context is provided", () => {
+      it("#then defaults to global cancel (backward compatibility)", async () => {
+        const taskA = makeTask({ id: "task-a", status: "running" });
+        const taskB = makeTask({ id: "task-b", status: "queued" });
+        const manager = {
+          get: mock((_id: string) => taskA),
+          getAll: mock(() => [taskA, taskB]),
+          cancel: mock(async () => {}),
+          launch: mock(async () => taskA),
+          complete: mock(() => {}),
+          fail: mock(() => {}),
+        } as unknown as BackgroundAgentManager;
+
+        const result = await handleBackgroundCancel(manager, mockCtx, { all: true });
+
+        expect(result).toContain("Cancelled 2");
+        expect(manager.cancel).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
 });

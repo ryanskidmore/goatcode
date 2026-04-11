@@ -13,6 +13,10 @@ export interface BackgroundTask {
   completedAt?: number;
   result?: string;
   error?: string;
+  /** Session ID of the parent that launched this task. Used for scoped cancellation. */
+  parentSessionID?: string;
+  /** Delegation depth of this task. Used for hierarchical concurrency pooling. */
+  delegationDepth?: number;
 }
 
 export interface LaunchInput {
@@ -22,4 +26,6 @@ export interface LaunchInput {
   parentSessionID?: string;
   title?: string;
   fallbackChain?: Array<{ providers: string[]; model: string; variant?: string }>;
+  /** Delegation depth of the child task. Used for hierarchical concurrency pooling. */
+  delegationDepth?: number;
 }

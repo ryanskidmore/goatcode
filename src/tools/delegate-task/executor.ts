@@ -26,9 +26,29 @@ export interface ExecutorDeps {
  * to the user's prompt. This ensures each category's behavioral guidance
  * reaches the delegated agent.
  */
+/**
+ * Maximum number of background sub-tasks a single parent agent can launch.
+ * Prevents explosive fan-out that saturates concurrency pools.
+ */
+const MAX_CHILDREN_PER_PARENT = 4;
+
 function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig): string {
   if (!config.prompt_append) return prompt;
   return `${prompt}\n\n${config.prompt_append}`;
+}
+
+/**
+ * Appends concurrency awareness guidance for depth≥1 agents so they
+ * prefer direct execution over sub-delegating to many background tasks.
+ */
+function injectConcurrencyGuidance(prompt: string, delegationDepth: number): string {
+  if (delegationDepth < 1) return prompt;
+  return (
+    prompt +
+    "\n\nIMPORTANT: Background task concurrency is limited. " +
+    "Prefer doing work directly rather than sub-delegating to many background tasks. " +
+    `Only sub-delegate if the work is truly parallelizable and you have ${MAX_CHILDREN_PER_PARENT} or fewer sub-tasks.`
+  );
 }
 
 /**
@@ -89,8 +109,27 @@ export async function executeBackground(
     });
   }
 
+  // --- Fan-out limit: prevent a single parent from spawning too many children ---
+  if (deps.sessionID) {
+    const existingChildren = manager.getAll().filter((t) => t.parentSessionID === deps.sessionID);
+    if (existingChildren.length >= MAX_CHILDREN_PER_PARENT) {
+      log("[delegate-task] Fan-out limit reached", {
+        parentSessionID: deps.sessionID,
+        existingChildren: existingChildren.length,
+        limit: MAX_CHILDREN_PER_PARENT,
+      });
+      return (
+        `Cannot launch more background tasks: per-parent limit (${MAX_CHILDREN_PER_PARENT}) reached. ` +
+        `You already have ${existingChildren.length} background tasks. Execute the remaining work directly using your available tools instead of delegating.`
+      );
+    }
+  }
+
+  const currentDepth = deps.delegationDepth ?? 0;
+  const childDepth = currentDepth + 1;
   const basePrompt = buildPromptWithCategoryContext(input.prompt, config);
-  const fullPrompt = injectDelegationDepth(basePrompt, deps.delegationDepth ?? 0);
+  const guidedPrompt = injectConcurrencyGuidance(basePrompt, currentDepth);
+  const fullPrompt = injectDelegationDepth(guidedPrompt, currentDepth);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
     id: taskId,
@@ -99,6 +138,7 @@ export async function executeBackground(
     parentSessionID: deps.sessionID,
     title: `${sanitiseValue(input.description)} (@${subagent} subagent)`,
     fallbackChain: config.fallback_chain,
+    delegationDepth: childDepth,
   });
 
   // Wait briefly for the session to be created so we can update metadata
@@ -107,6 +147,7 @@ export async function executeBackground(
   const sessionId = await waitForSessionId(manager, task.id);
 
   // Second metadata emission: add sessionId now that child session exists.
+  // If no sessionId yet (task still queued behind concurrency), indicate queued status.
   if (deps.metadata) {
     const metadata: Record<string, unknown> = {
       prompt: input.prompt,
@@ -118,9 +159,10 @@ export async function executeBackground(
       ...(sessionId ? { session_id: sessionId } : {}),
       ...(sessionId ? { sessionId } : {}),
       ...(config.model ? { model: config.model } : {}),
+      ...(!sessionId ? { status: "queued", queuePosition: manager.getQueuePosition(taskId) } : {}),
     };
     deps.metadata({ title: input.description, metadata });
-    log("[delegate-task] Emitted task metadata", { taskId, sessionId });
+    log("[delegate-task] Emitted task metadata", { taskId, sessionId, queued: !sessionId });
   }
 
   return formatBackgroundResult(task.id, input, config, sessionId);

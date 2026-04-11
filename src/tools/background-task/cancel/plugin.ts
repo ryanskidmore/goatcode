@@ -3,6 +3,7 @@ import type { OpenCodeContext } from "../../../types/plugin";
 import { getBackgroundAgent } from "../../../runtime";
 import { definePlugin } from "../../../plugin-api/define-plugin";
 import { handleBackgroundCancel } from "./handler";
+import { resolveParentSessionID, extractDelegationDepth } from "../../delegate-task/handler";
 import type { BackgroundCancelArgs } from "./types";
 
 const backgroundCancelTool = tool({
@@ -16,7 +17,25 @@ const backgroundCancelTool = tool({
   },
   async execute(args: BackgroundCancelArgs, toolContext) {
     const { manager } = getBackgroundAgent();
-    return handleBackgroundCancel(manager, toolContext as unknown as OpenCodeContext, args);
+    const callerSessionID = resolveParentSessionID(toolContext);
+
+    // Resolve delegation depth to scope cancellation.
+    // Root orchestrator (depth=0) gets global cancel; sub-agents only cancel their own children.
+    let delegationDepth = 0;
+    if (callerSessionID) {
+      try {
+        const client = (toolContext as unknown as OpenCodeContext).client;
+        const depth = await extractDelegationDepth(client, callerSessionID);
+        delegationDepth = depth ?? 0;
+      } catch {
+        // If we can't determine depth, default to 0 (root = global cancel).
+      }
+    }
+
+    return handleBackgroundCancel(manager, toolContext as unknown as OpenCodeContext, args, {
+      callerSessionID,
+      delegationDepth,
+    });
   },
 });
 

@@ -5,15 +5,17 @@ import type { BackgroundTask, BackgroundAgentManager } from "../../runtime";
 import { createTaskTool } from "./handler";
 import type { ToolDefinition } from "@opencode-ai/plugin";
 
-function makeMockManager() {
+function makeMockManager(existingTasks: BackgroundTask[] = []) {
   const launched: Array<{
     id: string;
     prompt: string;
     model: string;
     parentSessionID?: string;
     title?: string;
+    delegationDepth?: number;
   }> = [];
   const tasks = new Map<string, BackgroundTask>();
+  for (const t of existingTasks) tasks.set(t.id, t);
   return {
     launched,
     launch: mock(
@@ -25,6 +27,7 @@ function makeMockManager() {
           model: string;
           parentSessionID?: string;
           title?: string;
+          delegationDepth?: number;
         },
       ) => {
         launched.push(input);
@@ -41,7 +44,8 @@ function makeMockManager() {
       },
     ),
     get: mock((id: string) => tasks.get(id)),
-    getAll: mock(() => []),
+    getAll: mock(() => [...tasks.values()]),
+    getQueuePosition: mock((_id: string) => 0),
     complete: mock(() => {}),
     fail: mock(() => {}),
     cancel: mock(async () => {}),
@@ -465,6 +469,125 @@ describe("createTaskTool", () => {
         expect(result).toContain("I implemented the feature.");
         expect(result).toContain("Here are the details.");
       });
+    });
+  });
+
+  describe("#when executing background task", () => {
+    it("#then passes delegationDepth as childDepth to manager.launch", async () => {
+      const bgManager = makeMockManager();
+      const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+      const ctx = makeMockToolContext();
+
+      await bgTool.execute(
+        {
+          category: "quick",
+          subagent_type: "quick",
+          description: "test depth",
+          prompt: "do work",
+          run_in_background: true,
+        },
+        ctx,
+      );
+
+      // depth=0 (root) → child should be depth=1
+      expect(bgManager.launched[0].delegationDepth).toBe(1);
+    });
+  });
+
+  describe("#when fan-out limit is exceeded", () => {
+    it("#then returns error instead of launching", async () => {
+      const existingChildren: BackgroundTask[] = [
+        {
+          id: "child-1",
+          status: "running",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+        {
+          id: "child-2",
+          status: "running",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+        {
+          id: "child-3",
+          status: "queued",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+        {
+          id: "child-4",
+          status: "running",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+      ];
+      const bgManager = makeMockManager(existingChildren);
+      const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+      const ctx = makeMockToolContext();
+
+      const result = await bgTool.execute(
+        {
+          category: "quick",
+          subagent_type: "quick",
+          description: "fifth task",
+          prompt: "this should fail",
+          run_in_background: true,
+        },
+        ctx,
+      );
+
+      expect(result).toContain("per-parent limit");
+      expect(result).toContain("4");
+      expect(bgManager.launch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("#when fan-out limit is not reached", () => {
+    it("#then launches successfully", async () => {
+      const existingChildren: BackgroundTask[] = [
+        {
+          id: "child-1",
+          status: "running",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+        {
+          id: "child-2",
+          status: "running",
+          prompt: "",
+          model: "m",
+          createdAt: 0,
+          parentSessionID: "test-session",
+        },
+      ];
+      const bgManager = makeMockManager(existingChildren);
+      const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+      const ctx = makeMockToolContext();
+
+      const result = await bgTool.execute(
+        {
+          category: "quick",
+          subagent_type: "quick",
+          description: "third task",
+          prompt: "this should succeed",
+          run_in_background: true,
+        },
+        ctx,
+      );
+
+      expect(result).toContain("Background task launched");
+      expect(bgManager.launch).toHaveBeenCalledTimes(1);
     });
   });
 
