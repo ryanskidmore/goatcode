@@ -120,6 +120,30 @@ describe("handleBackgroundOutput", () => {
         expect(result).toContain("failed");
         expect(result).toContain("rate limit exceeded");
       });
+
+      it("#then includes actionable fallback diagnostics when available", async () => {
+        const task = makeTask({
+          status: "failed",
+          error: "fallback failed",
+          retryCount: 2,
+          attemptedModels: ["openai/gpt-5.3-codex", "anthropic/claude-opus-4-6"],
+          fallbackChain: [
+            { providers: ["openai", "opencode"], model: "gpt-5.3-codex" },
+            { providers: ["anthropic", "opencode"], model: "claude-opus-4-6" },
+          ],
+        });
+        const manager = makeManager(task);
+
+        const result = await handleBackgroundOutput(manager, { task_id: "task-42" });
+
+        expect(result).toContain("fallback retries attempted: 2");
+        expect(result).toContain(
+          "attempted models: openai/gpt-5.3-codex, anthropic/claude-opus-4-6",
+        );
+        expect(result).toContain(
+          "fallback chain: openai|opencode/gpt-5.3-codex -> anthropic|opencode/claude-opus-4-6",
+        );
+      });
     });
   });
 

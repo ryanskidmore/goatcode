@@ -35,6 +35,34 @@ describe("validateConfig", () => {
         expect(result.config.agents?.orchestrator?.model).toBe("anthropic/claude-opus-4-6");
       }
     });
+
+    test("accepts fallback mode and fallback models for agents and categories", () => {
+      //#given
+      const raw = {
+        agents: {
+          orchestrator: {
+            fallback_models: ["openai/gpt-5.4", "anthropic/claude-opus-4-6"],
+            fallback_mode: "append",
+          },
+        },
+        categories: {
+          deep: {
+            fallback_models: "openai/gpt-5.3-codex",
+            fallback_mode: "prepend",
+          },
+        },
+      };
+
+      //#when
+      const result = validateConfig(raw);
+
+      //#then
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.config.agents?.orchestrator?.fallback_mode).toBe("append");
+        expect(result.config.categories?.deep?.fallback_mode).toBe("prepend");
+      }
+    });
   });
 
   describe("with invalid config", () => {

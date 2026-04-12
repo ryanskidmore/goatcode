@@ -86,6 +86,25 @@ function hasMeaningfulText(value: string | undefined): boolean {
 
 function formatFailedStatus(task: BackgroundTask): string {
   const error = task.error ?? "(no error details)";
+  const fallbackContext: string[] = [];
+  if (typeof task.retryCount === "number") {
+    fallbackContext.push(`fallback retries attempted: ${task.retryCount}`);
+  }
+  if (Array.isArray(task.attemptedModels) && task.attemptedModels.length > 0) {
+    fallbackContext.push(`attempted models: ${task.attemptedModels.join(", ")}`);
+  }
+  if (Array.isArray(task.fallbackChain) && task.fallbackChain.length > 0) {
+    fallbackContext.push(
+      `fallback chain: ${task.fallbackChain
+        .map((entry) => `${entry.providers.join("|")}/${entry.model}`)
+        .join(" -> ")}`,
+    );
+  }
+
+  if (fallbackContext.length > 0) {
+    return `Task ${task.id} failed: ${error}\n${fallbackContext.join("\n")}`;
+  }
+
   return `Task ${task.id} failed: ${error}`;
 }
 

@@ -301,6 +301,49 @@ describe("bootstrap — agent fallback_models override (A22)", () => {
       });
     });
   });
+
+  describe("#given agents.orchestrator.fallback_mode is append", () => {
+    describe("#when bootstrap runs with anthropic connected and openai disconnected", () => {
+      it("#then default fallback chain remains active before appended custom fallback", async () => {
+        const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+        const tempCacheHome = await mkdtemp(join(tmpdir(), "goatcode-bootstrap-fallback-append-"));
+        process.env.XDG_CACHE_HOME = tempCacheHome;
+        const { writeConnectedProviders, resetConnectedProvidersCache } =
+          await import("./shared/connected-providers-cache");
+        writeConnectedProviders(["anthropic"]);
+
+        loadConfigImpl = async () => ({
+          agents: {
+            orchestrator: {
+              fallback_models: ["openai/gpt-5.4"],
+              fallback_mode: "append",
+            },
+          },
+        });
+        globalThis.structuredClone = passthroughStructuredClone;
+
+        try {
+          const hooks = await bootstrap(createBootstrapContext());
+          type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
+          const input = { agent: {} } as ConfigInput;
+          if (!hooks.config) throw new Error("Expected hooks.config to be defined");
+          await hooks.config(input);
+
+          // Anthropic is connected, so append mode should preserve default head entry.
+          expect(input.agent?.orchestrator?.model).toBe("anthropic/claude-opus-4-6");
+          expect(input.agent?.orchestrator?.["variant"]).toBe("max");
+        } finally {
+          if (previousXdgCacheHome === undefined) {
+            delete process.env.XDG_CACHE_HOME;
+          } else {
+            process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+          }
+          resetConnectedProvidersCache();
+          await rm(tempCacheHome, { recursive: true, force: true });
+        }
+      });
+    });
+  });
 });
 
 describe("bootstrap — subagent model resolution independence (A7)", () => {

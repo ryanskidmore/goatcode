@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "./logger";
-import { getGoatCodeCacheDir } from "./data-path";
+import { getGoatCodeCacheDir, getLegacyGoatCodeCacheDir } from "./data-path";
 
 const CONNECTED_PROVIDERS_FILE = "goatcode-connected-providers.json";
 const PROVIDER_MODELS_FILE = "goatcode-provider-models.json";
@@ -23,6 +23,37 @@ let memProviderModels: ProviderModelsData | null | undefined;
 
 function getCacheFilePath(filename: string): string {
   return join(getGoatCodeCacheDir(), filename);
+}
+
+function getLegacyCacheFilePath(filename: string): string {
+  return join(getLegacyGoatCodeCacheDir(), filename);
+}
+
+function ensureCacheFileMigrated(filename: string): void {
+  const targetPath = getCacheFilePath(filename);
+  if (existsSync(targetPath)) {
+    return;
+  }
+
+  const legacyPath = getLegacyCacheFilePath(filename);
+  if (!existsSync(legacyPath)) {
+    return;
+  }
+
+  ensureCacheDir();
+  try {
+    renameSync(legacyPath, targetPath);
+    log("[connected-providers-cache] Migrated cache file from legacy directory", {
+      from: legacyPath,
+      to: targetPath,
+    });
+  } catch (error) {
+    log("[connected-providers-cache] Failed cache migration from legacy directory", {
+      from: legacyPath,
+      to: targetPath,
+      error: String(error),
+    });
+  }
 }
 
 function ensureCacheDir(): void {
@@ -54,6 +85,8 @@ function writeJsonAtomically(filePath: string, payload: unknown): void {
  */
 export function readConnectedProviders(): string[] | null {
   if (memConnected !== undefined) return memConnected;
+
+  ensureCacheFileMigrated(CONNECTED_PROVIDERS_FILE);
 
   const filePath = getCacheFilePath(CONNECTED_PROVIDERS_FILE);
   if (!existsSync(filePath)) {
@@ -110,6 +143,8 @@ export function hasConnectedProvidersCache(): boolean {
  */
 export function readProviderModels(): ProviderModelsData | null {
   if (memProviderModels !== undefined) return memProviderModels;
+
+  ensureCacheFileMigrated(PROVIDER_MODELS_FILE);
 
   const filePath = getCacheFilePath(PROVIDER_MODELS_FILE);
   if (!existsSync(filePath)) {

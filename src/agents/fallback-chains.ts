@@ -129,3 +129,36 @@ export function buildCustomFallbackChain(models: string | string[]): FallbackEnt
     return { providers: ["opencode"], model: m };
   });
 }
+
+function uniqueFallbackEntries(entries: FallbackEntry[]): FallbackEntry[] {
+  const seen = new Set<string>();
+  const result: FallbackEntry[] = [];
+  for (const entry of entries) {
+    const key = `${entry.providers.join("|")}/${entry.model}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(entry);
+  }
+  return result;
+}
+
+export function mergeFallbackChains(input: {
+  defaults: FallbackEntry[];
+  overrides?: string | string[];
+  mode?: "replace" | "append" | "prepend";
+}): FallbackEntry[] {
+  const overrideEntries = input.overrides ? buildCustomFallbackChain(input.overrides) : [];
+  if (overrideEntries.length === 0) {
+    return [...input.defaults];
+  }
+
+  const mode = input.mode ?? "replace";
+  if (mode === "append") {
+    return uniqueFallbackEntries([...input.defaults, ...overrideEntries]);
+  }
+  if (mode === "prepend") {
+    return uniqueFallbackEntries([...overrideEntries, ...input.defaults]);
+  }
+
+  return uniqueFallbackEntries([...overrideEntries]);
+}

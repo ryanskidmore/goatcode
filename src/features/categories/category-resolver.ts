@@ -23,6 +23,8 @@ export class CategoryResolver {
       variant: override.variant ?? baseConfig.variant,
       description: override.description ?? baseConfig.description,
       prompt_append: override.prompt_append ?? baseConfig.prompt_append,
+      fallback_models: override.fallback_models ?? baseConfig.fallback_models,
+      fallback_mode: override.fallback_mode ?? baseConfig.fallback_mode,
     };
   }
 }

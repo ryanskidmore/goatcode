@@ -1,15 +1,29 @@
-import { describe, expect, test, mock, afterAll } from "bun:test";
+import { describe, expect, test, mock, afterAll, beforeEach } from "bun:test";
 import type { OpenCodeContext } from "../../types/plugin";
+import { readConnectedProviders } from "../../shared/connected-providers-cache";
 import type { BackgroundTask } from "./types";
 
+const spawnBackgroundSessionMock = mock(async () => ({ sessionId: "ses_child_123" }));
+
 mock.module("./spawner", () => ({
-  spawnBackgroundSession: mock(async () => ({ sessionId: "ses_child_123" })),
+  spawnBackgroundSession: spawnBackgroundSessionMock,
+}));
+
+mock.module("../../shared/connected-providers-cache", () => ({
+  readConnectedProviders: mock(() => null),
 }));
 
 const { BackgroundAgentManager } = await import("./manager");
 
 afterAll(() => {
   mock.restore();
+});
+
+beforeEach(() => {
+  spawnBackgroundSessionMock.mockClear();
+  spawnBackgroundSessionMock.mockImplementation(async () => ({ sessionId: "ses_child_123" }));
+  (readConnectedProviders as unknown as ReturnType<typeof mock>).mockClear();
+  (readConnectedProviders as unknown as ReturnType<typeof mock>).mockImplementation(() => null);
 });
 
 function createMockCtx(opts?: { messages?: unknown[] }): OpenCodeContext {
@@ -25,6 +39,16 @@ function createMockCtx(opts?: { messages?: unknown[] }): OpenCodeContext {
       },
     },
   } as unknown as OpenCodeContext;
+}
+
+function setSpawnerSequence(sessionIds: string[]) {
+  spawnBackgroundSessionMock.mockImplementation(async () => {
+    const next = sessionIds.shift();
+    if (!next) {
+      throw new Error("No more mocked session IDs");
+    }
+    return { sessionId: next };
+  });
 }
 
 async function waitForSessionId(task: BackgroundTask, maxAttempts = 20): Promise<string> {
@@ -233,7 +257,119 @@ describe("BackgroundAgentManager", () => {
     //#then
     const latest = manager.get(task.id);
     expect(latest?.status).toBe("failed");
-    expect(latest?.error).toBe("Rate limit exceeded");
+    expect(latest?.error).toContain("Rate limit exceeded");
+  });
+
+  test("#when quota exhaustion occurs #then retries with next-provider fallback model", async () => {
+    //#given
+    setSpawnerSequence(["ses_child_initial", "ses_child_retry"]);
+    (readConnectedProviders as unknown as ReturnType<typeof mock>).mockImplementation(() => [
+      "openai",
+      "anthropic",
+    ]);
+    const manager = new BackgroundAgentManager();
+    const ctx = createMockCtx({ messages: [] });
+
+    const task = await manager.launch(ctx, {
+      id: "task_quota_retry",
+      prompt: "run deep validation",
+      model: "openai/gpt-5.3-codex",
+      fallbackChain: [
+        { providers: ["openai"], model: "gpt-5.3-codex" },
+        { providers: ["anthropic"], model: "claude-opus-4-6" },
+      ],
+    });
+
+    await waitForSessionId(task);
+    const originalSessionId = task.sessionId;
+
+    //#when
+    await manager.handleSessionError("ses_child_initial", "insufficient quota", {
+      error: { statusCode: 429, message: "insufficient quota" },
+      model: "openai/gpt-5.3-codex",
+    });
+
+    // Wait until the fallback-spawned session is visible on the task.
+    await waitForSessionId(task, 50);
+
+    //#then
+    expect(task.status).toBe("running");
+    expect(task.retryCount).toBe(1);
+    expect(task.model).toBe("anthropic/claude-opus-4-6");
+    expect(task.sessionId).not.toBe(originalSessionId);
+    expect(task.attemptedModels).toContain("openai/gpt-5.3-codex");
+    expect(task.attemptedModels).toContain("anthropic/claude-opus-4-6");
+    expect(spawnBackgroundSessionMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("#when fallback candidates are exhausted #then fails without infinite retries", async () => {
+    //#given
+    setSpawnerSequence(["ses_child_1", "ses_child_2", "ses_child_3", "ses_child_4", "ses_child_5"]);
+    const manager = new BackgroundAgentManager();
+    const ctx = createMockCtx({ messages: [] });
+
+    const task = await manager.launch(ctx, {
+      id: "task_retry_exhausted",
+      prompt: "execute delegated work",
+      model: "openai/gpt-5.3-codex",
+      fallbackChain: [{ providers: ["openai"], model: "gpt-5.3-codex" }],
+    });
+
+    await waitForSessionId(task);
+
+    //#when
+    await manager.handleSessionError("ses_child_1", "quota exceeded", {
+      error: { message: "quota exceeded" },
+      model: "openai/gpt-5.3-codex",
+    });
+
+    //#then
+    expect(task.status).toBe("failed");
+    expect(task.error).toContain("no eligible fallback model available");
+    expect(task.error).toContain("retries_attempted");
+    expect(task.error).toContain("attempted_models");
+    expect(task.error).toContain("fallback_chain");
+    expect(task.retryCount).toBe(0);
+    // Should not schedule a second launch when no alternative model exists.
+    expect(spawnBackgroundSessionMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("#when connected-provider cache excludes all fallbacks #then manager still attempts disconnected fallback models", async () => {
+    //#given
+    setSpawnerSequence(["ses_child_primary", "ses_child_fallback"]);
+    (readConnectedProviders as unknown as ReturnType<typeof mock>).mockImplementation(() => [
+      "openai",
+    ]);
+    const manager = new BackgroundAgentManager();
+    const ctx = createMockCtx({ messages: [] });
+
+    const task = await manager.launch(ctx, {
+      id: "task_disconnected_fallback_attempt",
+      prompt: "run delegated analysis",
+      model: "openai/gpt-5.3-codex",
+      fallbackChain: [
+        { providers: ["openai"], model: "gpt-5.3-codex" },
+        { providers: ["anthropic"], model: "claude-opus-4-6" },
+      ],
+    });
+
+    await waitForSessionId(task);
+
+    //#when
+    await manager.handleSessionError("ses_child_primary", "subscription quota exceeded", {
+      error: { statusCode: 429, message: "subscription quota exceeded" },
+      model: "openai/gpt-5.3-codex",
+    });
+
+    await waitForSessionId(task, 50);
+
+    //#then
+    expect(task.status).toBe("running");
+    expect(task.model).toBe("anthropic/claude-opus-4-6");
+    expect(task.retryCount).toBe(1);
+    expect(task.attemptedModels).toContain("openai/gpt-5.3-codex");
+    expect(task.attemptedModels).toContain("anthropic/claude-opus-4-6");
+    expect(spawnBackgroundSessionMock).toHaveBeenCalledTimes(2);
   });
 
   test("#when handleSessionIdle receives unknown session #then it is ignored", async () => {

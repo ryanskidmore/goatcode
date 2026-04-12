@@ -47,6 +47,8 @@ export interface AgentOverrideConfig {
   disable?: boolean;
   /** Custom fallback model chain. */
   fallback_models?: string | string[];
+  /** How fallback_models should be applied against built-in defaults. */
+  fallback_mode?: "replace" | "append" | "prepend";
 }
 
 /** Agent contribution from a micro-plugin. */

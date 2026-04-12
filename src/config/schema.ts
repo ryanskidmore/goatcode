@@ -10,6 +10,7 @@ export const AgentOverrideConfigSchema = z.object({
   denied_tools: z.array(z.string()).optional(),
   disable: z.boolean().optional(),
   fallback_models: z.union([z.string(), z.array(z.string())]).optional(),
+  fallback_mode: z.enum(["replace", "append", "prepend"]).optional(),
 });
 
 export const CategoryConfigSchema = z.object({
@@ -17,6 +18,8 @@ export const CategoryConfigSchema = z.object({
   variant: z.string().optional(),
   description: z.string().optional(),
   prompt_append: z.string().optional(),
+  fallback_models: z.union([z.string(), z.array(z.string())]).optional(),
+  fallback_mode: z.enum(["replace", "append", "prepend"]).optional(),
 });
 
 export const AgentOverridesSchema = z.object({

@@ -47,11 +47,15 @@ describe("category-resolver", () => {
           writing: {
             model: "custom/writer-model",
             variant: "high",
+            fallback_models: ["openai/gpt-5.4-mini"],
+            fallback_mode: "append",
           },
         });
 
         expect(resolved?.model).toBe("custom/writer-model");
         expect(resolved?.variant).toBe("high");
+        expect(resolved?.fallback_models).toEqual(["openai/gpt-5.4-mini"]);
+        expect(resolved?.fallback_mode).toBe("append");
         expect(typeof resolved?.prompt_append).toBe("string");
       });
     });

@@ -12,6 +12,7 @@ import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks";
 import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools";
 import { initSessionManagerContext } from "./tools/session-manager";
 import { initLspClientContext } from "./tools/lsp/client";
+import { setDelegateCategoryOverrides } from "./tools/delegate-task/category-resolver";
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features";
 import { registerProjectSkillLoader } from "./features/skills";
 import { updateFromProviderList } from "./shared/connected-providers-cache";
@@ -89,6 +90,8 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     }
     config = fallback.config;
   }
+
+  setDelegateCategoryOverrides(config.categories);
 
   resetDiscovery();
   // Fire provider discovery in the background — don't block plugin init.

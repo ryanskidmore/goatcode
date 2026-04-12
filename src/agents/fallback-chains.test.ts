@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { buildCustomFallbackChain } from "./fallback-chains";
+import { buildCustomFallbackChain, mergeFallbackChains } from "./fallback-chains";
 
 describe("buildCustomFallbackChain", () => {
   describe("#given a single qualified model string", () => {
@@ -109,5 +109,47 @@ describe("A22 — fallback_models override reaches compositor", () => {
     const result = resolveModel({ fallbackChain: customChain, connectedProviders: ["opencode"] });
 
     expect(result?.model).toBe("opencode/my-custom-model");
+  });
+});
+
+describe("mergeFallbackChains", () => {
+  const defaults = [
+    { providers: ["anthropic", "opencode"], model: "claude-opus-4-6", variant: "max" as const },
+    { providers: ["openai", "opencode"], model: "gpt-5.4", variant: "medium" as const },
+  ];
+
+  it("replaces defaults by default when overrides are provided", () => {
+    const merged = mergeFallbackChains({
+      defaults,
+      overrides: ["google/gemini-3.1-pro"],
+    });
+
+    expect(merged).toEqual([{ providers: ["google", "opencode"], model: "gemini-3.1-pro" }]);
+  });
+
+  it("appends overrides when fallback_mode is append", () => {
+    const merged = mergeFallbackChains({
+      defaults,
+      overrides: ["google/gemini-3.1-pro"],
+      mode: "append",
+    });
+
+    expect(merged).toEqual([
+      ...defaults,
+      { providers: ["google", "opencode"], model: "gemini-3.1-pro" },
+    ]);
+  });
+
+  it("prepends overrides when fallback_mode is prepend", () => {
+    const merged = mergeFallbackChains({
+      defaults,
+      overrides: ["google/gemini-3.1-pro"],
+      mode: "prepend",
+    });
+
+    expect(merged).toEqual([
+      { providers: ["google", "opencode"], model: "gemini-3.1-pro" },
+      ...defaults,
+    ]);
   });
 });

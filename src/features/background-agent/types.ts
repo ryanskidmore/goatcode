@@ -6,6 +6,11 @@ export interface BackgroundTask {
   status: BackgroundTaskStatus;
   prompt: string;
   model: string;
+  title?: string;
+  fallbackChain?: Array<{ providers: string[]; model: string; variant?: string }>;
+  retryCount?: number;
+  attemptedModels?: string[];
+  concurrencyPoolKey?: string;
   createdAt: number;
   startedAt?: number;
   /** Timestamp when the background session was actually created (after spawn). */
