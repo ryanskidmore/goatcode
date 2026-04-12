@@ -71,7 +71,7 @@ describe("agent plugins", () => {
     });
 
     describe("#when checking tool-restricted agents", () => {
-      it("#then advisor has write, edit, bash, and task tools denied", () => {
+      it("#then advisor has write, edit, bash, and delegate_task denied", () => {
         const agent = advisorPlugin.agents!["advisor"];
         expect(agent.tools).toBeDefined();
         expect(agent.tools!["write"]).toBe(false);
@@ -79,8 +79,6 @@ describe("agent plugins", () => {
         expect(agent.tools!["bash"]).toBe(false);
         expect(agent.tools!["interactive_bash"]).toBe(false);
         expect(agent.tools!["delegate_task"]).toBe(false);
-        expect(agent.tools!["task_create"]).toBe(false);
-        expect(agent.tools!["task_update"]).toBe(false);
       });
     });
 

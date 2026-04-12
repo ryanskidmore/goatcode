@@ -25,7 +25,7 @@ describe("advisorPlugin", () => {
     });
 
     describe("#when inspecting tool restrictions", () => {
-      it("#then buildToolsMap('advisor') denies write, edit, bash, and task tools", () => {
+      it("#then buildToolsMap('advisor') denies write, edit, bash, and delegate_task", () => {
         const tools = buildToolsMap("advisor");
         expect(tools).toBeDefined();
         expect(tools!["write"]).toBe(false);
@@ -33,8 +33,6 @@ describe("advisorPlugin", () => {
         expect(tools!["bash"]).toBe(false);
         expect(tools!["interactive_bash"]).toBe(false);
         expect(tools!["delegate_task"]).toBe(false);
-        expect(tools!["task_create"]).toBe(false);
-        expect(tools!["task_update"]).toBe(false);
       });
 
       it("#then the agent config includes the tools map", () => {

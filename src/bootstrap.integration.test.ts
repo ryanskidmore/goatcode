@@ -39,7 +39,6 @@ const EXPECTED_TOOL_NAMES = [
   "grep",
   "glob",
   "hashline_edit",
-  "look_at",
   "skill",
   "task",
   "lsp_goto_definition",
@@ -54,12 +53,7 @@ const EXPECTED_TOOL_NAMES = [
   "background_cancel",
   "session_list",
   "session_read",
-  "session_search",
   "session_info",
-  "task_create",
-  "task_list",
-  "task_get",
-  "task_update",
 ] as const;
 
 const EXPECTED_AGENT_NAMES = [
