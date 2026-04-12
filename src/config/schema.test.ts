@@ -60,7 +60,12 @@ describe("validateConfig", () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.config.agents?.orchestrator?.fallback_mode).toBe("append");
+        expect(result.config.agents?.orchestrator?.fallback_models).toEqual([
+          "openai/gpt-5.4",
+          "anthropic/claude-opus-4-6",
+        ]);
         expect(result.config.categories?.deep?.fallback_mode).toBe("prepend");
+        expect(result.config.categories?.deep?.fallback_models).toBe("openai/gpt-5.3-codex");
       }
     });
   });

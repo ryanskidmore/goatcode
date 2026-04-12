@@ -134,7 +134,8 @@ function uniqueFallbackEntries(entries: FallbackEntry[]): FallbackEntry[] {
   const seen = new Set<string>();
   const result: FallbackEntry[] = [];
   for (const entry of entries) {
-    const key = `${entry.providers.join("|")}/${entry.model}`;
+    const providersKey = [...entry.providers].sort().join("|");
+    const key = `${providersKey}/${entry.model}/${entry.variant ?? ""}`;
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(entry);

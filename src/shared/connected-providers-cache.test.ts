@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { existsSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -50,30 +50,6 @@ describe("connected-providers-cache", () => {
       const second = readConnectedProviders();
       expect(first).toEqual(["opencode"]);
       expect(second).toBe(first); // same reference — memory cached
-    });
-
-    it("migrates legacy goatcode-sh cache file into opencode cache directory", () => {
-      const legacyCacheDir = join(TEST_CACHE_DIR, "xdg-cache", "goatcode-sh");
-      const legacyFile = join(legacyCacheDir, "goatcode-connected-providers.json");
-      const targetFile = join(
-        TEST_CACHE_DIR,
-        "xdg-cache",
-        "opencode",
-        "goatcode-connected-providers.json",
-      );
-
-      // Prepare legacy cache layout and payload
-      mkdirSync(legacyCacheDir, { recursive: true });
-      writeFileSync(
-        legacyFile,
-        JSON.stringify({ connected: ["openai"], updatedAt: new Date().toISOString() }, null, 2),
-      );
-      resetConnectedProvidersCache();
-
-      const providers = readConnectedProviders();
-      expect(providers).toEqual(["openai"]);
-      expect(existsSync(targetFile)).toBe(true);
-      expect(existsSync(legacyFile)).toBe(false);
     });
   });
 

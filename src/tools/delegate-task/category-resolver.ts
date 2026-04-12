@@ -4,17 +4,12 @@ import type { CategoryConfig as DelegateCategoryConfig } from "./types";
 import { mergeFallbackChains } from "../../agents/fallback-chains";
 
 const resolver = new CategoryResolver();
-let activeCategoryOverrides: CategoryOverrides | undefined;
-
-export function setDelegateCategoryOverrides(overrides: CategoryOverrides | undefined): void {
-  activeCategoryOverrides = overrides;
-}
 
 export function resolveCategory(
   name: string,
   configOverrides?: CategoryOverrides,
 ): DelegateCategoryConfig | undefined {
-  const effectiveOverrides = configOverrides ?? activeCategoryOverrides;
+  const effectiveOverrides = configOverrides;
   const base = DELEGATE_DEFAULT_CATEGORIES[name];
   if (!base) return undefined;
 

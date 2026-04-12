@@ -6,7 +6,8 @@ import { skillPlugin } from "./skill";
 // skill_mcp is intentionally excluded — it requires ctx.client MCP integration
 // that is not yet available in the tool execute context. Re-enable once implemented.
 // import { skillMcpPlugin } from "./skill-mcp"
-import { delegateTaskPlugin } from "./delegate-task";
+import { createDelegateTaskPlugin } from "./delegate-task";
+import type { CategoryOverrides } from "../types/config";
 import {
   lspGotoDefinitionPlugin,
   lspFindReferencesPlugin,
@@ -19,23 +20,29 @@ import { astGrepSearchPlugin, astGrepReplacePlugin } from "./ast-grep";
 import { backgroundOutputPlugin, backgroundCancelPlugin } from "./background-task";
 import { sessionListPlugin, sessionReadPlugin, sessionInfoPlugin } from "./session-manager";
 
-export const BUILTIN_TOOL_PLUGINS: PluginDefinition[] = [
-  grepPlugin,
-  globPlugin,
-  hashlineEditPlugin,
-  skillPlugin,
-  delegateTaskPlugin,
-  lspGotoDefinitionPlugin,
-  lspFindReferencesPlugin,
-  lspSymbolsPlugin,
-  lspDiagnosticsPlugin,
-  lspPrepareRenamePlugin,
-  lspRenamePlugin,
-  astGrepSearchPlugin,
-  astGrepReplacePlugin,
-  backgroundOutputPlugin,
-  backgroundCancelPlugin,
-  sessionListPlugin,
-  sessionReadPlugin,
-  sessionInfoPlugin,
-];
+export function createBuiltinToolPlugins(
+  getCategoryOverrides?: () => CategoryOverrides | undefined,
+): PluginDefinition[] {
+  return [
+    grepPlugin,
+    globPlugin,
+    hashlineEditPlugin,
+    skillPlugin,
+    createDelegateTaskPlugin(getCategoryOverrides),
+    lspGotoDefinitionPlugin,
+    lspFindReferencesPlugin,
+    lspSymbolsPlugin,
+    lspDiagnosticsPlugin,
+    lspPrepareRenamePlugin,
+    lspRenamePlugin,
+    astGrepSearchPlugin,
+    astGrepReplacePlugin,
+    backgroundOutputPlugin,
+    backgroundCancelPlugin,
+    sessionListPlugin,
+    sessionReadPlugin,
+    sessionInfoPlugin,
+  ];
+}
+
+export const BUILTIN_TOOL_PLUGINS: PluginDefinition[] = createBuiltinToolPlugins();

@@ -27,6 +27,8 @@ export async function withToolTimeout<T>(
   });
 
   try {
+    // Timeout is caller-visible only. The underlying work promise is not forcibly
+    // cancelled here because most tool handlers do not expose cooperative abort hooks.
     return await Promise.race([work, timeoutPromise]);
   } finally {
     if (timer) clearTimeout(timer);

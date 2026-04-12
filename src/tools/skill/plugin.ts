@@ -29,7 +29,11 @@ const skillTool = tool({
       ),
   },
   async execute(args: SkillArgs) {
-    return withToolTimeout("skill", DEFAULT_TOOL_TIMEOUT_MS, Promise.resolve(executeSkill(args)));
+    return withToolTimeout(
+      "skill",
+      DEFAULT_TOOL_TIMEOUT_MS,
+      Promise.resolve().then(() => executeSkill(args)),
+    );
   },
 });
 

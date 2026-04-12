@@ -1,5 +1,7 @@
 export type BackgroundTaskStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
+export type FallbackChainEntry = { providers: string[]; model: string; variant?: string };
+
 export interface BackgroundTask {
   id: string;
   sessionId?: string;
@@ -7,7 +9,7 @@ export interface BackgroundTask {
   prompt: string;
   model: string;
   title?: string;
-  fallbackChain?: Array<{ providers: string[]; model: string; variant?: string }>;
+  fallbackChain?: FallbackChainEntry[];
   retryCount?: number;
   attemptedModels?: string[];
   concurrencyPoolKey?: string;
@@ -36,7 +38,7 @@ export interface LaunchInput {
   model: string;
   parentSessionID?: string;
   title?: string;
-  fallbackChain?: Array<{ providers: string[]; model: string; variant?: string }>;
+  fallbackChain?: FallbackChainEntry[];
   /** Delegation depth of the child task. Used for hierarchical concurrency pooling. */
   delegationDepth?: number;
 }
