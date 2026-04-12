@@ -12,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export const lspRenameTool: ToolDefinition = buildTool({
+  name: TOOL_NAME,
   description: "Rename symbol across entire workspace. APPLIES changes to all files.",
   args: lspRenameArgsSchema.shape as unknown as ToolDefinition["args"],
   execute: async (args, ctx) => {

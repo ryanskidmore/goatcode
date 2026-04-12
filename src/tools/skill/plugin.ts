@@ -2,6 +2,7 @@ import { tool } from "@opencode-ai/plugin";
 import { definePlugin } from "../../plugin-api/define-plugin";
 import { executeSkill } from "./handler";
 import type { SkillArgs } from "./types";
+import { DEFAULT_TOOL_TIMEOUT_MS, withToolTimeout } from "../tool-timeout";
 
 const SKILL_DESCRIPTION =
   "Load a skill or execute a slash command to get detailed instructions for a specific task.\n\n" +
@@ -28,7 +29,7 @@ const skillTool = tool({
       ),
   },
   async execute(args: SkillArgs) {
-    return executeSkill(args);
+    return withToolTimeout("skill", DEFAULT_TOOL_TIMEOUT_MS, Promise.resolve(executeSkill(args)));
   },
 });
 

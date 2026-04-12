@@ -92,6 +92,7 @@ export async function executeGrep(
 
 export function createGrepTool(runner?: GrepCommandRunner): ToolDefinition {
   return buildTool({
+    name: "grep",
     description:
       "Fast content search tool with safety limits (60s timeout, 256KB output). " +
       'Searches file contents using regular expressions. Supports full regex syntax (eg. "log.*Error", "function\\s+\\w+", etc.). ' +

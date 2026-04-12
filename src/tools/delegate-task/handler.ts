@@ -121,6 +121,8 @@ export function createTaskTool(
   const contextGetter = getStoredContext ?? (() => undefined);
 
   return buildTool({
+    name: "delegate_task",
+    timeoutMs: 0, // No timeout — sync tasks run for minutes; background tasks return immediately but depth check is async
     description: [
       "Delegate a task to a category-based agent.",
       `Available categories: ${categoryListForDescription}.`,

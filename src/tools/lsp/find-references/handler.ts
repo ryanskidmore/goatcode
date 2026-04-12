@@ -12,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export const lspFindReferencesTool: ToolDefinition = buildTool({
+  name: TOOL_NAME,
   description: "Find ALL usages/references of a symbol across the entire workspace.",
   args: lspFindReferencesArgsSchema.shape as unknown as ToolDefinition["args"],
   execute: async (args, ctx) => {

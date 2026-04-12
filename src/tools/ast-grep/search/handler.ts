@@ -81,6 +81,7 @@ export async function executeAstGrepSearch(
 
 export function createAstGrepSearchTool(runner?: CommandRunner): ToolDefinition {
   return buildTool({
+    name: "ast_grep_search",
     description:
       "Search code patterns across filesystem using AST-aware matching. Supports 25 languages. " +
       "Use meta-variables: $VAR (single node), $$$ (multiple nodes). IMPORTANT: Patterns must be complete AST nodes (valid code). " +

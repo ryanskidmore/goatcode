@@ -3,6 +3,7 @@ import { definePlugin } from "../../../plugin-api/define-plugin";
 import { getSessionManagerContext } from "../client-context";
 import { handleSessionRead } from "./handler";
 import type { SessionReadArgs } from "./types";
+import { DEFAULT_TOOL_TIMEOUT_MS, withToolTimeout } from "../../tool-timeout";
 
 const SESSION_READ_DESCRIPTION = `Read messages and history from an OpenCode session.
 
@@ -39,7 +40,7 @@ const sessionReadTool = tool({
   },
   async execute(args: SessionReadArgs) {
     const ctx = getSessionManagerContext();
-    return handleSessionRead(args, ctx);
+    return withToolTimeout("session_read", DEFAULT_TOOL_TIMEOUT_MS, handleSessionRead(args, ctx));
   },
 });
 

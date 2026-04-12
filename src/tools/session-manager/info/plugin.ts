@@ -3,6 +3,7 @@ import { definePlugin } from "../../../plugin-api/define-plugin";
 import { getSessionManagerContext } from "../client-context";
 import { handleSessionInfo } from "./handler";
 import type { SessionInfoArgs } from "./types";
+import { DEFAULT_TOOL_TIMEOUT_MS, withToolTimeout } from "../../tool-timeout";
 
 const SESSION_INFO_DESCRIPTION = `Get metadata and statistics about an OpenCode session.
 
@@ -27,7 +28,7 @@ const sessionInfoTool = tool({
   },
   async execute(args: SessionInfoArgs) {
     const ctx = getSessionManagerContext();
-    return handleSessionInfo(args, ctx);
+    return withToolTimeout("session_info", DEFAULT_TOOL_TIMEOUT_MS, handleSessionInfo(args, ctx));
   },
 });
 

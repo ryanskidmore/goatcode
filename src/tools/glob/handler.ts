@@ -62,6 +62,7 @@ export async function executeGlob(
 
 export function createGlobTool(scanner?: GlobScanner): ToolDefinition {
   return buildTool({
+    name: "glob",
     description:
       "Fast file pattern matching tool with safety limits (60s timeout, 100 file limit). " +
       'Supports glob patterns like "**/*.js" or "src/**/*.ts". ' +
