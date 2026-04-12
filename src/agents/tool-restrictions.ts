@@ -30,33 +30,19 @@ const ALL_KNOWN_TOOLS = [
   // GoatCode custom tools
   "hashline_edit",
   "interactive_bash",
-  "look_at",
   "delegate_task",
   "background_output",
   "background_cancel",
   "session_list",
   "session_read",
-  "session_search",
   "session_info",
   "skill",
   "skill_mcp",
-  "task_create",
-  "task_list",
-  "task_get",
-  "task_update",
 ];
 
 export const AGENT_TOOL_RESTRICTIONS: Record<string, ToolRestriction> = {
   advisor: {
-    denied: [
-      "write",
-      "edit",
-      "bash",
-      "interactive_bash",
-      "delegate_task",
-      "task_create",
-      "task_update",
-    ],
+    denied: ["write", "edit", "bash", "interactive_bash", "delegate_task"],
   },
   explorer: {
     allowed: [
@@ -70,7 +56,6 @@ export const AGENT_TOOL_RESTRICTIONS: Record<string, ToolRestriction> = {
       "lsp_prepare_rename",
       "lsp_rename",
       "ast_grep_search",
-      "look_at",
       "todowrite",
     ],
   },

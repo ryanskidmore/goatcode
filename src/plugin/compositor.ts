@@ -3,7 +3,7 @@ import type { AggregatedPlugins, PluginHookHandler } from "../types/plugin";
 import { log } from "../shared/logger";
 import { readConnectedProviders } from "../shared/connected-providers-cache";
 import { resolveModel } from "../shared/model-resolution-pipeline";
-import { getFallbackChain, buildCustomFallbackChain } from "../agents/fallback-chains";
+import { getFallbackChain, mergeFallbackChains } from "../agents/fallback-chains";
 import { HOOK_EVENT_NAMES } from "../types/hook";
 import { getBuiltinSkillsDir } from "../features/skills";
 import type { GoatCodeConfig } from "../types/config";
@@ -82,10 +82,12 @@ export function compose(
         const agentConfig = input.agent[name];
         if (!agentConfig) continue;
 
-        const customModels = agentOverrides?.[name as keyof typeof agentOverrides]?.fallback_models;
-        const chain = customModels
-          ? buildCustomFallbackChain(customModels)
-          : getFallbackChain(name);
+        const overrideConfig = agentOverrides?.[name as keyof typeof agentOverrides];
+        const chain = mergeFallbackChains({
+          defaults: getFallbackChain(name),
+          overrides: overrideConfig?.fallback_models,
+          mode: overrideConfig?.fallback_mode,
+        });
         const resolved = resolveModel({
           fallbackChain: chain,
           connectedProviders: connected,

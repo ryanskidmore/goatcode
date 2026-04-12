@@ -39,7 +39,6 @@ const EXPECTED_TOOL_NAMES = [
   "grep",
   "glob",
   "hashline_edit",
-  "look_at",
   "skill",
   "task",
   "lsp_goto_definition",
@@ -54,12 +53,7 @@ const EXPECTED_TOOL_NAMES = [
   "background_cancel",
   "session_list",
   "session_read",
-  "session_search",
   "session_info",
-  "task_create",
-  "task_list",
-  "task_get",
-  "task_update",
 ] as const;
 
 const EXPECTED_AGENT_NAMES = [
@@ -295,6 +289,49 @@ describe("bootstrap — agent fallback_models override (A22)", () => {
 
           // Unqualified → providers:["opencode"]; opencode is connected → resolves to opencode/my-custom-model.
           expect(input.agent?.orchestrator?.model).toBe("opencode/my-custom-model");
+        } finally {
+          if (previousXdgCacheHome === undefined) {
+            delete process.env.XDG_CACHE_HOME;
+          } else {
+            process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+          }
+          resetConnectedProvidersCache();
+          await rm(tempCacheHome, { recursive: true, force: true });
+        }
+      });
+    });
+  });
+
+  describe("#given agents.orchestrator.fallback_mode is append", () => {
+    describe("#when bootstrap runs with anthropic connected and openai disconnected", () => {
+      it("#then default fallback chain remains active before appended custom fallback", async () => {
+        const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+        const tempCacheHome = await mkdtemp(join(tmpdir(), "goatcode-bootstrap-fallback-append-"));
+        process.env.XDG_CACHE_HOME = tempCacheHome;
+        const { writeConnectedProviders, resetConnectedProvidersCache } =
+          await import("./shared/connected-providers-cache");
+        writeConnectedProviders(["anthropic"]);
+
+        loadConfigImpl = async () => ({
+          agents: {
+            orchestrator: {
+              fallback_models: ["openai/gpt-5.4"],
+              fallback_mode: "append",
+            },
+          },
+        });
+        globalThis.structuredClone = passthroughStructuredClone;
+
+        try {
+          const hooks = await bootstrap(createBootstrapContext());
+          type ConfigInput = Parameters<NonNullable<typeof hooks.config>>[0];
+          const input = { agent: {} } as ConfigInput;
+          if (!hooks.config) throw new Error("Expected hooks.config to be defined");
+          await hooks.config(input);
+
+          // Anthropic is connected, so append mode should preserve default head entry.
+          expect(input.agent?.orchestrator?.model).toBe("anthropic/claude-opus-4-6");
+          expect(input.agent?.orchestrator?.["variant"]).toBe("max");
         } finally {
           if (previousXdgCacheHome === undefined) {
             delete process.env.XDG_CACHE_HOME;

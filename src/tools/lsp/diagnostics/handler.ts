@@ -12,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export const lspDiagnosticsTool: ToolDefinition = buildTool({
+  name: TOOL_NAME,
   description:
     "Get errors, warnings, hints from language server BEFORE running build. For directories, provide 'extension' parameter (e.g., extension=\".ts\").",
   args: lspDiagnosticsArgsSchema.shape as unknown as ToolDefinition["args"],

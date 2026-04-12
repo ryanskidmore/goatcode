@@ -19,6 +19,10 @@ export interface CategoryConfig {
   description?: string;
   /** Additional system prompt text appended for this category. */
   prompt_append?: string;
+  /** Custom fallback model chain. */
+  fallback_models?: string | string[];
+  /** How fallback_models should be applied against built-in defaults. */
+  fallback_mode?: "replace" | "append" | "prepend";
 }
 
 /** Available category with resolved metadata. */

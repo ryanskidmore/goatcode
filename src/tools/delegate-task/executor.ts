@@ -114,6 +114,7 @@ export async function executeBackground(
         category: input.category,
         subagent_type: subagent,
         description: input.description,
+        prompt: input.prompt,
         ...(deps.messageID ? { parentMessageId: deps.messageID } : {}),
         ...(deps.messageID ? { parent_message_id: deps.messageID } : {}),
         ...(config.model ? { model: config.model } : {}),
@@ -305,7 +306,12 @@ export async function executeSync(
   // session.idle event fired on completion is caught and resolves the
   // waitForCompletion() promise below.
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
-  manager.trackSyncSession(sessionId, taskId, ctx, config.model, deps.delegationDepth ?? 0);
+  manager.trackSyncSession(sessionId, taskId, ctx, config.model, deps.delegationDepth ?? 0, {
+    prompt: input.prompt,
+    parentSessionID: deps.sessionID,
+    title: input.description,
+    fallbackChain: config.fallback_chain,
+  });
 
   // Resolve model and send prompt.
   const basePrompt = buildPromptWithCategoryContext(input.prompt, config);

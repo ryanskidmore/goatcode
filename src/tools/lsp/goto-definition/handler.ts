@@ -12,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export const lspGotoDefinitionTool: ToolDefinition = buildTool({
+  name: TOOL_NAME,
   description: "Jump to symbol definition. Find WHERE something is defined.",
   args: lspGotoDefinitionArgsSchema.shape as unknown as ToolDefinition["args"],
   execute: async (args, ctx) => {

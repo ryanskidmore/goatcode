@@ -186,6 +186,39 @@ describe("resolveCategory", () => {
       });
     });
 
+    describe("#when resolving deep category", () => {
+      it("#then includes delegate fallback_chain entries", () => {
+        const config = resolveCategory("deep");
+        expect(config?.model).toBe("gpt-5.3-codex");
+        expect(Array.isArray(config?.fallback_chain)).toBe(true);
+        expect(config?.fallback_chain?.length).toBeGreaterThan(0);
+        expect(config?.fallback_chain?.[0]).toEqual(
+          expect.objectContaining({
+            model: "gpt-5.3-codex",
+            providers: expect.arrayContaining(["openai"]),
+          }),
+        );
+      });
+
+      it("#then applies category fallback_models with append mode", () => {
+        const config = resolveCategory("deep", {
+          deep: {
+            fallback_models: ["google/gemini-3.1-pro"],
+            fallback_mode: "append",
+          },
+        });
+
+        expect(config?.fallback_chain?.[0]).toEqual(
+          expect.objectContaining({
+            model: "gpt-5.3-codex",
+          }),
+        );
+        expect(config?.fallback_chain?.some((entry) => entry.model === "gemini-3.1-pro")).toBe(
+          true,
+        );
+      });
+    });
+
     describe("#when resolving an unknown category", () => {
       it("#then returns undefined", () => {
         const config = resolveCategory("nonexistent-category");
@@ -321,6 +354,7 @@ describe("createTaskTool", () => {
             metadata: expect.objectContaining({
               category: "quick",
               subagent_type: "worker",
+              prompt: "fix the typo in readme",
             }),
           }),
         );

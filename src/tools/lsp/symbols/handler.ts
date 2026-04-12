@@ -12,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export const lspSymbolsTool: ToolDefinition = buildTool({
+  name: TOOL_NAME,
   description:
     "Get symbols from file (document) or search across workspace. Use scope='document' for file outline, scope='workspace' for project-wide symbol search.",
   args: lspSymbolsArgsSchema.shape as unknown as ToolDefinition["args"],

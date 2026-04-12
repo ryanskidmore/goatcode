@@ -78,6 +78,7 @@ export async function executeAstGrepReplace(
 
 export function createAstGrepReplaceTool(runner?: CommandRunner): ToolDefinition {
   return buildTool({
+    name: "ast_grep_replace",
     description:
       "Replace code patterns across filesystem with AST-aware rewriting. " +
       "Dry-run by default. Use meta-variables in rewrite to preserve matched content. " +

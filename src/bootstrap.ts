@@ -9,7 +9,7 @@ import type { GoatCodeConfig } from "./types/config";
 import type { PluginDefinition } from "./types/plugin";
 import { BUILTIN_AGENT_PLUGINS } from "./agents/builtin-agents";
 import { BUILTIN_HOOK_PLUGINS } from "./hooks/builtin-hooks";
-import { BUILTIN_TOOL_PLUGINS } from "./tools/builtin-tools";
+import { createBuiltinToolPlugins } from "./tools/builtin-tools";
 import { initSessionManagerContext } from "./tools/session-manager";
 import { initLspClientContext } from "./tools/lsp/client";
 import { BUILTIN_FEATURE_PLUGINS } from "./features/builtin-features";
@@ -160,7 +160,8 @@ export async function bootstrap(ctx: OpenCodeContext): Promise<Hooks> {
     registry.register(plugin);
   }
 
-  for (const plugin of BUILTIN_TOOL_PLUGINS) {
+  const builtInToolPlugins = createBuiltinToolPlugins(() => config.categories);
+  for (const plugin of builtInToolPlugins) {
     registry.register(plugin);
   }
 

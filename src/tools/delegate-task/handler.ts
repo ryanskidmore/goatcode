@@ -1,5 +1,6 @@
 import type { ToolDefinition } from "@opencode-ai/plugin";
 import type { BackgroundAgentManager } from "../../runtime";
+import type { CategoryOverrides } from "../../types/config";
 import type { OpenCodeContext } from "../../types/plugin";
 import type { TaskInput, CategoryConfig } from "./types";
 import type { ExecutorDeps } from "./executor";
@@ -117,10 +118,14 @@ function resolveParentMessageID(
 export function createTaskTool(
   getManager: () => BackgroundAgentManager,
   getStoredContext?: () => OpenCodeContext | undefined,
+  getCategoryOverrides?: () => CategoryOverrides | undefined,
 ): ToolDefinition {
   const contextGetter = getStoredContext ?? (() => undefined);
+  const categoryOverridesGetter = getCategoryOverrides ?? (() => undefined);
 
   return buildTool({
+    name: "delegate_task",
+    timeoutMs: 0, // No timeout — sync tasks run for minutes; background tasks return immediately but depth check is async
     description: [
       "Delegate a task to a category-based agent.",
       `Available categories: ${categoryListForDescription}.`,
@@ -139,7 +144,9 @@ export function createTaskTool(
         session_id: args.session_id,
       };
 
-      const config = resolveCategory(input.category) as CategoryConfig | undefined;
+      const config = resolveCategory(input.category, categoryOverridesGetter()) as
+        | CategoryConfig
+        | undefined;
       if (!config) {
         const available = CATEGORY_NAMES.join(", ");
         log("[delegate-task] Unknown category", { category: input.category });

@@ -3,6 +3,7 @@ import { definePlugin } from "../../../plugin-api/define-plugin";
 import { getSessionManagerContext } from "../client-context";
 import { handleSessionList } from "./handler";
 import type { SessionListArgs } from "./types";
+import { DEFAULT_TOOL_TIMEOUT_MS, withToolTimeout } from "../../tool-timeout";
 
 const SESSION_LIST_DESCRIPTION = `List all OpenCode sessions with optional filtering.
 
@@ -39,7 +40,7 @@ const sessionListTool = tool({
   },
   async execute(args: SessionListArgs) {
     const ctx = getSessionManagerContext();
-    return handleSessionList(args, ctx);
+    return withToolTimeout("session_list", DEFAULT_TOOL_TIMEOUT_MS, handleSessionList(args, ctx));
   },
 });
 

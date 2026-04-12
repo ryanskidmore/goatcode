@@ -1,4 +1,5 @@
 import type { OpenCodeContext } from "../../types/plugin";
+import type { CategoryOverrides } from "../../types/config";
 import { definePlugin } from "../../plugin-api/define-plugin";
 import { getBackgroundAgent, initBackgroundAgent, resetBackgroundAgent } from "../../runtime";
 import { createTaskTool } from "./handler";
@@ -13,18 +14,25 @@ export function getDelegateTaskContext(): OpenCodeContext | undefined {
   return storedContext;
 }
 
-export default definePlugin({
-  name: "delegate-task",
-  version: "1.0.0",
-  setup(ctx) {
-    storedContext = ctx;
-    initBackgroundAgent();
-  },
-  teardown() {
-    storedContext = undefined;
-    resetBackgroundAgent();
-  },
-  tools: {
-    task: createTaskTool(getManagerOrThrow, () => storedContext),
-  },
-});
+export function createDelegateTaskPlugin(
+  getCategoryOverrides?: () => CategoryOverrides | undefined,
+) {
+  return definePlugin({
+    name: "delegate-task",
+    version: "1.0.0",
+    setup(ctx) {
+      storedContext = ctx;
+      initBackgroundAgent();
+    },
+    teardown() {
+      storedContext = undefined;
+      resetBackgroundAgent();
+    },
+    tools: {
+      task: createTaskTool(getManagerOrThrow, () => storedContext, getCategoryOverrides),
+    },
+  });
+}
+
+const delegateTaskPlugin = createDelegateTaskPlugin();
+export default delegateTaskPlugin;

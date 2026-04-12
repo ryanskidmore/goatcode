@@ -2,7 +2,6 @@ import { describe, it, expect } from "bun:test";
 import type { OpenCodeContext } from "../../types/plugin";
 import { handleSessionList } from "./list/handler";
 import { handleSessionRead } from "./read/handler";
-import { handleSessionSearch } from "./search/handler";
 import { handleSessionInfo } from "./info/handler";
 
 const SESSION_A_ID = "ses_aaa111";
@@ -196,42 +195,6 @@ describe("session_read", () => {
         const result = await handleSessionRead({ session_id: "ses_nonexistent" }, ctx);
 
         expect(result).toContain("Session not found");
-      });
-    });
-  });
-});
-
-describe("session_search", () => {
-  describe("#given two sessions with text content", () => {
-    describe("#when searching for a term that exists in session A", () => {
-      it("#then returns matching excerpts", async () => {
-        const ctx = createMockCtx();
-        const result = await handleSessionSearch({ query: "session manager" }, ctx);
-
-        expect(result).toContain("Found");
-        expect(result).toContain(SESSION_A_ID);
-      });
-    });
-
-    describe("#when searching within a specific session", () => {
-      it("#then only searches that session", async () => {
-        const ctx = createMockCtx();
-        const result = await handleSessionSearch(
-          { query: "session manager", session_id: SESSION_A_ID },
-          ctx,
-        );
-
-        expect(result).toContain(SESSION_A_ID);
-        expect(result).not.toContain(SESSION_B_ID);
-      });
-    });
-
-    describe("#when searching for a term that does not exist", () => {
-      it("#then returns no matches found", async () => {
-        const ctx = createMockCtx();
-        const result = await handleSessionSearch({ query: "xyzzy_nonexistent_term_12345" }, ctx);
-
-        expect(result).toBe("No matches found.");
       });
     });
   });

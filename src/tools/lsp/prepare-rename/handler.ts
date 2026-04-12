@@ -12,6 +12,7 @@ function errorMessage(error: unknown): string {
 }
 
 export const lspPrepareRenameTool: ToolDefinition = buildTool({
+  name: TOOL_NAME,
   description: "Check if rename is valid. Use BEFORE lsp_rename.",
   args: lspPrepareRenameArgsSchema.shape as unknown as ToolDefinition["args"],
   execute: async (args, ctx) => {

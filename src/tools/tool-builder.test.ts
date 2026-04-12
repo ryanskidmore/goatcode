@@ -29,4 +29,44 @@ describe("buildTool", () => {
       });
     });
   });
+
+  describe("#given a slow execute handler", () => {
+    describe("#when the default timeout elapses", () => {
+      it("#then returns a timeout error string", async () => {
+        const result = buildTool({
+          name: "slow-tool",
+          timeoutMs: 50,
+          description: "Slow tool",
+          args: {},
+          execute: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 80));
+            return "done";
+          },
+        });
+
+        await expect(result.execute({}, mockContext)).resolves.toContain(
+          "Error: Tool 'slow-tool' timed out after 50ms",
+        );
+      });
+    });
+  });
+
+  describe("#given a custom timeout override", () => {
+    describe("#when execute completes within the custom timeout", () => {
+      it("#then returns the tool result", async () => {
+        const result = buildTool({
+          name: "custom-timeout-tool",
+          timeoutMs: 200,
+          description: "Custom timeout tool",
+          args: {},
+          execute: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 80));
+            return "finished";
+          },
+        });
+
+        await expect(result.execute({}, mockContext)).resolves.toBe("finished");
+      });
+    });
+  });
 });
