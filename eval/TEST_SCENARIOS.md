@@ -524,7 +524,7 @@ Every scenario follows: **Given → When → Then** with edge cases. Organized t
 | FEATURES-48-BUILD_ORCHESTRATOR_PROMPT | Build orchestrator prompt | All agents/skills/categories available | `buildDynamicPrompt()` | Base prompt + agent table + skills + categories |
 | FEATURES-49-EMPTY_AGENTS | Empty agents | No agents registered | Build | Agent table section omitted |
 | FEATURES-50-EMPTY_SKILLS | Empty skills | No skills loaded | Build | Skills section omitted |
-| FEATURES-51-AGENT_DESCRIPTION_WITH_PIPE | Agent description with pipe | Description contains `|` | Agent table | Pipe escaped in markdown table |
+| FEATURES-51-AGENT_DESCRIPTION_WITH_PIPE | Agent description with pipe | Description contains `\|` | Agent table | Pipe escaped in markdown table |
 | FEATURES-52-SKILL_WITH_MULTILINE_DESCRIPTION | Skill with multiline description | Skill has newlines in description | Skill section | Collapsed to single line |
 | FEATURES-53-AGENT_DESCRIPTION_TRUNCATION | Agent description truncation | Long description with multiple sentences | Agent table | Truncated at first `.` |
 
@@ -670,13 +670,13 @@ Every scenario follows: **Given → When → Then** with edge cases. Organized t
 | Category | Scenario Count |
 |----------|---------------|
 | Agents | 27 (AGENTS-1 through AGENTS-27) |
-| Tools | 89 (TOOLS-1 through TOOLS-151) — heaviest section (23 tools) |
-| Hooks | 55 (HOOKS-1 through HOOKS-119) — 32 hooks |
-| Features | 31 (FEATURES-1 through FEATURES-59) — 6 features |
+| Tools | 151 (TOOLS-1 through TOOLS-151) — heaviest section (23 tools) |
+| Hooks | 119 (HOOKS-1 through HOOKS-119) — 32 hooks |
+| Features | 59 (FEATURES-1 through FEATURES-59) — 6 features |
 | Config | 13 (CONFIG-1 through CONFIG-13) |
 | Plugins | 11 (PLUGINS-1 through PLUGINS-11) |
 | Provider/Model | 17 (PROVIDERS-1 through PROVIDERS-17) |
 | Delegation | 8 (DELEGATION-1 through DELEGATION-8) |
 | CLI | 7 (CLI-1 through CLI-7) |
 | Cross-Cutting | 14 (CROSSCUTTING-1 through CROSSCUTTING-14) |
-| **Total** | **~272 scenarios** |
+| **Total** | **426 scenarios** |

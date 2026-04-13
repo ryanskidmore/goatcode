@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const evalDir = path.resolve(__dirname, "..");
 const repoDir = path.resolve(evalDir, "..");
 const scenariosPath = path.join(evalDir, "scenarios", "suite.json");
+const OPENCODE_TIMEOUT_MS = 120000;
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -21,10 +22,50 @@ function loadScenarios() {
   return JSON.parse(fs.readFileSync(scenariosPath, "utf8"));
 }
 
+function resolveWithinRepo(relPath, label) {
+  if (typeof relPath !== "string" || relPath.trim() === "") {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  if (path.isAbsolute(relPath)) {
+    throw new Error(`${label} must be relative: ${relPath}`);
+  }
+  const abs = path.resolve(repoDir, relPath);
+  const rel = path.relative(repoDir, abs);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) {
+    throw new Error(`${label} escapes repository root: ${relPath}`);
+  }
+  return abs;
+}
+
+function sanitizeString(value) {
+  let out = String(value);
+  const home = process.env.HOME || "";
+  const replacements = [
+    [repoDir, "<REPO_DIR>"],
+    [evalDir, "<EVAL_DIR>"],
+    [home, "<HOME>"],
+  ].filter(([from]) => from && from.length > 1);
+  for (const [from, to] of replacements.sort((a, b) => b[0].length - a[0].length)) {
+    out = out.split(from).join(to);
+  }
+  return out;
+}
+
+function sanitizePaths(value) {
+  if (typeof value === "string") return sanitizeString(value);
+  if (Array.isArray(value)) return value.map((v) => sanitizePaths(v));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, sanitizePaths(v)]),
+    );
+  }
+  return value;
+}
+
 function writeSetup(setup) {
   if (!setup || !Array.isArray(setup.files)) return;
   for (const file of setup.files) {
-    const abs = path.join(repoDir, file.path);
+    const abs = resolveWithinRepo(file.path, "setup.files.path");
     ensureDir(path.dirname(abs));
     fs.writeFileSync(abs, file.content || "", "utf8");
   }
@@ -76,13 +117,14 @@ function verify(checks, tools, text) {
   }
   if (checks.requiredToolResultContains && typeof checks.requiredToolResultContains === "object") {
     for (const [tool, vals] of Object.entries(checks.requiredToolResultContains)) {
-      const rec = tools.find((t) => t.name === tool);
-      if (!rec) {
+      const recs = tools.filter((t) => t.name === tool);
+      if (recs.length === 0) {
         fails.push(`missing tool output: ${tool}`);
         continue;
       }
       for (const v of vals) {
-        if (!rec.output.toLowerCase().includes(String(v).toLowerCase())) {
+        const needle = String(v).toLowerCase();
+        if (!recs.some((rec) => rec.output.toLowerCase().includes(needle))) {
           fails.push(`tool ${tool} output missing: ${v}`);
         }
       }
@@ -90,14 +132,16 @@ function verify(checks, tools, text) {
   }
   if (checks.requiredToolInputContains && typeof checks.requiredToolInputContains === "object") {
     for (const [tool, vals] of Object.entries(checks.requiredToolInputContains)) {
-      const rec = tools.find((t) => t.name === tool);
-      if (!rec) {
+      const recs = tools.filter((t) => t.name === tool);
+      if (recs.length === 0) {
         fails.push(`missing tool input: ${tool}`);
         continue;
       }
-      const inputString = JSON.stringify(rec.input || {});
       for (const v of vals) {
-        if (!inputString.toLowerCase().includes(String(v).toLowerCase())) {
+        const needle = String(v).toLowerCase();
+        if (
+          !recs.some((rec) => JSON.stringify(rec.input || {}).toLowerCase().includes(needle))
+        ) {
           fails.push(`tool ${tool} input missing: ${v}`);
         }
       }
@@ -105,7 +149,7 @@ function verify(checks, tools, text) {
   }
   if (checks.requireAssistantText && !text) fails.push("assistant text missing");
   if (checks.filesystem && checks.filesystem.path) {
-    const abs = path.join(repoDir, checks.filesystem.path);
+    const abs = resolveWithinRepo(checks.filesystem.path, "checks.filesystem.path");
     if (!fs.existsSync(abs)) {
       fails.push(`filesystem path missing: ${checks.filesystem.path}`);
     } else {
@@ -164,9 +208,12 @@ export default class OpenCodeEvalProvider {
     ];
 
     const run = spawnSync("opencode", cmd, {
+      // Workspace isolation per-scenario is deferred for now to avoid
+      // high-risk fixture/setup behavior changes in existing eval scenarios.
       cwd: repoDir,
       encoding: "utf8",
       maxBuffer: 30 * 1024 * 1024,
+      timeout: OPENCODE_TIMEOUT_MS,
     });
 
     const events = parseJsonEvents(run.stdout || "");
@@ -174,8 +221,14 @@ export default class OpenCodeEvalProvider {
     const text = collectText(events);
     const fails = verify(scenario.checks || {}, tools, text);
 
-    if (run.status !== 0) {
+    if (run.error) {
+      fails.push(`opencode spawn error: ${run.error.message}`);
+    }
+
+    if (typeof run.status === "number" && run.status !== 0) {
       fails.push(`opencode exit status ${run.status}`);
+    } else if (run.status === null && run.signal) {
+      fails.push(`opencode terminated by signal ${run.signal}`);
     }
 
     const report = {
@@ -184,6 +237,7 @@ export default class OpenCodeEvalProvider {
       failures: fails,
       command: `opencode ${cmd.join(" ")}`,
       exitStatus: run.status,
+      signal: run.signal || null,
       stderr: String(run.stderr || ""),
       tools,
       assistantText: text,
@@ -192,7 +246,7 @@ export default class OpenCodeEvalProvider {
     const runDir = path.join(evalDir, "artifacts", "runs", stamp());
     ensureDir(runDir);
     const reportPath = path.join(runDir, `${scenario.id}.json`);
-    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf8");
+    fs.writeFileSync(reportPath, JSON.stringify(sanitizePaths(report), null, 2), "utf8");
 
     return {
       output: `SCENARIO=${scenario.id}\nSTATUS=${report.status}\nFAILURES=${fails.length}`,
