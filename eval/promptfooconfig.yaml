@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
 
-description: "GoatCode local Phase 1 eval suite (real OpenCode provider calls)"
+description: "GoatCode local eval suite (real OpenCode provider calls)"
 
 prompts:
   - "Run scenario {{scenarioId}}"

@@ -42,7 +42,7 @@
   },
   {
     "id": "TOOLS-11-PATTERN_MATCHES_FILES",
-    "prompt": "Use glob to list markdown files at repo root and include TEST_SCENARIOS.md.",
+    "prompt": "Use glob to find eval/TEST_SCENARIOS.md and include that path in your output.",
     "checks": {
       "requiredToolCalls": ["glob"],
       "requiredToolResultContains": {
@@ -95,7 +95,7 @@
     "checks": {
       "requiredToolCalls": ["hashline_edit"],
       "requiredToolResultContains": {
-        "hashline_edit": ["File not found"]
+        "hashline_edit": ["Error:"]
       },
       "requireAssistantText": true
     }
@@ -112,7 +112,7 @@
   },
   {
     "id": "CROSSCUTTING-1-TASK_STORE_RESET",
-    "prompt": "Read TEST_PLAN.md and provide one sentence about test isolation.",
+    "prompt": "Read eval/TEST_SCENARIOS.md and provide one sentence summarizing how scenarios are organized.",
     "checks": {
       "requiredToolCalls": ["read"],
       "requireAssistantText": true

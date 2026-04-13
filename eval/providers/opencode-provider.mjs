@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const evalDir = path.resolve(__dirname, "..");
 const repoDir = path.resolve(evalDir, "..");
-const scenariosPath = path.join(evalDir, "scenarios", "phase1.json");
+const scenariosPath = path.join(evalDir, "scenarios", "suite.json");
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -121,9 +121,9 @@ function verify(checks, tools, text) {
   return fails;
 }
 
-export default class OpenCodePhase1Provider {
+export default class OpenCodeEvalProvider {
   constructor(opts) {
-    this.providerId = (opts && opts.id) || "opencode-phase1";
+    this.providerId = (opts && opts.id) || "opencode-eval";
   }
 
   id() {
@@ -135,7 +135,7 @@ export default class OpenCodePhase1Provider {
     if (!fs.existsSync(userCfg)) {
       return {
         output: "",
-        error: `Missing required OpenCode config: ${userCfg}. Configure it before running Phase 1 evals.`,
+        error: `Missing required OpenCode config: ${userCfg}. Configure it before running local evals.`,
       };
     }
 

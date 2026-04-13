@@ -1,0 +1,22 @@
+{
+  "scenarioId": "TOOLS-2-NO_MATCHES",
+  "status": "PASS",
+  "failures": [],
+  "command": "opencode run --format json --agent orchestrator --model openai/gpt-5.2 --dangerously-skip-permissions Use grep to search README.md for zzz_nonexistent_pattern_42 and report the output.",
+  "exitStatus": 0,
+  "stderr": "",
+  "tools": [
+    {
+      "name": "grep",
+      "output": "No matches found",
+      "input": {
+        "pattern": "zzz_nonexistent_pattern_42",
+        "include": "README.md",
+        "path": "/home/ryan/go/src/github.com/ryanskidmore/goatcode",
+        "output_mode": "content",
+        "head_limit": 50
+      }
+    }
+  ],
+  "assistantText": "No matches found for `zzz_nonexistent_pattern_42` in `README.md`."
+}

@@ -1,0 +1,22 @@
+{
+  "scenarioId": "TOOLS-1-PATTERN_MATCH_FOUND",
+  "status": "PASS",
+  "failures": [],
+  "command": "opencode run --format json --agent orchestrator --model openai/gpt-5.2 --dangerously-skip-permissions Use grep to find \"GoatCode\" in README.md and print one matching line.",
+  "exitStatus": 0,
+  "stderr": "",
+  "tools": [
+    {
+      "name": "grep",
+      "output": "/home/ryan/go/src/github.com/ryanskidmore/goatcode/README.md:1:![GoatCode Logo](./docs/header.png)",
+      "input": {
+        "pattern": "GoatCode",
+        "include": "README.md",
+        "path": "/home/ryan/go/src/github.com/ryanskidmore/goatcode",
+        "output_mode": "content",
+        "head_limit": 1
+      }
+    }
+  ],
+  "assistantText": "/home/ryan/go/src/github.com/ryanskidmore/goatcode/README.md:1:![GoatCode Logo](./docs/header.png)"
+}

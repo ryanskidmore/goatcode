@@ -1,0 +1,19 @@
+{
+  "scenarioId": "CLI-1-GOATCODE_INSTALL",
+  "status": "PASS",
+  "failures": [],
+  "command": "opencode run --format json --agent orchestrator --model openai/gpt-5.2 --dangerously-skip-permissions Use glob to list files in repo root and confirm package.json is present.",
+  "exitStatus": 0,
+  "stderr": "",
+  "tools": [
+    {
+      "name": "glob",
+      "output": "/home/ryan/go/src/github.com/ryanskidmore/goatcode/TEST_PLAN.md\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/TEST_SCENARIOS.md\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/package.json\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/README.md\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/AGENTS.md\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/opencode.json\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/bun.lock\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/tsconfig.json\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/CONTRIBUTING.md\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/test-setup.ts\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/bunfig.toml\n/home/ryan/go/src/github.com/ryanskidmore/goatcode/LICENSE",
+      "input": {
+        "pattern": "*",
+        "path": "/home/ryan/go/src/github.com/ryanskidmore/goatcode"
+      }
+    }
+  ],
+  "assistantText": "Repo root files (glob `*`):\n\n- AGENTS.md\n- CONTRIBUTING.md\n- LICENSE\n- README.md\n- TEST_PLAN.md\n- TEST_SCENARIOS.md\n- bun.lock\n- bunfig.toml\n- opencode.json\n- package.json\n- test-setup.ts\n- tsconfig.json\n\nConfirmed: `package.json` is present."
+}

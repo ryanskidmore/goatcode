@@ -1,6 +1,6 @@
-# GoatCode local evals (Phase 1)
+# GoatCode local evals
 
-This directory contains a **local-only** Phase 1 promptfoo eval suite that runs
+This directory contains a **local-only** promptfoo eval suite that runs
 real OpenCode provider calls through your existing user OpenCode config.
 
 ## Hard requirements
@@ -8,26 +8,26 @@ real OpenCode provider calls through your existing user OpenCode config.
 - Requires `~/.config/opencode/opencode.json`
 - Requires provider credentials configured in that OpenCode config
 - Uses real provider execution (`opencode run`) with no mocks/fakes
-- Not intended for CI in Phase 1
+- Not intended for CI
 
 ## Run
 
 From repo root:
 
 ```bash
-bun run eval:phase1
+bun run eval:suite
 ```
 
 or directly:
 
 ```bash
 cd eval
-npx promptfoo eval -c promptfooconfig.yaml -o artifacts/results/phase1-latest.json --max-concurrency 1
+npx promptfoo eval -c promptfooconfig.yaml -o artifacts/results/latest.json --max-concurrency 1 --no-cache
 ```
 
 ## Artifacts
 
-- Promptfoo summary output: `eval/artifacts/results/phase1-latest.json`
+- Promptfoo summary output: `eval/artifacts/results/latest.json`
 - Per-scenario execution logs: `eval/artifacts/runs/<timestamp>/<scenario-id>.json`
 
 Each per-scenario log includes:
@@ -37,7 +37,7 @@ Each per-scenario log includes:
 - filesystem side-effect checks (for mutating scenarios)
 - raw command and stderr snapshots
 
-## Phase 1 included scenarios
+## Included scenarios
 
 - AGENTS-12-ORCHESTRATOR_FULL_ACCESS
 - AGENTS-9-ADVISOR_ALLOWED_TOOLS

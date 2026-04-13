@@ -1,0 +1,46 @@
+{
+  "scenarioId": "TOOLS-29-REPLACE_LINE",
+  "status": "PASS",
+  "failures": [],
+  "command": "opencode run --format json --agent orchestrator --model openai/gpt-5.2 --dangerously-skip-permissions Use hashline_edit on eval/artifacts/tmp/mutate/replace-line.txt. First read file for LINE#HASH tags, then replace line 2 from beta to beta-updated.",
+  "exitStatus": 0,
+  "stderr": "",
+  "tools": [
+    {
+      "name": "read",
+      "output": "<path>/home/ryan/go/src/github.com/ryanskidmore/goatcode/eval/artifacts/tmp/mutate/replace-line.txt</path>\n<type>file</type>\n<content>\n1#JN|alpha\n2#NK|beta\n3#WB|gamma\n\n(End of file - total 3 lines)\n</content>\n\n[Directory Context: /home/ryan/go/src/github.com/ryanskidmore/goatcode/AGENTS.md]\n# Agent Reference\n\nGoatCode includes 7 specialized agents. Each agent is tuned for specific tasks and has unique capabilities and tool restrictions.\n\n## orchestrator\n\nThe main coordinator for all tasks. It analyzes user intent, builds a plan, and delegates work to specialists.\n\n- **When to use**: For any new task or complex multi-step project.\n- **Key Capabilities**: Intent analysis, task delegation, parallel execution management, and final verification.\n- **Example Prompt**: \"Analyze the user's request and break it down into atomic tasks for specialist agents.\"\n\n## deepworker\n\nAn autonomous worker designed for end-to-end execution of complex technical goals.\n\n- **When to use**: When you have a clear goal but the implementation steps are unknown or complex.\n- **Key Capabilities**: Codebase exploration, research, and implementation without constant supervision.\n- **Example Prompt**: \"Implement the new authentication flow including database migrations and API endpoints.\"\n\n## planbuilder\n\nA strategic planner that uses an interview mode to define project scope and requirements.\n\n- **When to use**: Before starting a large feature or refactor to ensure all requirements are clear.\n- **Key Capabilities**: Requirement gathering, ambiguity identification, and detailed plan generation.\n- **Example Prompt**: \"Interview the user to understand the requirements for the new plugin system.\"\n\n## advisor\n\nA read-only consultant for architecture, code review, and debugging advice.\n\n- **When to use**: When you need a second opinion on a design or help debugging a complex issue.\n- **Key Capabilities**: Architecture analysis, code review, and debugging strategy.\n- **Example Prompt**: \"Review this architectural proposal for potential security vulnerabilities.\"\n\n## researcher\n\nSpecializes in searching external documentation and internal codebases.\n\n- **When to use**: When you need to find how to use a specific library or find existing patterns in the code.\n- **Key Capabilities**: Documentation search, code pattern identification, and classification.\n- **Example Prompt**: \"Find the best practices for implementing JWT authentication in a Bun environment.\"\n\n## explorer\n\nA fast agent for codebase search and pattern matching using grep and glob tools.\n\n- **When to use**: For quick searches across the entire project.\n- **Key Capabilities**: Fast pattern matching, file discovery, and parallel tool execution.\n- **Example Prompt**: \"Find all occurrences of the 'PluginRegistry' class and its usages.\"\n\n## worker\n\nA general purpose executor for standard tasks and category-based delegation.\n\n- **When to use**: For standard tasks that don't require a specific specialist.\n- **Key Capabilities**: General code editing, file management, and tool usage.\n- **Example Prompt**: \"Update the version number in package.json and run the build script.\"\n\n\n---\nWorkflow Reminder: delegate based on rules; if mentioning a specialist, launch it in this same turn.",
+      "input": {
+        "filePath": "/home/ryan/go/src/github.com/ryanskidmore/goatcode/eval/artifacts/tmp/mutate/replace-line.txt",
+        "offset": 1,
+        "limit": 50
+      }
+    },
+    {
+      "name": "hashline_edit",
+      "output": "Applied 1 hashline edit(s) to /home/ryan/go/src/github.com/ryanskidmore/goatcode/eval/artifacts/tmp/mutate/replace-line.txt",
+      "input": {
+        "filePath": "/home/ryan/go/src/github.com/ryanskidmore/goatcode/eval/artifacts/tmp/mutate/replace-line.txt",
+        "edits": [
+          {
+            "op": "replace_line",
+            "pos": "2#NK",
+            "end": "",
+            "lines": [
+              "beta-updated"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "read",
+      "output": "<path>/home/ryan/go/src/github.com/ryanskidmore/goatcode/eval/artifacts/tmp/mutate/replace-line.txt</path>\n<type>file</type>\n<content>\n1#JN|alpha\n2#ZS|beta-updated\n3#WB|gamma\n\n(End of file - total 3 lines)\n</content>\n\n[Directory Context: /home/ryan/go/src/github.com/ryanskidmore/goatcode/AGENTS.md — see full AGENTS.md injected above]\n\n---\nWorkflow Reminder: delegate based on rules; if mentioning a specialist, launch it in this same turn.",
+      "input": {
+        "filePath": "/home/ryan/go/src/github.com/ryanskidmore/goatcode/eval/artifacts/tmp/mutate/replace-line.txt",
+        "offset": 1,
+        "limit": 20
+      }
+    }
+  ],
+  "assistantText": "Read `eval/artifacts/tmp/mutate/replace-line.txt` and replaced line `2#NK` from `beta` → `beta-updated`.\n\nVerified file now contains:\n- `1: alpha`\n- `2: beta-updated`\n- `3: gamma`"
+}
