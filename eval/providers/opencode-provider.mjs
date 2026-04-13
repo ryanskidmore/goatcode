@@ -246,13 +246,15 @@ export default class OpenCodeEvalProvider {
     const runDir = path.join(evalDir, "artifacts", "runs", stamp());
     ensureDir(runDir);
     const reportPath = path.join(runDir, `${scenario.id}.json`);
-    fs.writeFileSync(reportPath, JSON.stringify(sanitizePaths(report), null, 2), "utf8");
+    const sanitizedReport = sanitizePaths(report);
+    const sanitizedReportPath = sanitizeString(reportPath);
+    fs.writeFileSync(reportPath, JSON.stringify(sanitizedReport, null, 2), "utf8");
 
     return {
       output: `SCENARIO=${scenario.id}\nSTATUS=${report.status}\nFAILURES=${fails.length}`,
       metadata: {
-        reportPath,
-        report,
+        reportPath: sanitizedReportPath,
+        report: sanitizedReport,
       },
     };
   }

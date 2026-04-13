@@ -1,6 +1,6 @@
 # GoatCode Test Scenarios — Comprehensive Self-Executable Suite
 
-Every scenario follows: **Given → When → Then** with edge cases. Organized to match TEST_PLAN.md structure.
+Every scenario follows: **Given → When → Then** with edge cases. This file (`eval/TEST_SCENARIOS.md`) is the canonical scenario catalog.
 
 ---
 
