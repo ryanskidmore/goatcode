@@ -13,6 +13,63 @@ import { executeBackground, executeSync } from "./executor";
 import { CATEGORY_NAMES, MAX_DELEGATION_DEPTH } from "./constants";
 import { log } from "../../shared/logger";
 
+type DelegationBlockCode = "DEPTH_LOOKUP_FAILED" | "DEPTH_LIMIT_REACHED";
+
+type DelegationBlockDetails = {
+  code: DelegationBlockCode;
+  message: string;
+  currentDepth?: number;
+  maxDepth: number;
+  category: string;
+  subagentType: string;
+  runInBackground: boolean;
+  sessionID?: string;
+};
+
+function formatDelegationBlock(details: DelegationBlockDetails): string {
+  const lines = [
+    details.message,
+    "",
+    "<task_error>",
+    `code: ${details.code}`,
+    "retryable: false",
+    "recommended_action: execute_directly",
+    ...(typeof details.currentDepth === "number" ? [`current_depth: ${details.currentDepth}`] : []),
+    `max_depth: ${details.maxDepth}`,
+    `category: ${details.category}`,
+    `subagent_type: ${details.subagentType}`,
+    `run_in_background: ${details.runInBackground}`,
+    ...(details.sessionID
+      ? [`session_id: ${details.sessionID}`, `sessionId: ${details.sessionID}`]
+      : []),
+    "</task_error>",
+  ];
+
+  return lines.join("\n");
+}
+
+function emitDelegationBlockMetadata(
+  toolContext: Parameters<ToolDefinition["execute"]>[1],
+  details: DelegationBlockDetails,
+): void {
+  toolContext.metadata({
+    metadata: {
+      error_code: details.code,
+      retryable: false,
+      recommended_action: "execute_directly",
+      category: details.category,
+      subagent_type: details.subagentType,
+      run_in_background: details.runInBackground,
+      ...(typeof details.currentDepth === "number"
+        ? { current_depth: details.currentDepth, currentDepth: details.currentDepth }
+        : {}),
+      max_depth: details.maxDepth,
+      maxDepth: details.maxDepth,
+      ...(details.sessionID ? { session_id: details.sessionID, sessionId: details.sessionID } : {}),
+    },
+  });
+}
+
 /**
  * Pattern injected by the executor into child session prompts.
  * @see executor.ts injectDelegationDepth
@@ -159,22 +216,45 @@ export function createTaskTool(
       // --- Delegation depth enforcement ---
       const currentDepth = await extractDelegationDepth(client, currentSessionID);
       if (currentDepth === null) {
-        log("[delegate-task] Blocked: unable to determine delegation depth", {
+        const details: DelegationBlockDetails = {
+          code: "DEPTH_LOOKUP_FAILED",
+          message:
+            "Delegation blocked: unable to determine current delegation depth. Execute the work directly using your available tools instead of delegating.",
+          maxDepth: MAX_DELEGATION_DEPTH,
           category: input.category,
+          subagentType: input.subagent_type,
+          runInBackground: input.run_in_background,
+          sessionID: currentSessionID,
+        };
+        log("[delegate-task] Blocked: unable to determine delegation depth", {
+          ...details,
+          retryable: false,
+          recommendedAction: "execute_directly",
         });
-        return "Delegation blocked: unable to determine current delegation depth. Please retry or execute directly.";
+        emitDelegationBlockMetadata(toolContext, details);
+        return formatDelegationBlock(details);
       }
       if (currentDepth >= MAX_DELEGATION_DEPTH) {
-        log("[delegate-task] Blocked: delegation depth limit reached", {
+        const details: DelegationBlockDetails = {
+          code: "DEPTH_LIMIT_REACHED",
+          message:
+            `Delegation blocked: maximum depth (${MAX_DELEGATION_DEPTH}) reached. ` +
+            `Current depth: ${currentDepth}. ` +
+            `Execute the work directly using your available tools instead of delegating.`,
           currentDepth,
           maxDepth: MAX_DELEGATION_DEPTH,
           category: input.category,
+          subagentType: input.subagent_type,
+          runInBackground: input.run_in_background,
+          sessionID: currentSessionID,
+        };
+        log("[delegate-task] Blocked: delegation depth limit reached", {
+          ...details,
+          retryable: false,
+          recommendedAction: "execute_directly",
         });
-        return (
-          `Delegation blocked: maximum depth (${MAX_DELEGATION_DEPTH}) reached. ` +
-          `Current depth: ${currentDepth}. ` +
-          `Execute the work directly using your available tools instead of delegating.`
-        );
+        emitDelegationBlockMetadata(toolContext, details);
+        return formatDelegationBlock(details);
       }
 
       const manager = getManager();

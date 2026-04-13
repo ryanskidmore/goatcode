@@ -118,7 +118,7 @@ function makeMockToolContext(overrides: Record<string, unknown> = {}) {
   } as unknown as Parameters<ToolDefinition["execute"]>[1];
 }
 
-function makeMockClient() {
+function makeMockClient(opts?: { messages?: unknown[] }) {
   return {
     session: {
       create: mock(async () => ({
@@ -135,12 +135,24 @@ function makeMockClient() {
         },
       })),
       messages: mock(async () => ({
-        data: [
+        data: opts?.messages ?? [
           { role: "user", content: "test prompt" },
           { role: "assistant", content: "task result here" },
         ],
       })),
       delete: mock(async () => ({})),
+    },
+  };
+}
+
+function makeMockClientWithMessageFailure() {
+  const base = makeMockClient();
+  return {
+    session: {
+      ...base.session,
+      messages: mock(async () => {
+        throw new Error("session.messages failed");
+      }),
     },
   };
 }
@@ -289,6 +301,102 @@ describe("createTaskTool", () => {
         expect(result).toContain("Unknown category");
         expect(result).toContain("bogus");
         expect(result).toContain("visual-engineering");
+      });
+    });
+
+    describe("#when delegation is blocked by depth policy", () => {
+      it("#then returns structured DEPTH_LIMIT_REACHED and does not launch", async () => {
+        const bgManager = makeMockManager();
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const depthTwoClient = makeMockClient({
+          messages: [
+            { role: "user", content: "<!-- goatcode:delegation_depth=2 -->" },
+            { role: "assistant", content: "existing context" },
+          ],
+        });
+        const ctx = makeMockToolContext({
+          client: depthTwoClient,
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await bgTool.execute(
+          {
+            category: "quick",
+            subagent_type: "worker",
+            description: "blocked task",
+            prompt: "delegate this",
+            run_in_background: true,
+          },
+          ctx,
+        );
+
+        expect(result).toContain("Delegation blocked: maximum depth (2) reached.");
+        expect(result).toContain("<task_error>");
+        expect(result).toContain("code: DEPTH_LIMIT_REACHED");
+        expect(result).toContain("retryable: false");
+        expect(result).toContain("recommended_action: execute_directly");
+        expect(result).toContain("current_depth: 2");
+        expect(result).toContain("max_depth: 2");
+        expect(bgManager.launch).not.toHaveBeenCalled();
+        expect(events).toHaveLength(1);
+        expect(events[0]).toEqual(
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              error_code: "DEPTH_LIMIT_REACHED",
+              retryable: false,
+              recommended_action: "execute_directly",
+              current_depth: 2,
+              max_depth: 2,
+              category: "quick",
+              subagent_type: "worker",
+            }),
+          }),
+        );
+      });
+
+      it("#then returns structured DEPTH_LOOKUP_FAILED when depth cannot be read", async () => {
+        const bgManager = makeMockManager();
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const failingClient = makeMockClientWithMessageFailure();
+        const ctx = makeMockToolContext({
+          client: failingClient,
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await bgTool.execute(
+          {
+            category: "quick",
+            subagent_type: "worker",
+            description: "blocked depth lookup",
+            prompt: "delegate this",
+            run_in_background: true,
+          },
+          ctx,
+        );
+
+        expect(result).toContain(
+          "Delegation blocked: unable to determine current delegation depth.",
+        );
+        expect(result).toContain("<task_error>");
+        expect(result).toContain("code: DEPTH_LOOKUP_FAILED");
+        expect(result).toContain("retryable: false");
+        expect(result).toContain("recommended_action: execute_directly");
+        expect(bgManager.launch).not.toHaveBeenCalled();
+        expect(events).toHaveLength(1);
+        expect(events[0]).toEqual(
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              error_code: "DEPTH_LOOKUP_FAILED",
+              retryable: false,
+              recommended_action: "execute_directly",
+              max_depth: 2,
+              category: "quick",
+              subagent_type: "worker",
+            }),
+          }),
+        );
       });
     });
 
@@ -576,6 +684,73 @@ describe("createTaskTool", () => {
 
       // depth=0 (root) → child should be depth=1
       expect(bgManager.launched[0].delegationDepth).toBe(1);
+    });
+
+    it("#then injects hard no-subdelegation guidance when child reaches max depth", async () => {
+      const bgManager = makeMockManager();
+      const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+      const depthOneClient = makeMockClient({
+        messages: [
+          { role: "user", content: "<!-- goatcode:delegation_depth=1 -->" },
+          { role: "assistant", content: "task result here" },
+        ],
+      });
+      const ctx = makeMockToolContext({ client: depthOneClient });
+
+      await bgTool.execute(
+        {
+          category: "quick",
+          subagent_type: "quick",
+          description: "depth-two task",
+          prompt: "do work",
+          run_in_background: true,
+        },
+        ctx,
+      );
+
+      expect(bgManager.launched[0].prompt).toContain("<!-- goatcode:delegation_depth=2 -->");
+      expect(bgManager.launched[0].prompt).toContain("Hard Delegation Depth Stop");
+      expect(bgManager.launched[0].prompt).toContain(
+        "Do NOT call `task` or `delegate_task` again in this session.",
+      );
+    });
+  });
+
+  describe("#when executing sync task at depth 1", () => {
+    it("#then injects hard no-subdelegation guidance into sync prompt", async () => {
+      const syncManager = makeMockManager();
+      const syncTool = createTaskTool(() => syncManager as unknown as BackgroundAgentManager);
+      const depthOneClient = makeMockClient({
+        messages: [
+          { role: "user", content: "<!-- goatcode:delegation_depth=1 -->" },
+          { role: "assistant", content: "task result here" },
+        ],
+      });
+      const ctx = makeMockToolContext({ client: depthOneClient });
+
+      await syncTool.execute(
+        {
+          category: "unspecified-low",
+          subagent_type: "unspecified-low",
+          description: "sync depth two",
+          prompt: "implement the feature",
+          run_in_background: false,
+        },
+        ctx,
+      );
+
+      const promptCalls = (depthOneClient.session.promptAsync as ReturnType<typeof mock>).mock
+        .calls;
+      expect(promptCalls.length).toBeGreaterThan(0);
+
+      const promptRequest = promptCalls[0]?.[0] as {
+        body?: { parts?: Array<{ type?: string; text?: string }> };
+      };
+      const promptText = promptRequest.body?.parts?.[0]?.text ?? "";
+
+      expect(promptText).toContain("<!-- goatcode:delegation_depth=2 -->");
+      expect(promptText).toContain("Hard Delegation Depth Stop");
+      expect(promptText).toContain("Do NOT call `task` or `delegate_task` again in this session.");
     });
   });
 

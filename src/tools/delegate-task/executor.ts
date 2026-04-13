@@ -38,11 +38,22 @@ function buildPromptWithCategoryContext(prompt: string, config: CategoryConfig):
 }
 
 /**
- * Appends concurrency awareness guidance for depth≥1 agents so they
- * prefer direct execution over sub-delegating to many background tasks.
+ * Appends delegation-policy guidance for depth≥1 agents so they prefer
+ * direct execution. At child depth 2, it adds a hard stop against further
+ * delegate_task calls to prevent retry loops at max depth.
  */
-function injectConcurrencyGuidance(prompt: string, delegationDepth: number): string {
+function injectDelegationGuidance(prompt: string, delegationDepth: number): string {
   if (delegationDepth < 1) return prompt;
+
+  const childDepth = delegationDepth + 1;
+  const hardDepthStop =
+    childDepth >= 2
+      ? "\n\n# Hard Delegation Depth Stop" +
+        "\nYour next agent depth is 2 (the maximum allowed)." +
+        "\nDo NOT call `task` or `delegate_task` again in this session." +
+        "\nIf work remains, execute it directly with your available tools."
+      : "";
+
   return (
     prompt +
     "\n\n# Sub-Delegation Constraints (You Are a Sub-Agent)" +
@@ -59,7 +70,8 @@ function injectConcurrencyGuidance(prompt: string, delegationDepth: number): str
     "\n- You can make meaningful progress on other work while waiting." +
     "\n" +
     "\nFor any task completable in ≤5 tool calls, execute it yourself. " +
-    "The delegation overhead alone exceeds the work."
+    "The delegation overhead alone exceeds the work." +
+    hardDepthStop
   );
 }
 
@@ -141,7 +153,7 @@ export async function executeBackground(
   const currentDepth = deps.delegationDepth ?? 0;
   const childDepth = currentDepth + 1;
   const basePrompt = buildPromptWithCategoryContext(input.prompt, config);
-  const guidedPrompt = injectConcurrencyGuidance(basePrompt, currentDepth);
+  const guidedPrompt = injectDelegationGuidance(basePrompt, currentDepth);
   const fullPrompt = injectDelegationDepth(guidedPrompt, currentDepth);
   const ctx: OpenCodeContext = { client, directory } as OpenCodeContext;
   const task = await manager.launch(ctx, {
@@ -315,7 +327,8 @@ export async function executeSync(
 
   // Resolve model and send prompt.
   const basePrompt = buildPromptWithCategoryContext(input.prompt, config);
-  const fullPrompt = injectDelegationDepth(basePrompt, deps.delegationDepth ?? 0);
+  const guidedPrompt = injectDelegationGuidance(basePrompt, deps.delegationDepth ?? 0);
+  const fullPrompt = injectDelegationDepth(guidedPrompt, deps.delegationDepth ?? 0);
   const resolved = resolveModel({
     override: config.model.includes("/") ? config.model : undefined,
     fallbackChain: config.fallback_chain,
