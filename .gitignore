@@ -4,3 +4,7 @@ dist/
 *.log
 .DS_Store
 deps/
+eval/artifacts/runs/
+eval/artifacts/tmp/
+eval/artifacts/outputs/
+eval/artifacts/results/

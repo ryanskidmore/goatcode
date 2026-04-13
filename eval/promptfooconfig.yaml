@@ -1,42 +1,61 @@
-description: "GoatCode A/B Evaluation — With vs Without Plugin"
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
 
-providers:
-  - id: file://providers/opencode-provider.ts
-    label: with-goatcode
-    config:
-      enablePlugin: true
-      model: "anthropic/claude-sonnet-4-20250514"
-  - id: file://providers/opencode-baseline.ts
-    label: baseline
-
-defaultTest:
-  assert:
-    - type: javascript
-      value: "output.length > 0"
-    - type: latency
-      threshold: 30000
-    - type: cost
-      threshold: 0.10
+description: "GoatCode local eval suite (real OpenCode provider calls)"
 
 prompts:
-  - "{{task}}"
+  - "Run scenario {{scenarioId}}"
+
+providers:
+  - "file://providers/opencode-provider.mjs"
 
 tests:
   - vars:
-      task: "Find all usages of the function 'bootstrap'"
+      scenarioId: "AGENTS-12-ORCHESTRATOR_FULL_ACCESS"
     assert:
-      - type: javascript
-        value: "file://assertions/task-completion.ts"
-        threshold: 0.5
+      - type: contains
+        value: "STATUS=PASS"
   - vars:
-      task: "Fix the edit error and retry the write"
+      scenarioId: "AGENTS-9-ADVISOR_ALLOWED_TOOLS"
     assert:
-      - type: javascript
-        value: "file://assertions/tool-accuracy.ts"
-        threshold: 0.5
+      - type: contains
+        value: "STATUS=PASS"
   - vars:
-      task: "Create a plan for refactoring the hooks module"
+      scenarioId: "TOOLS-1-PATTERN_MATCH_FOUND"
     assert:
-      - type: javascript
-        value: "file://assertions/task-completion.ts"
-        threshold: 0.5
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-2-NO_MATCHES"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-11-PATTERN_MATCHES_FILES"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-29-REPLACE_LINE"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-33-APPEND_FILE"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-40-FILE_NOT_FOUND_EDIT_MODE"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "CLI-1-GOATCODE_INSTALL"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "CROSSCUTTING-1-TASK_STORE_RESET"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
