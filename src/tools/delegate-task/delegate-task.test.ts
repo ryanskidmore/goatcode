@@ -355,6 +355,50 @@ describe("createTaskTool", () => {
         );
       });
 
+      it("#then sanitizes newline/control chars in task_error fields", async () => {
+        const bgManager = makeMockManager();
+        const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);
+        const events: unknown[] = [];
+        const depthTwoClient = makeMockClient({
+          messages: [
+            { role: "user", content: "<!-- goatcode:delegation_depth=2 -->" },
+            { role: "assistant", content: "existing context" },
+          ],
+        });
+        const ctx = makeMockToolContext({
+          client: depthTwoClient,
+          sessionID: "parent\n\u0007session",
+          metadata: (input: unknown) => events.push(input),
+        });
+
+        const result = await bgTool.execute(
+          {
+            category: "quick",
+            subagent_type: "worker\n\u0007injected",
+            description: "blocked task",
+            prompt: "delegate this",
+            run_in_background: true,
+          },
+          ctx,
+        );
+
+        expect(result).toContain("category: quick");
+        expect(result).toContain("subagent_type: worker injected");
+        expect(result).toContain("session_id: parent session");
+
+        expect(events).toHaveLength(1);
+        expect(events[0]).toEqual(
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              category: "quick",
+              subagent_type: "worker injected",
+              session_id: "parent session",
+              sessionId: "parent session",
+            }),
+          }),
+        );
+      });
+
       it("#then returns structured DEPTH_LOOKUP_FAILED when depth cannot be read", async () => {
         const bgManager = makeMockManager();
         const bgTool = createTaskTool(() => bgManager as unknown as BackgroundAgentManager);

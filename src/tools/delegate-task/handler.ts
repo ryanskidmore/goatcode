@@ -26,7 +26,25 @@ type DelegationBlockDetails = {
   sessionID?: string;
 };
 
+function sanitiseTaskErrorValue(value: string): string {
+  return value
+    .replace(/[\r\n]+/g, " ")
+    .split("")
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+      return code >= 0x20 && code !== 0x7f;
+    })
+    .join("")
+    .trim();
+}
+
 function formatDelegationBlock(details: DelegationBlockDetails): string {
+  const sanitisedCategory = sanitiseTaskErrorValue(details.category);
+  const sanitisedSubagentType = sanitiseTaskErrorValue(details.subagentType);
+  const sanitisedSessionID = details.sessionID
+    ? sanitiseTaskErrorValue(details.sessionID)
+    : undefined;
+
   const lines = [
     details.message,
     "",
@@ -36,11 +54,11 @@ function formatDelegationBlock(details: DelegationBlockDetails): string {
     "recommended_action: execute_directly",
     ...(typeof details.currentDepth === "number" ? [`current_depth: ${details.currentDepth}`] : []),
     `max_depth: ${details.maxDepth}`,
-    `category: ${details.category}`,
-    `subagent_type: ${details.subagentType}`,
+    `category: ${sanitisedCategory}`,
+    `subagent_type: ${sanitisedSubagentType}`,
     `run_in_background: ${details.runInBackground}`,
-    ...(details.sessionID
-      ? [`session_id: ${details.sessionID}`, `sessionId: ${details.sessionID}`]
+    ...(sanitisedSessionID
+      ? [`session_id: ${sanitisedSessionID}`, `sessionId: ${sanitisedSessionID}`]
       : []),
     "</task_error>",
   ];
@@ -52,20 +70,28 @@ function emitDelegationBlockMetadata(
   toolContext: Parameters<ToolDefinition["execute"]>[1],
   details: DelegationBlockDetails,
 ): void {
+  const sanitisedCategory = sanitiseTaskErrorValue(details.category);
+  const sanitisedSubagentType = sanitiseTaskErrorValue(details.subagentType);
+  const sanitisedSessionID = details.sessionID
+    ? sanitiseTaskErrorValue(details.sessionID)
+    : undefined;
+
   toolContext.metadata({
     metadata: {
       error_code: details.code,
       retryable: false,
       recommended_action: "execute_directly",
-      category: details.category,
-      subagent_type: details.subagentType,
+      category: sanitisedCategory,
+      subagent_type: sanitisedSubagentType,
       run_in_background: details.runInBackground,
       ...(typeof details.currentDepth === "number"
         ? { current_depth: details.currentDepth, currentDepth: details.currentDepth }
         : {}),
       max_depth: details.maxDepth,
       maxDepth: details.maxDepth,
-      ...(details.sessionID ? { session_id: details.sessionID, sessionId: details.sessionID } : {}),
+      ...(sanitisedSessionID
+        ? { session_id: sanitisedSessionID, sessionId: sanitisedSessionID }
+        : {}),
     },
   });
 }
