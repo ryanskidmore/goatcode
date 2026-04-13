@@ -1,0 +1,121 @@
+[
+  {
+    "id": "AGENTS-12-ORCHESTRATOR_FULL_ACCESS",
+    "prompt": "Use bash to list files in the repository root and confirm package.json exists.",
+    "checks": {
+      "requiredToolCalls": ["bash"],
+      "requiredToolResultContains": {
+        "bash": ["package.json"]
+      },
+      "requireAssistantText": true
+    }
+  },
+  {
+    "id": "AGENTS-9-ADVISOR_ALLOWED_TOOLS",
+    "prompt": "Use grep to find \"orchestrator\" in README.md and quote one matching line.",
+    "checks": {
+      "requiredToolCalls": ["grep"],
+      "requiredToolResultContains": {
+        "grep": ["orchestrator"]
+      }
+    }
+  },
+  {
+    "id": "TOOLS-1-PATTERN_MATCH_FOUND",
+    "prompt": "Use grep to find \"GoatCode\" in README.md and print one matching line.",
+    "checks": {
+      "requiredToolCalls": ["grep"],
+      "requiredToolResultContains": {
+        "grep": ["GoatCode"]
+      }
+    }
+  },
+  {
+    "id": "TOOLS-2-NO_MATCHES",
+    "prompt": "Use grep to search README.md for zzz_nonexistent_pattern_42 and report the output.",
+    "checks": {
+      "requiredToolCalls": ["grep"],
+      "requiredToolResultContains": {
+        "grep": ["No matches found"]
+      }
+    }
+  },
+  {
+    "id": "TOOLS-11-PATTERN_MATCHES_FILES",
+    "prompt": "Use glob to list markdown files at repo root and include TEST_SCENARIOS.md.",
+    "checks": {
+      "requiredToolCalls": ["glob"],
+      "requiredToolResultContains": {
+        "glob": ["TEST_SCENARIOS.md"]
+      }
+    }
+  },
+  {
+    "id": "TOOLS-29-REPLACE_LINE",
+    "setup": {
+      "files": [
+        {
+          "path": "eval/artifacts/tmp/mutate/replace-line.txt",
+          "content": "alpha\nbeta\ngamma\n"
+        }
+      ]
+    },
+    "prompt": "Use hashline_edit on eval/artifacts/tmp/mutate/replace-line.txt. First read file for LINE#HASH tags, then replace line 2 from beta to beta-updated.",
+    "checks": {
+      "requiredToolCalls": ["read", "hashline_edit"],
+      "filesystem": {
+        "path": "eval/artifacts/tmp/mutate/replace-line.txt",
+        "mustContain": ["beta-updated"],
+        "mustNotContain": ["\nbeta\n"]
+      }
+    }
+  },
+  {
+    "id": "TOOLS-33-APPEND_FILE",
+    "setup": {
+      "files": [
+        {
+          "path": "eval/artifacts/tmp/mutate/append-file.txt",
+          "content": "one\ntwo\n"
+        }
+      ]
+    },
+    "prompt": "Use hashline_edit append_file to append 'three' to eval/artifacts/tmp/mutate/append-file.txt.",
+    "checks": {
+      "requiredToolCalls": ["hashline_edit"],
+      "filesystem": {
+        "path": "eval/artifacts/tmp/mutate/append-file.txt",
+        "mustContain": ["three"]
+      }
+    }
+  },
+  {
+    "id": "TOOLS-40-FILE_NOT_FOUND_EDIT_MODE",
+    "prompt": "Use hashline_edit replace_line on eval/artifacts/tmp/mutate/missing-file.txt and return the error.",
+    "checks": {
+      "requiredToolCalls": ["hashline_edit"],
+      "requiredToolResultContains": {
+        "hashline_edit": ["File not found"]
+      },
+      "requireAssistantText": true
+    }
+  },
+  {
+    "id": "CLI-1-GOATCODE_INSTALL",
+    "prompt": "Use glob to list files in repo root and confirm package.json is present.",
+    "checks": {
+      "requiredToolCalls": ["glob"],
+      "requiredToolResultContains": {
+        "glob": ["package.json"]
+      }
+    }
+  },
+  {
+    "id": "CROSSCUTTING-1-TASK_STORE_RESET",
+    "prompt": "Read TEST_PLAN.md and provide one sentence about test isolation.",
+    "checks": {
+      "requiredToolCalls": ["read"],
+      "requireAssistantText": true
+    }
+  }
+]

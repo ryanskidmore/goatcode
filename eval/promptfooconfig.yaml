@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+
+description: "GoatCode local Phase 1 eval suite (real OpenCode provider calls)"
+
+prompts:
+  - "Run scenario {{scenarioId}}"
+
+providers:
+  - "file://providers/opencode-provider.mjs"
+
+tests:
+  - vars:
+      scenarioId: "AGENTS-12-ORCHESTRATOR_FULL_ACCESS"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "AGENTS-9-ADVISOR_ALLOWED_TOOLS"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-1-PATTERN_MATCH_FOUND"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-2-NO_MATCHES"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-11-PATTERN_MATCHES_FILES"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-29-REPLACE_LINE"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-33-APPEND_FILE"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "TOOLS-40-FILE_NOT_FOUND_EDIT_MODE"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "CLI-1-GOATCODE_INSTALL"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
+  - vars:
+      scenarioId: "CROSSCUTTING-1-TASK_STORE_RESET"
+    assert:
+      - type: contains
+        value: "STATUS=PASS"
